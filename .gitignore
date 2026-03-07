@@ -1,0 +1,13 @@
+build/
+devel/
+install/
+log/
+logs/
+.catkin_tools/
+.catkin_workspace
+
+__pycache__/
+*.pyc
+
+.vscode/
+.idea/
