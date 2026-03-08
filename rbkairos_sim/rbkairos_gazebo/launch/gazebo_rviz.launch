@@ -4,6 +4,7 @@
 	<!-- roslaunch arguments --> 
 	<arg name="debug" default="false"/>
 	<arg name="launch_rviz" default="false"/>
+	<arg name="rviz_config" default="$(find rbkairos_gazebo)/rviz/rbkairos_greenhouse.rviz"/>
 	<!--arg name="world" default="office.world"/--> <!-- located in summit_xl_gazebo/worlds -->
 	<arg name="world" default="$(find rbkairos_gazebo)/worlds/office.world"/> <!-- Changed to absolute path-->
 
@@ -17,7 +18,7 @@
 	</include>
 	
 	<!-- launch rviz -->
-	<node if="$(arg launch_rviz)" name="rviz" pkg="rviz" type="rviz" required="true" args="-d $(find rbkairos_gazebo)/rviz/rbkairos_a.rviz"/>
+	<node if="$(arg launch_rviz)" name="rviz" pkg="rviz" type="rviz" required="true" args="-d $(arg rviz_config)"/>
 
 	
 	

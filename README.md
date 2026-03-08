@@ -72,6 +72,12 @@ source devel/setup.bash
 
 ## Usage
 
+Before starting the simulation, from the repository root set the Gazebo model path:
+
+```bash
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$PWD/rbkairos_sim/rbkairos_gazebo/models
+```
+
 Launch the complete RB-Kairos simulation:
 
 ```bash
