@@ -84,8 +84,14 @@ Launch the complete RB-Kairos simulation:
 roslaunch rbkairos_sim_bringup rbkairos_complete.launch
 ```
 
-This starts Gazebo and the required ROS controllers.
-By default, it loads the full simulation stack (navigation, localization, and manipulation) with an **RB-Kairos + UR5 + EGH gripper** configuration.
+This starts Gazebo along with the required ROS controllers.
+By default, the full simulation stack is loaded (navigation, localization, and manipulation) using the **RB-Kairos + UR5 + EGH gripper** configuration with **differential drive**.
+
+To enable omni/holonomic drive:
+
+```bash
+roslaunch rbkairos_sim_bringup rbkairos_complete.launch omni_drive:=true
+```
 
 To enable MoveIt:
 

@@ -61,7 +61,7 @@
   	<xacro:arg name="ros_planar_move_plugin" default="false"/>
 
 
-    <xacro:macro name="rbkairos_base" params="prefix publish_bf hq gpu:=false">
+    <xacro:macro name="rbkairos_base" params="prefix publish_bf hq gpu:=false use_omni_wheels:=false">
 
   		<!-- *************** -->
   		<!-- Robots Elements -->
@@ -72,22 +72,43 @@
   		<!-- Summit XL base -->
   		<xacro:summit_xls_base prefix="$(arg prefix)" publish_bf="true" hq="${hq}" />
 
-  		<xacro:omni_wheel prefix="$(arg prefix)front_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
-  			<origin xyz="${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
-  		</xacro:omni_wheel>
+  		<xacro:if value="${use_omni_wheels}">
+  			<xacro:omni_wheel prefix="$(arg prefix)front_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
+  				<origin xyz="${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+  			</xacro:omni_wheel>
 
-  		<xacro:omni_wheel prefix="$(arg prefix)front_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
-  			<origin xyz="${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
-  		</xacro:omni_wheel>
+  			<xacro:omni_wheel prefix="$(arg prefix)front_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
+  				<origin xyz="${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+  			</xacro:omni_wheel>
 
-  		<xacro:omni_wheel prefix="$(arg prefix)back_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
-  			<origin xyz="-${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
-  		</xacro:omni_wheel>
+  			<xacro:omni_wheel prefix="$(arg prefix)back_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
+  				<origin xyz="-${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+  			</xacro:omni_wheel>
 
-  		<xacro:omni_wheel prefix="$(arg prefix)back_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
-  			<origin xyz="-${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
-  		</xacro:omni_wheel>
-          <!-- IMU -->
+  			<xacro:omni_wheel prefix="$(arg prefix)back_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
+  				<origin xyz="-${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+  			</xacro:omni_wheel>
+  		</xacro:if>
+
+  		<xacro:unless value="${use_omni_wheels}">
+  			<xacro:rubber_wheel prefix="$(arg prefix)front_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
+  				<origin xyz="${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+  			</xacro:rubber_wheel>
+
+  			<xacro:rubber_wheel prefix="$(arg prefix)front_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
+  				<origin xyz="${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+  			</xacro:rubber_wheel>
+
+  			<xacro:rubber_wheel prefix="$(arg prefix)back_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
+  				<origin xyz="-${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+  			</xacro:rubber_wheel>
+
+  			<xacro:rubber_wheel prefix="$(arg prefix)back_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
+  				<origin xyz="-${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+  			</xacro:rubber_wheel>
+  		</xacro:unless>
+
+		<!-- IMU -->
   		<xacro:sensor_imu_hector prefix="$(arg prefix)imu" parent="$(arg prefix)base_link">
   			<origin xyz="${imu_offset_x} ${imu_offset_y} ${imu_offset_z}" rpy="0 0 0"/>
   		</xacro:sensor_imu_hector>

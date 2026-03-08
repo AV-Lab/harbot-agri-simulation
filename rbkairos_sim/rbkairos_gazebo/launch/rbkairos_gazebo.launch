@@ -41,6 +41,8 @@
     <arg name="launch_pad_a" default="false"/>
     <arg name="launch_gripper_a" default="false"/>
     <arg name="gripper_model_a" default="$(arg default_gripper_model)"/>
+    <arg name="launch_camera_a" default="false"/>
+
 
     <!-- robot b -->
     <arg name="id_robot_b" default="robot_b"/>
@@ -62,6 +64,7 @@
     <arg name="launch_pad_b" default="false"/>
     <arg name="launch_gripper_b" default="false"/>
     <arg name="gripper_model_b" default="$(arg default_gripper_model)"/>
+    <arg name="launch_camera_b" default="false"/>
 
     <!-- robot c -->
     <arg name="id_robot_c" default="robot_c"/>
@@ -83,6 +86,7 @@
     <arg name="launch_pad_c" default="false"/>
     <arg name="launch_gripper_c" default="false"/>
     <arg name="gripper_model_c" default="$(arg default_gripper_model)"/>
+    <arg name="launch_camera_c" default="false"/>
 
 
     <!--BEGIN ROBOT 1-->
@@ -106,6 +110,7 @@
         <arg name="launch_move_group" value="$(arg moveit_movegroup_a)"/>
         <arg name="launch_pad" value="$(arg launch_pad_a)"/>
         <arg name="launch_gripper" value="$(arg launch_gripper_a)"/>
+        <arg name="launch_camera" value="$(arg launch_camera_a)"/>
         <arg name="gripper_model" value="$(arg gripper_model_a)"/>
         <arg name="load_arm_kinematics_file" value="$(arg load_arm_kinematics_file)"/>
         <arg name="launch_base_hw_sim" value="$(arg launch_base_hw_sim)"/>
@@ -134,6 +139,7 @@
         <arg name="launch_move_group" value="$(arg moveit_movegroup_b)"/>
         <arg name="launch_pad" value="$(arg launch_pad_b)"/>
         <arg name="launch_gripper" value="$(arg launch_gripper_b)"/>
+        <arg name="launch_camera" value="$(arg launch_camera_b)"/>
         <arg name="gripper_model" value="$(arg gripper_model_b)"/>
         <arg name="load_arm_kinematics_file" value="$(arg load_arm_kinematics_file)"/>
         <arg name="launch_base_hw_sim" value="$(arg launch_base_hw_sim)"/>
@@ -162,6 +168,7 @@
         <arg name="launch_move_group" value="$(arg moveit_movegroup_c)"/>
         <arg name="launch_pad" value="$(arg launch_pad_c)"/>
         <arg name="launch_gripper" value="$(arg launch_gripper_c)"/>
+        <arg name="launch_camera" value="$(arg launch_camera_c)"/>
         <arg name="gripper_model" value="$(arg gripper_model_c)"/>
         <arg name="load_arm_kinematics_file" value="$(arg load_arm_kinematics_file)"/>
         <arg name="launch_base_hw_sim" value="$(arg launch_base_hw_sim)"/>

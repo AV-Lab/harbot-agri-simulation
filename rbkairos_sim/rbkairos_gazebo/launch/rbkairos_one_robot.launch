@@ -28,6 +28,7 @@
     <arg name="movebase_local_planner" default="teb"/>
     <arg name="launch_pad" default="false"/>
     <arg name="launch_gripper" default="false"/>
+    <arg name="launch_camera" default="false"/>
     <arg name="launch_base_hw_sim" default="false"/>
     <arg name="launch_battery_estimator" default="false"/>
     <arg name="use_gpu" default="false"/>
@@ -42,7 +43,7 @@
 
         <!-- Load the URDF into the ROS Parameter Server -->
         <param name="robot_description"
-        command="$(find xacro)/xacro '$(find rbkairos_description)/robots/$(arg xacro_robot)' prefix:=$(arg prefix) ros_planar_move_plugin:=$(arg ros_planar_move_plugin) load_kinematics_file:=$(arg load_arm_kinematics_file) use_gpu_for_simulation:=$(arg use_gpu) --inorder"/>
+        command="$(find xacro)/xacro '$(find rbkairos_description)/robots/$(arg xacro_robot)' prefix:=$(arg prefix) ros_planar_move_plugin:=$(arg ros_planar_move_plugin) load_kinematics_file:=$(arg load_arm_kinematics_file) use_gpu_for_simulation:=$(arg use_gpu) launch_arm:=$(arg launch_arm) launch_gripper:=$(arg launch_gripper) launch_camera:=$(arg launch_camera) --inorder"/>
 
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
             <remap from="/joint_states" to="joint_states" />

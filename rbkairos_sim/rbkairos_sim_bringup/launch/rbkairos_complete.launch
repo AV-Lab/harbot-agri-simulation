@@ -3,13 +3,13 @@
 
     <!-- arg to config the launch file-->
 
-    <arg name="launch_rviz" default="true"/>
+    <arg name="launch_rviz" default="false"/>
     <arg name="gazebo_world" default="$(find rbkairos_gazebo)/worlds/greenhouse.world"/>
     <arg name="default_map" default="willow_garage/willow_garage.yaml"/>
     <arg name="default_arm_model" default="ur5"/>
     <arg name="default_gripper_model" default="egh"/>
     <arg name="default_xacro" default="versions/rbkairos_$(arg default_arm_model)_$(arg default_gripper_model).urdf.xacro"/>
-    <arg name="omni_drive" default="true"/>
+    <arg name="omni_drive" default="false"/>
     <!-- Needed if using ur_description from fmauch_universal_robot -->
     <arg name="load_arm_kinematics_file" default="false"/>
     <!-- simulation of motor controllers topics and battery estimation -->
@@ -26,20 +26,21 @@
     <arg name="map_file_a" default="$(arg default_map)"/>
     <arg name="localization_robot_a" default="false"/>
     <arg name="gmapping_robot_a" default="false"/>
-    <arg name="move_base_robot_a" default="true"/>
+    <arg name="move_base_robot_a" default="false"/>
     <arg name="amcl_and_mapserver_a" default="true"/>
     <arg name="launch_pad_a" default="true"/>
     <!-- spawn position robot a -->
     <arg name="x_init_pose_robot_a" default="0" />
     <arg name="y_init_pose_robot_a" default="0" />
-    <arg name="z_init_pose_robot_a" default="0" />
-    <arg name="yaw_init_pose_robot_a" default="0" />
+    <arg name="z_init_pose_robot_a" default="0.1" />
+    <arg name="yaw_init_pose_robot_a" default="-1.5708" />
     <!-- arm robot a -->
     <arg name="launch_arm_a" default="true"/>
     <arg name="arm_model_a" default="$(arg default_arm_model)"/>
     <arg name="moveit_movegroup_a" default="false"/>
     <!-- gripper robot a -->
     <arg name="launch_gripper_a" default="true"/>
+    <arg name="launch_camera_a" default="false"/>
     <arg name="gripper_model_a" default="$(arg default_gripper_model)"/>
 
     <!-- arguments robot b -->
@@ -65,6 +66,7 @@
     <arg name="moveit_movegroup_b" default="false"/>
     <!-- gripper robot b -->
     <arg name="launch_gripper_b" default="true"/>
+    <arg name="launch_camera_b" default="false"/>
     <arg name="gripper_model_b" default="$(arg default_gripper_model)"/>
 
     <!-- arguments robot c -->
@@ -90,6 +92,7 @@
     <arg name="moveit_movegroup_c" default="false"/>
     <!-- gripper robot c -->
     <arg name="launch_gripper_c" default="true"/>
+    <arg name="launch_camera_c" default="false"/>
     <arg name="gripper_model_c" default="$(arg default_gripper_model)"/>
 
 
@@ -128,6 +131,7 @@
         <arg name="moveit_movegroup_a" value="$(arg moveit_movegroup_a)"/>
         <!-- robot_a gripper args -->
         <arg name="launch_gripper_a" value="$(arg launch_gripper_a)"/>
+        <arg name="launch_camera_a" value="$(arg launch_camera_a)"/>
         <arg name="gripper_model_a" value="$(arg gripper_model_a)"/>
 
         <!-- robot_b args -->
@@ -154,6 +158,7 @@
         <!-- robot_b gripper args -->
         <arg name="launch_gripper_b" value="$(arg launch_gripper_b)"/>
         <arg name="gripper_model_b" value="$(arg gripper_model_b)"/>
+        <arg name="launch_camera_b" value="$(arg launch_camera_b)"/>
 
         <!-- robot_c args -->
         <arg name="id_robot_c" value="$(arg id_robot_c)"/>
@@ -179,6 +184,7 @@
         <!-- robot_c gripper args -->
         <arg name="launch_gripper_c" value="$(arg launch_gripper_c)"/>
         <arg name="gripper_model_c" value="$(arg gripper_model_c)"/>
+        <arg name="launch_camera_c" value="$(arg launch_camera_c)"/>s
 
 
     </include>
