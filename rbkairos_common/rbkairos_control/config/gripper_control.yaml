@@ -2,13 +2,13 @@
 # The controller joint must be the master joint. 
 gripper_controller:
   type: position_controllers/GripperActionController
-  joint: robot_egh_gripper_finger_left_joint  
+  joint: $(arg prefix)egh_gripper_finger_left_joint  
 
 
 pos_traj_controller:
   type: position_controllers/JointTrajectoryController
   joints: 
-    - robot_egh_gripper_finger_left_joint
+    - $(arg prefix)egh_gripper_finger_left_joint
   constraints:
     goal_time: 0.6
     stopped_velocity_tolerance: 0.05
