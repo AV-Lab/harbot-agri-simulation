@@ -13,6 +13,9 @@
 
   <!-- By default, we will load or override the robot_description -->
   <arg name="load_robot_description" default="true"/>
+  <arg name="prefix" default="robot_"/>
+  <arg name="launch_camera" default="false"/>
+  <arg name="fixed_frame" default="$(arg prefix)base_footprint"/>
 
   <!-- Set execution mode for fake execution controllers -->
   <arg name="execution_type" default="interpolate" />
@@ -51,12 +54,15 @@
     <arg name="debug" value="$(arg debug)"/>
     <arg name="pipeline" value="$(arg pipeline)"/>
     <arg name="load_robot_description" value="$(arg load_robot_description)"/>
+    <arg name="prefix" value="$(arg prefix)"/>
+    <arg name="launch_camera" value="$(arg launch_camera)"/>
   </include>
 
   <!-- Run Rviz and load the default config to see the state of the move_group node -->
   <include file="$(find rbkairos_ur5_egh_moveit_config)/launch/moveit_rviz.launch" if="$(arg use_rviz)">
     <arg name="rviz_config" value="$(find rbkairos_ur5_egh_moveit_config)/launch/moveit.rviz"/>
     <arg name="debug" value="$(arg debug)"/>
+    <arg name="fixed_frame" value="$(arg fixed_frame)"/>
   </include>
 
   <!-- If database loading was enabled, start mongodb as well -->

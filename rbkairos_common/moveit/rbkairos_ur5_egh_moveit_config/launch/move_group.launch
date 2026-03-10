@@ -39,9 +39,13 @@
   -->
 
   <arg name="load_robot_description" default="true" />
+  <arg name="prefix" default="robot_" />
+  <arg name="launch_camera" default="false" />
   <!-- load URDF, SRDF and joint_limits configuration -->
   <include file="$(find rbkairos_ur5_egh_moveit_config)/launch/planning_context.launch">
     <arg name="load_robot_description" value="$(arg load_robot_description)" />
+    <arg name="prefix" value="$(arg prefix)" />
+    <arg name="launch_camera" value="$(arg launch_camera)" />
   </include>
 
   <!-- Planning Functionality -->
@@ -57,6 +61,7 @@
     <arg name="moveit_controller_manager" value="rbkairos" unless="$(arg fake_execution)"/>
     <arg name="moveit_controller_manager" value="fake" if="$(arg fake_execution)"/>
     <arg name="execution_type" value="$(arg execution_type)" />
+    <arg name="prefix" value="$(arg prefix)" />
   </include>
 
   <!-- Sensors Functionality -->

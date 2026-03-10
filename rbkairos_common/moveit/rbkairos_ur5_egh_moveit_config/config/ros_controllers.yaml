@@ -9,13 +9,13 @@ generic_hw_control_loop:
 # Settings for ros_control hardware interface
 hardware_interface:
   joints:
-    - robot_arm_shoulder_pan_joint
-    - robot_arm_shoulder_lift_joint
-    - robot_arm_elbow_joint
-    - robot_arm_wrist_1_joint
-    - robot_arm_wrist_2_joint
-    - robot_arm_wrist_3_joint
-    - robot_egh_gripper_finger_left_joint
+    - $(arg prefix)arm_shoulder_pan_joint
+    - $(arg prefix)arm_shoulder_lift_joint
+    - $(arg prefix)arm_elbow_joint
+    - $(arg prefix)arm_wrist_1_joint
+    - $(arg prefix)arm_wrist_2_joint
+    - $(arg prefix)arm_wrist_3_joint
+    - $(arg prefix)egh_gripper_finger_left_joint
   sim_control_mode: 1  # 0: position, 1: velocity
 # Publish all joint states
 # Creates the /joint_states topic necessary in ROS
@@ -28,15 +28,15 @@ controller_list:
     default: True
     type: FollowJointTrajectory
     joints:
-      - robot_arm_shoulder_pan_joint
-      - robot_arm_shoulder_lift_joint
-      - robot_arm_elbow_joint
-      - robot_arm_wrist_1_joint
-      - robot_arm_wrist_2_joint
-      - robot_arm_wrist_3_joint
+      - $(arg prefix)arm_shoulder_pan_joint
+      - $(arg prefix)arm_shoulder_lift_joint
+      - $(arg prefix)arm_elbow_joint
+      - $(arg prefix)arm_wrist_1_joint
+      - $(arg prefix)arm_wrist_2_joint
+      - $(arg prefix)arm_wrist_3_joint
   - name: gripper/pos_traj_controller
     action_ns: follow_joint_trajectory
     default: True
     type: FollowJointTrajectory
     joints:
-      - robot_egh_gripper_finger_left_joint
+      - $(arg prefix)egh_gripper_finger_left_joint

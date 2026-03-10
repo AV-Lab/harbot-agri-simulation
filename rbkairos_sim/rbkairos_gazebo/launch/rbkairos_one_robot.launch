@@ -135,6 +135,9 @@
         <!-- MoveGroup Moveit! -->
         <include if="$(arg launch_move_group)" file="$(find rbkairos_ur5_egh_moveit_config)/launch/demo.launch">
             <arg name="load_robot_description" value="false"/>
+            <arg name="prefix" value="$(arg prefix)"/>
+            <arg name="launch_camera" value="$(arg launch_camera)"/>
+            <arg name="fixed_frame" value="$(arg prefix)base_footprint"/>
         </include>
 
     </group>

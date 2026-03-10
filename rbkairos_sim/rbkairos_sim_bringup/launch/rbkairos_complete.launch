@@ -19,7 +19,7 @@
 
     <!-- arguments robot a -->
     <arg name="id_robot_a" default="robot"/>
-    <arg name="launch_robot_a" default="true"/>
+    <arg name="launch_robot_a" default="false"/>
     <arg name="xacro_robot_a" default="$(arg default_xacro)"/>
     <arg name="map_package_a" default="$(find summit_xl_localization)"/>
     <arg name="map_folder_a" default="maps"/>
@@ -63,7 +63,7 @@
     <!-- arm robot b -->
     <arg name="launch_arm_b" default="true"/>
     <arg name="arm_model_b" default="$(arg default_arm_model)"/>
-    <arg name="moveit_movegroup_b" default="false"/>
+    <arg name="moveit_movegroup_b" default="true"/>
     <!-- gripper robot b -->
     <arg name="launch_gripper_b" default="true"/>
     <arg name="launch_camera_b" default="false"/>
