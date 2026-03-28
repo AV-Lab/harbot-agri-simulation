@@ -15,17 +15,17 @@
           <izz>0.01</izz>
         </inertia>
       </inertial>
-      <collision name='body_collision'>
-        <pose>0 0 0 1.5708 -0 0</pose>
+      <!-- <collision name='body_collision'>
+        <pose>0 0 0 1.57079632679 -0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
             <uri>model://orange_left/meshes/orange_left.obj</uri>
           </mesh>
         </geometry>
-      </collision>
+      </collision> -->
       <visual name='body_visual'>
-        <pose>0 0 0 1.5708 -0 0</pose>
+        <pose>0 0 0 1.57079632679 -0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>

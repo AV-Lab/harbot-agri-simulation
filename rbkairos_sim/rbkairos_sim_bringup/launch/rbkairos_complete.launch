@@ -5,7 +5,7 @@
 
     <arg name="launch_rviz" default="false"/>
     <arg name="gazebo_world" default="$(find rbkairos_gazebo)/worlds/greenhouse.world"/>
-    <arg name="default_map" default="willow_garage/willow_garage.yaml"/>
+    <arg name="default_map" default="greenhouse/greenhouse_map.yaml"/>
     <arg name="default_arm_model" default="ur5"/>
     <arg name="default_gripper_model" default="egh"/>
     <arg name="default_xacro" default="versions/rbkairos_$(arg default_arm_model)_$(arg default_gripper_model).urdf.xacro"/>
@@ -19,7 +19,7 @@
 
     <!-- arguments robot a -->
     <arg name="id_robot_a" default="robot"/>
-    <arg name="launch_robot_a" default="false"/>
+    <arg name="launch_robot_a" default="true"/>
     <arg name="xacro_robot_a" default="$(arg default_xacro)"/>
     <arg name="map_package_a" default="$(find summit_xl_localization)"/>
     <arg name="map_folder_a" default="maps"/>
@@ -30,14 +30,14 @@
     <arg name="amcl_and_mapserver_a" default="true"/>
     <arg name="launch_pad_a" default="true"/>
     <!-- spawn position robot a -->
-    <arg name="x_init_pose_robot_a" default="0" />
-    <arg name="y_init_pose_robot_a" default="0" />
+    <arg name="x_init_pose_robot_a" default="-0.5" />
+    <arg name="y_init_pose_robot_a" default="1.43" />
     <arg name="z_init_pose_robot_a" default="0.1" />
     <arg name="yaw_init_pose_robot_a" default="-1.5708" />
     <!-- arm robot a -->
     <arg name="launch_arm_a" default="true"/>
     <arg name="arm_model_a" default="$(arg default_arm_model)"/>
-    <arg name="moveit_movegroup_a" default="false"/>
+    <arg name="moveit_movegroup_a" default="true"/>
     <!-- gripper robot a -->
     <arg name="launch_gripper_a" default="true"/>
     <arg name="launch_camera_a" default="false"/>
@@ -45,7 +45,7 @@
 
     <!-- arguments robot b -->
     <arg name="id_robot_b" default="robot_b"/>
-    <arg name="launch_robot_b" default="true"/>
+    <arg name="launch_robot_b" default="false"/>
     <arg name="xacro_robot_b" default="$(arg default_xacro)"/>
     <arg name="map_package_b" default="$(find summit_xl_localization)"/>
     <arg name="map_folder_b" default="maps"/>
@@ -184,7 +184,7 @@
         <!-- robot_c gripper args -->
         <arg name="launch_gripper_c" value="$(arg launch_gripper_c)"/>
         <arg name="gripper_model_c" value="$(arg gripper_model_c)"/>
-        <arg name="launch_camera_c" value="$(arg launch_camera_c)"/>s
+        <arg name="launch_camera_c" value="$(arg launch_camera_c)"/>
 
 
     </include>

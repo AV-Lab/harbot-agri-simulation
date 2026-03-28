@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 
+	<env name="GAZEBO_MODEL_PATH" value="$(find rbkairos_gazebo)/models:$(optenv GAZEBO_MODEL_PATH)"/>
+	
 	<!-- roslaunch arguments --> 
 	<arg name="debug" default="false"/>
 	<arg name="launch_rviz" default="false"/>

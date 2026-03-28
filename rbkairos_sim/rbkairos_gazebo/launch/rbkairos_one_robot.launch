@@ -58,6 +58,7 @@
                 -J $(arg id_robot)_arm_elbow_joint -2
                 -J $(arg id_robot)_arm_shoulder_lift_joint -0.785
                 -J $(arg id_robot)_arm_shoulder_pan_joint -0.785
+                -J $(arg id_robot)_egh_gripper_finger_left_joint 0.048
                 -urdf
                 -param robot_description
                  -model $(arg id_robot)
@@ -116,6 +117,7 @@
             <arg name="x_init_pose" value="$(arg x_init_pose)"/>
             <arg name="y_init_pose" value="$(arg y_init_pose)"/>
             <arg name="z_init_pose" value="$(arg z_init_pose)"/>
+            <arg name="yaw_init_pose" value="$(arg yaw_init_pose)"/>
             <arg name="odom_model_type" value="$(arg odom_model_type)"/>
         </include>
 

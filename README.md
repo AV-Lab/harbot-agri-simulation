@@ -98,3 +98,17 @@ To enable MoveIt:
 ```bash
 roslaunch rbkairos_sim_bringup rbkairos_complete.launch moveit_movegroup_a:=true
 ```
+
+For initial testing of orange picking with the UR5 arm, first run:
+
+```bash
+rosrun rbkairos_sim_bringup moveit_target_reach.py
+```
+
+This moves the arm to the target position of an orange. Then run to grape the orange:
+
+```bash
+rosrun rbkairos_sim_bringup grasp_orange.py
+```
+
+> **Note:** This is an initial simulation test flow.
