@@ -1,4 +1,5 @@
 <launch>
+  <arg name="arm_id" default="fr3" />
 
   <!-- The request adapters (plugins) used when planning. ORDER MATTERS! -->
   <arg name="planning_adapters" default="" />

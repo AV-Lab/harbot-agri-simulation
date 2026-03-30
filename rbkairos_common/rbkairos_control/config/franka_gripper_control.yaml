@@ -1,0 +1,16 @@
+# Franka hand controller (joint2 mimics joint1 in the URDF).
+gripper_controller:
+  type: position_controllers/GripperActionController
+  joint: $(arg arm_id)_finger_joint1
+
+pos_traj_controller:
+  type: position_controllers/JointTrajectoryController
+  joints:
+    - $(arg arm_id)_finger_joint1
+  constraints:
+    goal_time: 0.6
+    stopped_velocity_tolerance: 0.05
+    $(arg arm_id)_finger_joint1: {trajectory: 0.2, goal: 0.1}
+  stop_trajectory_duration: 0.5
+  state_publish_rate: 125
+  action_monitor_rate: 10

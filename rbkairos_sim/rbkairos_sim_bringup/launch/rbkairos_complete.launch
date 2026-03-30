@@ -6,10 +6,10 @@
     <arg name="launch_rviz" default="false"/>
     <arg name="gazebo_world" default="$(find rbkairos_gazebo)/worlds/greenhouse.world"/>
     <arg name="default_map" default="greenhouse/greenhouse_map.yaml"/>
-    <arg name="default_arm_model" default="ur5"/>
+    <arg name="default_arm_model" default="franka"/>
     <arg name="default_gripper_model" default="egh"/>
-    <arg name="default_xacro" default="versions/rbkairos_$(arg default_arm_model)_$(arg default_gripper_model).urdf.xacro"/>
-    <arg name="omni_drive" default="false"/>
+    <arg name="default_xacro" default="$(eval 'rbkairos_franka.urdf.xacro' if arg('default_arm_model') == 'franka' else 'versions/rbkairos_{}_{}.urdf.xacro'.format(arg('default_arm_model'), arg('default_gripper_model')))"/>
+    <arg name="omni_drive" default="true"/>
     <!-- Needed if using ur_description from fmauch_universal_robot -->
     <arg name="load_arm_kinematics_file" default="false"/>
     <!-- simulation of motor controllers topics and battery estimation -->

@@ -35,12 +35,12 @@ BOX_SIZE = (0.06, 0.06, 0.08)
 MARKER_FRAME = "robot_map"
 ROBOT_NS = "/robot"
 
-# For UR5, use:
-MOVE_GROUP_NAME = "ur5_arm"
-EE_LINK = "robot_egh_gripper_grasp_link"
+# For Franka, use:
+MOVE_GROUP_NAME = "arm"
+EE_LINK = 'robot_hand_tcp'
 
 # Planning parameters
-PLANNER_ID = "RRTConnect"
+PLANNER_ID = "OMPL"
 PLANNING_TIME = 10.0
 PLANNING_ATTEMPTS = 10
 POSITION_TOLERANCE = 0.01
@@ -164,6 +164,15 @@ def move_arm_to_target():
 
 def main():
     rospy.init_node("moveit_target_reach")
+    
+    arm_type = rospy.get_param("~arm", "Franka")
+    if arm_type.lower() == "ur5":
+        global MOVE_GROUP_NAME, EE_LINK
+        MOVE_GROUP_NAME = "ur5_arm"
+        EE_LINK = "robot_egh_gripper_grasp_link"
+        rospy.loginfo("Configured for UR5 arm")
+    else:
+        rospy.loginfo("Configured for Franka arm")
     
     # Create publishers
     object_marker_pub = rospy.Publisher("/detected_object_marker", Marker, queue_size=1)

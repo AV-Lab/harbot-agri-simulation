@@ -1,19 +1,21 @@
 <launch>
   <!-- By default we do not overwrite the URDF. Change the following to true to change the default behavior -->
   <arg name="load_robot_description" default="false"/>
+  <arg name="prefix" default="robot_"/>
+  <arg name="arm_id" default="$(eval arg('prefix')[:-1] if arg('prefix').endswith('_') else arg('prefix'))"/>
 
   <!-- The name of the parameter under which the URDF is loaded -->
   <arg name="robot_description" default="robot_description"/>
 
   <!-- Load universal robot description format (URDF) -->
-  <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro prefix:=robot_ '$(find rbkairos_description)/robots/rbkairos_franka.urdf.xacro'"/>
+  <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro --inorder prefix:=$(arg prefix) arm_id:=$(arg arm_id) '$(find rbkairos_description)/robots/rbkairos_franka.urdf.xacro'"/>
 
   <!-- The semantic description that corresponds to the URDF -->
-  <param name="$(arg robot_description)_semantic" textfile="$(find rbkairos_franka_moveit_config)/config/rbkairos.srdf" />
+  <param name="$(arg robot_description)_semantic" command="$(find xacro)/xacro --inorder '$(find rbkairos_franka_moveit_config)/config/rbkairos.srdf' prefix:=$(arg prefix) arm_id:=$(arg arm_id)" />
 
   <!-- Load updated joint limits (override information from URDF) -->
   <group ns="$(arg robot_description)_planning">
-    <rosparam command="load" file="$(find rbkairos_franka_moveit_config)/config/joint_limits.yaml"/>
+    <rosparam command="load" file="$(find rbkairos_franka_moveit_config)/config/joint_limits.yaml" subst_value="true"/>
     <rosparam command="load" file="$(find rbkairos_franka_moveit_config)/config/cartesian_limits.yaml"/>
   </group>
 

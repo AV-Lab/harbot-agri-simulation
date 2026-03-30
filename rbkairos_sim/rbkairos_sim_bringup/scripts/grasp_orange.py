@@ -9,23 +9,24 @@ ROBOT_MODEL = "robot"
 ORANGE_MODEL = "orange2.5.R"
 ORANGE_LINK = "body"
 
-# Arm config
+# For Franka, use:
 ARM_JOINTS = [
-    "robot_arm_shoulder_pan_joint",
-    "robot_arm_shoulder_lift_joint",
-    "robot_arm_elbow_joint",
-    "robot_arm_wrist_1_joint",
-    "robot_arm_wrist_2_joint",
-    "robot_arm_wrist_3_joint",
+    "robot_joint1",
+    "robot_joint2",
+    "robot_joint3",
+    "robot_joint4",
+    "robot_joint5",
+    "robot_joint6",
+    "robot_joint7",
 ]
-ARM_CMD_TOPIC = "/robot/arm/pos_traj_controller/command"
-ARM_INITIAL_POS = [-0.785, -0.785, -2.000, 0.000, 0.000, 0.000]
-
-# Gripper config
-GRIPPER_LINK = "robot_arm_wrist_3_link"
-GRIPPER_JOINT = "robot_egh_gripper_finger_left_joint"
-GRIPPER_CMD_TOPIC = "/robot/gripper/pos_traj_controller/command"
+ARM_INITIAL_POS = [1.571, -0.785, 0.000, -2.100, 0.000, 1.571, 0.785]
+GRIPPER_LINK = "robot_link7"
+GRIPPER_JOINT = "robot_finger_joint1"
 GRIPPER_CLOSE_POS = 0.035
+
+# Arm and gripper command topics
+ARM_CMD_TOPIC = "/robot/arm/pos_traj_controller/command"
+GRIPPER_CMD_TOPIC = "/robot/gripper/pos_traj_controller/command"
 
 
 def close_gripper(pub):
@@ -56,6 +57,25 @@ def move_arm_to_initial_position(pub):
 
 def main():
     rospy.init_node("attach_object_to_gripper")
+    
+    arm_type = rospy.get_param("~arm", "Franka")
+    if arm_type.lower() == "ur5":
+        global ARM_JOINTS, ARM_INITIAL_POS, GRIPPER_LINK, GRIPPER_JOINT, GRIPPER_CLOSE_POS
+        ARM_JOINTS = [
+            "robot_arm_shoulder_pan_joint",
+            "robot_arm_shoulder_lift_joint",
+            "robot_arm_elbow_joint",
+            "robot_arm_wrist_1_joint",
+            "robot_arm_wrist_2_joint",
+            "robot_arm_wrist_3_joint",
+        ]
+        ARM_INITIAL_POS = [-0.785, -0.785, -2.000, 0.000, 0.000, 0.000]
+        GRIPPER_LINK = "robot_arm_wrist_3_link"
+        GRIPPER_JOINT = "robot_egh_gripper_finger_left_joint"
+        GRIPPER_CLOSE_POS = 0.035
+        rospy.loginfo("Configured for UR5 arm")
+    else:
+        rospy.loginfo("Configured for Franka arm")
 
     # Wait for attach service
     rospy.wait_for_service("/link_attacher_node/attach")

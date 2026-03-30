@@ -1,0 +1,33 @@
+# Settings for ros_control control loop
+hardware_control_loop:
+   loop_hz: &loop_hz 500
+
+# Publish all joint states ----------------------------------
+joint_state_controller:
+   type: joint_state_controller/JointStateController
+   publish_rate: *loop_hz
+
+# Joint Trajectory Controller - position based -------------------------------
+pos_traj_controller:
+   type: position_controllers/JointTrajectoryController
+   joints:
+     - $(arg arm_id)_joint1
+     - $(arg arm_id)_joint2
+     - $(arg arm_id)_joint3
+     - $(arg arm_id)_joint4
+     - $(arg arm_id)_joint5
+     - $(arg arm_id)_joint6
+     - $(arg arm_id)_joint7
+   constraints:
+      goal_time: 0.6
+      stopped_velocity_tolerance: 0.05
+      $(arg arm_id)_joint1: {trajectory: 0.2, goal: 0.1}
+      $(arg arm_id)_joint2: {trajectory: 0.2, goal: 0.1}
+      $(arg arm_id)_joint3: {trajectory: 0.2, goal: 0.1}
+      $(arg arm_id)_joint4: {trajectory: 0.2, goal: 0.1}
+      $(arg arm_id)_joint5: {trajectory: 0.2, goal: 0.1}
+      $(arg arm_id)_joint6: {trajectory: 0.2, goal: 0.1}
+      $(arg arm_id)_joint7: {trajectory: 0.2, goal: 0.1}
+   stop_trajectory_duration: 0.5
+   state_publish_rate: *loop_hz
+   action_monitor_rate: 10

@@ -1,45 +1,45 @@
 arm_controller:
   type: effort_controllers/JointTrajectoryController
   joints:
-    - fr3_joint1
-    - fr3_joint2
-    - fr3_joint3
-    - fr3_joint4
-    - fr3_joint5
-    - fr3_joint6
-    - fr3_joint7
+    - $(arg arm_id)_joint1
+    - $(arg arm_id)_joint2
+    - $(arg arm_id)_joint3
+    - $(arg arm_id)_joint4
+    - $(arg arm_id)_joint5
+    - $(arg arm_id)_joint6
+    - $(arg arm_id)_joint7
   gains:
-    fr3_joint1:
+    $(arg arm_id)_joint1:
       p: 100
       d: 1
       i: 1
       i_clamp: 1
-    fr3_joint2:
+    $(arg arm_id)_joint2:
       p: 100
       d: 1
       i: 1
       i_clamp: 1
-    fr3_joint3:
+    $(arg arm_id)_joint3:
       p: 100
       d: 1
       i: 1
       i_clamp: 1
-    fr3_joint4:
+    $(arg arm_id)_joint4:
       p: 100
       d: 1
       i: 1
       i_clamp: 1
-    fr3_joint5:
+    $(arg arm_id)_joint5:
       p: 100
       d: 1
       i: 1
       i_clamp: 1
-    fr3_joint6:
+    $(arg arm_id)_joint6:
       p: 100
       d: 1
       i: 1
       i_clamp: 1
-    fr3_joint7:
+    $(arg arm_id)_joint7:
       p: 100
       d: 1
       i: 1
