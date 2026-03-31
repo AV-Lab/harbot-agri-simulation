@@ -11,9 +11,9 @@ from visualization_msgs.msg import Marker
 
 # Object properties
 OBJECT_DIAMETER = 0.07
-OFFSET_X = -0.0005
-OFFSET_Y = 0.00116
-OFFSET_Z = -0.09296
+OFFSET_X = -0.0005 * 0
+OFFSET_Y = 3.6111
+OFFSET_Z = -0.09296 * 0
 
 # Object position in world frame 
 OBJECT_X = -1.00881 + OFFSET_X
@@ -32,7 +32,7 @@ BOX_Z = 1.51907 + OFFSET_Z
 BOX_SIZE = (0.06, 0.06, 0.08)
 
 # ROS configuration
-MARKER_FRAME = "robot_map"
+MARKER_FRAME = "world" 
 ROBOT_NS = "/robot"
 
 # For Franka, use:
