@@ -18,6 +18,9 @@
     <arg name="use_gpu" default="false"/>
     <arg name="launch_gt_odom_tf" default="true"/>
 
+    <arg name="gt_odom_world_frame" default="world"/>
+    <arg name="gt_odom_rate" default="30.0"/>
+
     <!-- arguments robot a -->
     <arg name="id_robot_a" default="robot"/>
     <arg name="launch_robot_a" default="true"/>
@@ -31,44 +34,50 @@
     <arg name="amcl_and_mapserver_a" default="false"/>
     <arg name="launch_pad_a" default="true"/>
     <!-- spawn position robot a -->
-    <arg name="x_init_pose_robot_a" default="-0.5" />
-    <arg name="y_init_pose_robot_a" default="5.0" />
+    <arg name="x_init_pose_robot_a" default="7.5" />
+    <arg name="y_init_pose_robot_a" default="14.0" />
     <arg name="z_init_pose_robot_a" default="0.1" />
     <arg name="yaw_init_pose_robot_a" default="-1.5708" />
     <!-- arm robot a -->
     <arg name="launch_arm_a" default="true"/>
     <arg name="arm_model_a" default="$(arg default_arm_model)"/>
-    <arg name="moveit_movegroup_a" default="true"/>
+    <arg name="moveit_movegroup_a" default="false"/>
     <!-- gripper robot a -->
     <arg name="launch_gripper_a" default="true"/>
     <arg name="launch_camera_a" default="false"/>
     <arg name="gripper_model_a" default="$(arg default_gripper_model)"/>
+    <arg name="gt_odom_topic_a" default="/$(arg id_robot_a)/robotnik_base_control/odom_gt"/>
+    <arg name="gt_odom_frame_a" default="$(arg id_robot_a)_odom"/>
+    <arg name="gt_base_frame_a" default="$(arg id_robot_a)_base_footprint"/>
 
     <!-- arguments robot b -->
     <arg name="id_robot_b" default="robot_b"/>
-    <arg name="launch_robot_b" default="false"/>
+    <arg name="launch_robot_b" default="true"/>
     <arg name="xacro_robot_b" default="$(arg default_xacro)"/>
     <arg name="map_package_b" default="$(find summit_xl_localization)"/>
     <arg name="map_folder_b" default="maps"/>
     <arg name="map_file_b" default="$(arg default_map)"/>
     <arg name="localization_robot_b" default="false"/>
     <arg name="gmapping_robot_b" default="false"/>
-    <arg name="move_base_robot_b" default="true"/>
-    <arg name="amcl_and_mapserver_b" default="true"/>
+    <arg name="move_base_robot_b" default="false"/>
+    <arg name="amcl_and_mapserver_b" default="false"/>
     <arg name="launch_pad_b" default="true"/>
     <!-- spawn position robot b -->
-    <arg name="x_init_pose_robot_b" default="4" />
-    <arg name="y_init_pose_robot_b" default="0" />
-    <arg name="z_init_pose_robot_b" default="0.5" />
-    <arg name="yaw_init_pose_robot_b" default="-1.5708" />
+    <arg name="x_init_pose_robot_b" default="-7.5" />
+    <arg name="y_init_pose_robot_b" default="-14.0" />
+    <arg name="z_init_pose_robot_b" default="0.1" />
+    <arg name="yaw_init_pose_robot_b" default="1.5708" />
     <!-- arm robot b -->
     <arg name="launch_arm_b" default="true"/>
     <arg name="arm_model_b" default="$(arg default_arm_model)"/>
-    <arg name="moveit_movegroup_b" default="true"/>
+    <arg name="moveit_movegroup_b" default="false"/>
     <!-- gripper robot b -->
     <arg name="launch_gripper_b" default="true"/>
     <arg name="launch_camera_b" default="false"/>
     <arg name="gripper_model_b" default="$(arg default_gripper_model)"/>
+    <arg name="gt_odom_topic_b" default="/$(arg id_robot_b)/robotnik_base_control/odom_gt"/>
+    <arg name="gt_odom_frame_b" default="$(arg id_robot_b)_odom"/>
+    <arg name="gt_base_frame_b" default="$(arg id_robot_b)_base_footprint"/>
 
     <!-- arguments robot c -->
     <arg name="id_robot_c" default="robot_c"/>
@@ -79,8 +88,8 @@
     <arg name="map_file_c" default="$(arg default_map)"/>
     <arg name="localization_robot_c" default="false"/>
     <arg name="gmapping_robot_c" default="false"/>
-    <arg name="move_base_robot_c" default="true"/>
-    <arg name="amcl_and_mapserver_c" default="true"/>
+    <arg name="move_base_robot_c" default="false"/>
+    <arg name="amcl_and_mapserver_c" default="false"/>
     <arg name="launch_pad_c" default="true"/>
     <!-- spawn position robot c -->
     <arg name="x_init_pose_robot_c" default="0" />
@@ -95,6 +104,9 @@
     <arg name="launch_gripper_c" default="true"/>
     <arg name="launch_camera_c" default="false"/>
     <arg name="gripper_model_c" default="$(arg default_gripper_model)"/>
+    <arg name="gt_odom_topic_c" default="/$(arg id_robot_c)/robotnik_base_control/odom_gt"/>
+    <arg name="gt_odom_frame_c" default="$(arg id_robot_c)_odom"/>
+    <arg name="gt_base_frame_c" default="$(arg id_robot_c)_base_footprint"/>
 
 
     <!-- RBKAIROS GAZEBO -->
@@ -190,7 +202,31 @@
 
     </include>
 
-    <node if="$(arg launch_gt_odom_tf)" pkg="rbkairos_sim_bringup" type="gt_odom_tf.py" name="gt_odom_tf" output="screen" />
+    <group if="$(arg launch_gt_odom_tf)">
+        <node if="$(arg launch_robot_a)" pkg="rbkairos_sim_bringup" type="gt_odom_tf.py" name="gt_odom_tf_$(arg id_robot_a)" output="screen">
+            <param name="gt_odom_topic" value="$(arg gt_odom_topic_a)"/>
+            <param name="world_frame" value="$(arg gt_odom_world_frame)"/>
+            <param name="odom_frame" value="$(arg gt_odom_frame_a)"/>
+            <param name="base_frame" value="$(arg gt_base_frame_a)"/>
+            <param name="rate" value="$(arg gt_odom_rate)"/>
+        </node>
+
+        <node if="$(arg launch_robot_b)" pkg="rbkairos_sim_bringup" type="gt_odom_tf.py" name="gt_odom_tf_$(arg id_robot_b)" output="screen">
+            <param name="gt_odom_topic" value="$(arg gt_odom_topic_b)"/>
+            <param name="world_frame" value="$(arg gt_odom_world_frame)"/>
+            <param name="odom_frame" value="$(arg gt_odom_frame_b)"/>
+            <param name="base_frame" value="$(arg gt_base_frame_b)"/>
+            <param name="rate" value="$(arg gt_odom_rate)"/>
+        </node>
+
+        <node if="$(arg launch_robot_c)" pkg="rbkairos_sim_bringup" type="gt_odom_tf.py" name="gt_odom_tf_$(arg id_robot_c)" output="screen">
+            <param name="gt_odom_topic" value="$(arg gt_odom_topic_c)"/>
+            <param name="world_frame" value="$(arg gt_odom_world_frame)"/>
+            <param name="odom_frame" value="$(arg gt_odom_frame_c)"/>
+            <param name="base_frame" value="$(arg gt_base_frame_c)"/>
+            <param name="rate" value="$(arg gt_odom_rate)"/>
+        </node>
+    </group>
 
 
 </launch>
