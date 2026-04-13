@@ -24,7 +24,7 @@
   <xacro:property name="PI" value="3.1415926535897931"/>
 
   <!-- Franka mounting pose on RBKAIROS base -->
-  <xacro:property name="arm_position_x" value="-0.2731"/>
+  <xacro:property name="arm_position_x" value="0.1883"/>
   <xacro:property name="arm_position_y" value="0"/>
   <xacro:property name="arm_position_z" value="0.38212"/>
   <xacro:property name="arm_orientation_r" value="0"/>

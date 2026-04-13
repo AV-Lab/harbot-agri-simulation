@@ -116,6 +116,7 @@
         <arg name="launch_base_hw_sim" value="$(arg launch_base_hw_sim)"/>
         <arg name="launch_battery_estimator" value="$(arg launch_battery_estimator)"/>
         <arg name="use_gpu" value="$(arg use_gpu)"/>
+        <arg name="launch_rviz" value="$(arg launch_rviz)"/>
     </include>
 
     <!--BEGIN ROBOT 2-->
@@ -145,6 +146,7 @@
         <arg name="launch_base_hw_sim" value="$(arg launch_base_hw_sim)"/>
         <arg name="launch_battery_estimator" value="$(arg launch_battery_estimator)"/>
         <arg name="use_gpu" value="$(arg use_gpu)"/>
+        <arg name="launch_rviz" value="$(arg launch_rviz)"/>
     </include>
 
     <!--BEGIN ROBOT 3-->
@@ -174,6 +176,7 @@
         <arg name="launch_base_hw_sim" value="$(arg launch_base_hw_sim)"/>
         <arg name="launch_battery_estimator" value="$(arg launch_battery_estimator)"/>
         <arg name="use_gpu" value="$(arg use_gpu)"/>
+        <arg name="launch_rviz" value="$(arg launch_rviz)"/>
     </include>
 
 
