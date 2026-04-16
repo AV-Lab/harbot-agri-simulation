@@ -1,0 +1,37 @@
+<launch>
+  <arg name="robot_ns" default="robot"/>
+  <arg name="odom_topic" default="robotnik_base_control/odom_gt"/>
+  <arg name="cmd_vel_topic" default="robotnik_base_control/cmd_vel"/>
+  <arg name="path_name" default="robot_a.json"/>
+  <arg name="path_topic" default="path_nav/path"/>
+  <arg name="desired_speed_topic" default="path_nav/desired_speed"/>
+  <arg name="status_topic" default="path_nav/status"/>
+  <arg name="proceed_flag_topic" default="path_nav/proceed_flag"/>
+
+  <group ns="$(arg robot_ns)">
+    <node pkg="rbkairos_path_nav" type="path_planner.py" name="path_planner" output="screen">
+      <param name="odom_topic" value="$(arg odom_topic)"/>
+      <param name="path_name" value="$(arg path_name)"/>
+      <param name="path_topic" value="$(arg path_topic)"/>
+      <param name="desired_speed_topic" value="$(arg desired_speed_topic)"/>
+      <param name="status_topic" value="$(arg status_topic)"/>
+      <param name="proceed_flag_topic" value="$(arg proceed_flag_topic)"/>
+    </node>
+
+    <node pkg="rbkairos_path_nav" type="path_gui.py" name="path_gui" output="screen">
+      <param name="odom_topic" value="$(arg odom_topic)"/>
+      <param name="path_name" value="$(arg path_name)"/>
+      <param name="global_path_topic" value="$(arg path_topic)"/>
+      <param name="desired_velocity_topic" value="$(arg desired_speed_topic)"/>
+      <param name="state_flag_topic" value="$(arg status_topic)"/>
+      <param name="proceed_flag_topic" value="$(arg proceed_flag_topic)"/>
+    </node>
+
+    <node pkg="rbkairos_path_nav" type="path_controller.py" name="path_controller" output="screen">
+      <param name="odom_topic" value="$(arg odom_topic)"/>
+      <param name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
+      <param name="path_topic" value="$(arg path_topic)"/>
+      <param name="desired_speed_topic" value="$(arg desired_speed_topic)"/>
+    </node>
+  </group>
+</launch>
