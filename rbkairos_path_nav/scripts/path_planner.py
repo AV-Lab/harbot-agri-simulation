@@ -132,12 +132,13 @@ class PathPlanner(object):
             )
             if next_goal_distance < current_goal_distance:
                 self.path.popleft()
-                
-            if self.path[0][5] == 1.0 and self.path[1][5] != 1.0:
-                self.proceed_flag = False
-                self.paused_at_stop = True
-                self.proceed_pub.publish(Bool(data=self.proceed_flag))
-                self.path.popleft()
+            
+            if len(self.path) > 1:        
+                if self.path[0][5] == 1.0 and self.path[1][5] != 1.0 :
+                    self.proceed_flag = False
+                    self.paused_at_stop = True
+                    self.proceed_pub.publish(Bool(data=self.proceed_flag))
+                    self.path.popleft()
                 
         elif len(self.path) == 1:
             current_goal_distance = math.hypot(
