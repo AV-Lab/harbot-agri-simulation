@@ -5,6 +5,7 @@
 
     <plugin name="gazebo_ros_api_plugin" filename="libgazebo_ros_api_plugin.so"/>
     <plugin name="link_attacher_plugin" filename="libgazebo_ros_link_attacher.so"></plugin>
+
     <physics type="ode">
       <gravity>0 0 -9.8</gravity>
       <ode>
@@ -23,12 +24,16 @@
       <max_step_size>0.001</max_step_size>
     </physics>
 
+    <gui fullscreen='0'>
+      <camera name='user_camera'>
+        <pose>4.1601 -21.7252 57.6904 0.0 1.18365 1.58017</pose>
+        <view_controller>orbit</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
+
     <include>
       <uri>model://sun</uri>
-    </include>
-    <!-- A ground plane -->
-    <include>
-      <uri>model://ground_plane</uri>
     </include>
 
     <light name="light_nw" type="point">
@@ -49,6 +54,72 @@
       <uri>model://greenhouse</uri>
       <name>greenhouse</name>
       <pose>0 0 0 0 0 0</pose>
+    </include>
+    
+    <include>
+      <uri>model://small_tree</uri>
+      <name>tree01_small</name>
+      <pose>-24.0 15.0 0 0 0 0.35</pose>
+    </include>
+
+    <include>
+      <uri>model://large_tree</uri>
+      <name>tree02_large</name>
+      <pose>-23.0 -12.0 0 0 0 1.10</pose>
+    </include>
+
+    <include>
+      <uri>model://large_tree</uri>
+      <name>tree03_large</name>
+      <pose>-17.0 22.0 0 0 0 -0.60</pose>
+    </include>
+
+    <include>
+      <uri>model://small_tree</uri>
+      <name>tree04_small</name>
+      <pose>17.0 22.0 0 0 0 2.20</pose>
+    </include>
+
+    <include>
+      <uri>model://large_tree</uri>
+      <name>tree05_large</name>
+      <pose>25.0 10.0 0 0 0 0.90</pose>
+    </include>
+
+    <include>
+      <uri>model://small_tree</uri>
+      <name>tree06_small</name>
+      <pose>23.0 -13.0 0 0 0 -1.35</pose>
+    </include>
+
+    <include>
+      <uri>model://large_tree</uri>
+      <name>tree07_large</name>
+      <pose>19.0 -22.0 0 0 0 1.75</pose>
+    </include>
+
+    <include>
+      <uri>model://small_tree</uri>
+      <name>tree08_small</name>
+      <pose>-16.0 -22.0 0 0 0 -0.25</pose>
+    </include>
+
+    <include>
+      <uri>model://small_tree</uri>
+      <name>tree09_small</name>
+      <pose>-20.0 4.0 0 0 0 0.70</pose>
+    </include>
+
+    <include>
+      <uri>model://large_tree</uri>
+      <name>tree10_large</name>
+      <pose>20.0 0.0 0 0 0 -0.85</pose>
+    </include>
+
+    <include>
+      <uri>model://large_tree</uri>
+      <name>tree11_large</name>
+      <pose>3.0 22.0 0 0 0 -0.85</pose>
     </include>
 
     <!-- oranges row 1 left -->
