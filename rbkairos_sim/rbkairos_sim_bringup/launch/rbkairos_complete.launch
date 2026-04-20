@@ -33,15 +33,16 @@
     <arg name="move_base_robot_a" default="false"/>
     <arg name="amcl_and_mapserver_a" default="false"/>
     <arg name="launch_pad_a" default="true"/>
+    <arg name="waypoint_robot_a" default=""/>
     <!-- spawn position robot a -->
-    <arg name="x_init_pose_robot_a" default="7.5" />
-    <arg name="y_init_pose_robot_a" default="14.0" />
+    <arg name="x_init_pose_robot_a" default="$(eval {'w1': -7.5, 'w2': -7.5, 'w3': -7.5, 'w4': -7.5, 'w5': -7.5, 'w6': -7.5, 'w7': -7.5, 'w8': -7.5, 'w9': -4.0, 'w10': -4.0, 'w11': -4.0, 'w12': -4.0, 'w13': -4.0, 'w14': -4.0, 'w15': -4.0, 'w16': -4.0, 'w17': 0.0, 'w18': 0.0, 'w19': 0.0, 'w20': 0.0}.get(arg('waypoint_robot_a').lower(), -7.5))" />
+    <arg name="y_init_pose_robot_a" default="$(eval {'w1': -12.0, 'w2': -8.559429, 'w3': -5.118858, 'w4': -1.678287, 'w5': 1.762284, 'w6': 5.202855, 'w7': 8.643426, 'w8': 12.083997, 'w9': 12.083997, 'w10': 8.643426, 'w11': 5.202855, 'w12': 1.762284, 'w13': -1.678287, 'w14': -5.118858, 'w15': -8.559429, 'w16': -12.0, 'w17': -12.0, 'w18': -8.559429, 'w19': -5.118858, 'w20': -1.678287}.get(arg('waypoint_robot_a').lower(), -12.0))" />
     <arg name="z_init_pose_robot_a" default="0.1" />
-    <arg name="yaw_init_pose_robot_a" default="-1.5708" />
+    <arg name="yaw_init_pose_robot_a"  default="$(eval {'w1': 1.5708, 'w2': 1.5708, 'w3': 1.5708, 'w4': 1.5708, 'w5': 1.5708, 'w6': 1.5708, 'w7': 1.5708, 'w8': 1.5708, 'w9': -1.5708, 'w10': -1.5708, 'w11': -1.5708, 'w12': -1.5708, 'w13': -1.5708, 'w14': -1.5708, 'w15': -1.5708, 'w16': -1.5708, 'w17': 1.5708, 'w18': 1.5708, 'w19': 1.5708, 'w20': 1.5708}.get(arg('waypoint_robot_a').lower(), 1.5708))" />
     <!-- arm robot a -->
     <arg name="launch_arm_a" default="true"/>
     <arg name="arm_model_a" default="$(arg default_arm_model)"/>
-    <arg name="moveit_movegroup_a" default="false"/>
+    <arg name="moveit_movegroup_a" default="true"/>
     <!-- gripper robot a -->
     <arg name="launch_gripper_a" default="true"/>
     <arg name="launch_camera_a" default="false"/>
@@ -62,15 +63,16 @@
     <arg name="move_base_robot_b" default="false"/>
     <arg name="amcl_and_mapserver_b" default="false"/>
     <arg name="launch_pad_b" default="true"/>
+    <arg name="waypoint_robot_b" default=""/>
     <!-- spawn position robot b -->
-    <arg name="x_init_pose_robot_b" default="-7.5" />
-    <arg name="y_init_pose_robot_b" default="-14.0" />
+    <arg name="x_init_pose_robot_b" default="$(eval {'w40': 7.5, 'w39': 7.5, 'w38': 7.5, 'w37': 7.5, 'w36': 7.5, 'w35': 7.5, 'w34': 7.5, 'w33': 7.5, 'w32': 4.0, 'w31': 4.0, 'w30': 4.0, 'w29': 4.0, 'w28': 4.0, 'w27': 4.0, 'w26': 4.0, 'w25': 4.0, 'w24': 0.0, 'w23': 0.0, 'w22': 0.0, 'w21': 0.0}.get(arg('waypoint_robot_b').lower(), 7.5))" />
+    <arg name="y_init_pose_robot_b" default="$(eval {'w40': 12.083997, 'w39': 8.643426, 'w38': 5.202855, 'w37': 1.762284, 'w36': -1.678287, 'w35': -5.118858, 'w34': -8.559429, 'w33': -12.0, 'w32': -12.0, 'w31': -8.559429, 'w30': -5.118858, 'w29': -1.678287, 'w28': 1.762284, 'w27': 5.202855, 'w26': 8.643426, 'w25': 12.083997, 'w24': 12.083997, 'w23': 8.643426, 'w22': 5.202855, 'w21': 1.762284}.get(arg('waypoint_robot_b').lower(), 12.083997))" />
     <arg name="z_init_pose_robot_b" default="0.1" />
-    <arg name="yaw_init_pose_robot_b" default="1.5708" />
+    <arg name="yaw_init_pose_robot_b" default="$(eval {'w40': -1.5708, 'w39': -1.5708, 'w38': -1.5708, 'w37': -1.5708, 'w36': -1.5708, 'w35': -1.5708, 'w34': -1.5708, 'w33': -1.5708, 'w32': 1.5708, 'w31': 1.5708, 'w30': 1.5708, 'w29': 1.5708, 'w28': 1.5708, 'w27': 1.5708, 'w26': 1.5708, 'w25': 1.5708, 'w24': -1.5708, 'w23': -1.5708, 'w22': -1.5708, 'w21': -1.5708}.get(arg('waypoint_robot_b').lower(), -1.5708))" />
     <!-- arm robot b -->
     <arg name="launch_arm_b" default="true"/>
     <arg name="arm_model_b" default="$(arg default_arm_model)"/>
-    <arg name="moveit_movegroup_b" default="false"/>
+    <arg name="moveit_movegroup_b" default="true"/>
     <!-- gripper robot b -->
     <arg name="launch_gripper_b" default="true"/>
     <arg name="launch_camera_b" default="false"/>
