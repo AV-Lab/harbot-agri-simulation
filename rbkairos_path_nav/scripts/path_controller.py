@@ -2,7 +2,7 @@
 
 import math
 import rospy
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Bool
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry, Path
 from tf.transformations import euler_from_quaternion
@@ -14,6 +14,7 @@ class PathController(object):
         self.odom_topic = rospy.get_param('~odom_topic', 'robotnik_base_control/odom')
         self.path_topic = rospy.get_param('~path_topic', 'path_nav/path')
         self.desired_speed_topic = rospy.get_param('~desired_speed_topic', 'path_nav/desired_speed')
+        self.reverse_mode_topic = rospy.get_param('~reverse_mode_topic', 'path_nav/reverse_mode')
         self.lookahead_point_index = int(rospy.get_param('~lookahead_point_index', 4))
         self.linear_gain = float(rospy.get_param('~linear_gain', 10.0))
         self.heading_gain = float(rospy.get_param('~heading_gain', 10.0))
@@ -23,15 +24,20 @@ class PathController(object):
         self.desired_speed = 0.0
         self.vehicle_position = None
         self.path_points = []
+        self.reverse_mode = False
 
         self.cmd_pub = rospy.Publisher(self.cmd_vel_topic, Twist, queue_size=1)
         
         rospy.Subscriber(self.odom_topic, Odometry, self.odom_callback, queue_size=10)
         rospy.Subscriber(self.path_topic, Path, self.path_callback, queue_size=1)
         rospy.Subscriber(self.desired_speed_topic, Float64, self.speed_callback, queue_size=1)
+        rospy.Subscriber(self.reverse_mode_topic, Bool, self.reverse_mode_callback, queue_size=1)
 
         self.timer = rospy.Timer(rospy.Duration(0.05), self.publish_cmd)
  
+    def reverse_mode_callback(self, msg):
+        self.reverse_mode = msg.data
+    
     def normalize_angle(self, angle):
         while angle > math.pi:
             angle -= 2.0 * math.pi
@@ -73,21 +79,26 @@ class PathController(object):
         # Compute the target position error in the global frame.
         dx = lookahead_point[0] - self.vehicle_position[0]
         dy = lookahead_point[1] - self.vehicle_position[1]
-        yaw = self.vehicle_position[2]
         
+        if self.reverse_mode:
+            yaw = self.vehicle_position[2] + math.pi
+        else:
+            yaw = self.vehicle_position[2]
+
+                
         # Transform the global position error into the robot's local frame.
         local_x = math.cos(yaw) * dx + math.sin(yaw) * dy      
         local_y = -math.sin(yaw) * dx + math.cos(yaw) * dy
         
         # Proportional velocity command: larger local position error -> larger commanded speed.
-        vx = self.linear_gain * local_x
-        vy = self.linear_gain * local_y
+        vx = self.linear_gain * local_x if not self.reverse_mode else -self.linear_gain * local_x
+        vy = self.linear_gain * local_y if not self.reverse_mode else -self.linear_gain * local_y
         
         # Compute the magnitude of the linear velocity vector.
         speed_norm = math.hypot(vx, vy)
         
         # Scale vx and vy so the total linear speed stays within the limit.
-        speed_limit = self.desired_speed
+        speed_limit = abs(self.desired_speed)
         if speed_norm > 1e-6 and speed_norm > speed_limit:
             scale = speed_limit / speed_norm
             vx *= scale
@@ -118,7 +129,6 @@ def main():
         rospy.spin()
     except KeyboardInterrupt:
         pass
-
 
 if __name__ == '__main__':
     main()

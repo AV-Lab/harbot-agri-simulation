@@ -23,6 +23,7 @@ class PathPlanner(object):
         self.odom_topic = rospy.get_param('~odom_topic', 'robotnik_base_control/odom_gt')
         self.proceed_flag_topic = rospy.get_param('~proceed_flag_topic', 'path_nav/proceed_flag')
         self.desired_speed_topic = rospy.get_param('~desired_speed_topic', 'path_nav/desired_speed')
+        self.reverse_mode_topic = rospy.get_param('~reverse_mode_topic', 'path_nav/reverse_mode')
         
         self.path = deque()
         self.status = 'IDLE'
@@ -32,11 +33,13 @@ class PathPlanner(object):
         self.goal_tolerance = 0.5
         self.vehicle_position = []
         self.current_path_file = ''
+        self.reverse_mode = False
 
         self.path_pub = rospy.Publisher(self.path_topic, Path, queue_size=1)
         self.speed_pub = rospy.Publisher(self.desired_speed_topic, Float64, queue_size=1)
         self.status_pub = rospy.Publisher(self.status_topic, String, queue_size=1, latch=True)
         self.proceed_pub = rospy.Publisher(self.proceed_flag_topic, Bool, queue_size=1, latch=True)
+        self.reverse_mode_pub = rospy.Publisher(self.reverse_mode_topic, Bool, queue_size=1, latch=True)
 
         rospy.Subscriber(self.odom_topic, Odometry, self.odom_callback, queue_size=10)
         rospy.Subscriber(self.proceed_flag_topic, Bool, self.proceed_callback, queue_size=1)
@@ -48,6 +51,9 @@ class PathPlanner(object):
 
         self.update_status()
 
+    def is_reverse_mode(self, speed):
+        return speed < 0
+        
     def set_status(self, status_text):
         if self.status == status_text:
             return
@@ -101,6 +107,9 @@ class PathPlanner(object):
             ])
 
         self.path = loaded_path
+        self.reverse_mode = self.is_reverse_mode(self.path[0][3])
+        rospy.loginfo('Reverse mode: %s', self.reverse_mode)
+        self.reverse_mode_pub.publish(Bool(data=self.reverse_mode))
         self.current_path_file = file_path
         self.proceed_flag = False
 
@@ -115,7 +124,7 @@ class PathPlanner(object):
         q = msg.pose.pose.orientation
         quaternion = [q.x, q.y, q.z, q.w]
         _, _, yaw = euler_from_quaternion(quaternion)
-        return yaw
+        return yaw if not self.reverse_mode else yaw + math.pi
 
     def update_path(self):
         if not self.vehicle_position or not self.path:
@@ -181,7 +190,14 @@ class PathPlanner(object):
         self.speed_pub.publish(Float64(data=self.get_desired_speed()))
 
 
-if __name__ == '__main__':
+def main():
     rospy.init_node('path_planner')
     PathPlanner()
-    rospy.spin()
+    
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        pass
+    
+if __name__ == '__main__':
+    main()

@@ -18,6 +18,7 @@ class PathGuiNode(object):
         self.desired_velocity_topic = rospy.get_param('~desired_velocity_topic', 'path_nav/desired_speed')
         self.state_flag_topic = rospy.get_param('~state_flag_topic', 'path_nav/status')
         self.proceed_flag_topic = rospy.get_param('~proceed_flag_topic', 'path_nav/proceed_flag')
+        self.reverse_mode_topic = rospy.get_param('~reverse_mode_topic', 'path_nav/reverse_mode')
         self.wheel_base = float(rospy.get_param('~wheel_base', 0.45))
         self.vehicle_width = float(rospy.get_param('~vehicle_width', 0.60))
         self.vehicle_length = float(rospy.get_param('~vehicle_length', 0.70))
@@ -30,16 +31,22 @@ class PathGuiNode(object):
         self.state = 'IDLE'
         self.proceed_flag = False
         self.scale = 200.0
+        self.reverse_mode = False
 
         rospy.Subscriber(self.odom_topic, Odometry, self.odom_callback, queue_size=10)
         rospy.Subscriber(self.global_path_topic, Path, self.path_callback, queue_size=1)
         rospy.Subscriber(self.desired_velocity_topic, Float64, self.velocity_callback, queue_size=1)
         rospy.Subscriber(self.state_flag_topic, String, self.state_callback, queue_size=1)
         rospy.Subscriber(self.proceed_flag_topic, Bool, self.proceed_callback, queue_size=1)
+        rospy.Subscriber(self.reverse_mode_topic, Bool, self.reverse_mode_callback, queue_size=1)
+          
         self.proceed_pub = rospy.Publisher(self.proceed_flag_topic, Bool, queue_size=1, latch=True)
 
         threading.Thread(target=self.start_gui, daemon=True).start()
 
+    def reverse_mode_callback(self, msg):
+        self.reverse_mode = msg.data
+    
     def odom_callback(self, msg):
         q = msg.pose.pose.orientation
         _, _, yaw = euler_from_quaternion([q.x, q.y, q.z, q.w])
@@ -157,15 +164,32 @@ class PathGuiNode(object):
         legend_frame = ttk.LabelFrame(control_frame, text='Legend', padding=10)
         legend_frame.pack(side=tk.LEFT, fill=tk.Y, padx=20)
 
-        vehicle_canvas = tk.Canvas(legend_frame, width=15, height=15)
+        legend_top_row = ttk.Frame(legend_frame)
+        legend_top_row.pack(anchor=tk.W)
+
+        vehicle_canvas = tk.Canvas(legend_top_row, width=15, height=15)
         vehicle_canvas.create_rectangle(0, 0, 15, 15, fill='blue')
         vehicle_canvas.pack(side=tk.LEFT, padx=5)
-        ttk.Label(legend_frame, text='Vehicle').pack(side=tk.LEFT)
+        ttk.Label(legend_top_row, text='Vehicle').pack(side=tk.LEFT)
 
-        path_canvas = tk.Canvas(legend_frame, width=15, height=15)
+        path_canvas = tk.Canvas(legend_top_row, width=15, height=15)
         path_canvas.create_rectangle(0, 0, 15, 15, fill='green')
         path_canvas.pack(side=tk.LEFT, padx=5)
-        ttk.Label(legend_frame, text='Path').pack(side=tk.LEFT)
+        ttk.Label(legend_top_row, text='Path').pack(side=tk.LEFT)
+
+        legend_bottom_row = ttk.Frame(legend_frame)
+        legend_bottom_row.pack(anchor=tk.W, pady=(6, 0))
+
+        forward_line = tk.Canvas(legend_bottom_row, width=22, height=15, highlightthickness=0)
+        forward_line.create_line(2, 8, 20, 8, fill='deepskyblue', width=3, arrow=tk.LAST)
+        forward_line.pack(side=tk.LEFT, padx=5)
+        ttk.Label(legend_bottom_row, text='Forward').pack(side=tk.LEFT, padx=(0, 12))
+
+        reverse_line = tk.Canvas(legend_bottom_row, width=22, height=15, highlightthickness=0)
+        reverse_line.create_line(20, 8, 2, 8, fill='orange', width=3, arrow=tk.LAST)
+        reverse_line.pack(side=tk.LEFT, padx=5)
+        ttk.Label(legend_bottom_row, text='Reverse').pack(side=tk.LEFT)
+
 
         canvas_frame = ttk.Frame(main_frame)
         canvas_frame.pack(fill=tk.BOTH, expand=True)
@@ -259,7 +283,7 @@ class PathGuiNode(object):
 
     def world_to_canvas(self, x_value, y_value):
         canvas_x = -x_value * self.scale
-        canvas_y = y_value * self.scale
+        canvas_y = -y_value * self.scale
         return canvas_x, canvas_y
 
     def draw_vehicle(self):
@@ -290,8 +314,13 @@ class PathGuiNode(object):
         front_y = y_value + min(length * 0.45, 0.35) * math.sin(yaw)
         canvas_x, canvas_y = self.world_to_canvas(x_value, y_value)
         canvas_front_x, canvas_front_y = self.world_to_canvas(front_x, front_y)
-        self.canvas.create_line(canvas_x, canvas_y, canvas_front_x, canvas_front_y,
-                                fill='yellow', width=1, arrow=tk.LAST, tags='vehicle')
+        if self.reverse_mode:
+            self.canvas.create_line(canvas_x, canvas_y, canvas_front_x, canvas_front_y,
+                                fill='orange', width=3, arrow=tk.FIRST, tags='vehicle')
+        else:
+            self.canvas.create_line(canvas_x, canvas_y, canvas_front_x, canvas_front_y,
+                                fill='deepskyblue', width=3, arrow=tk.LAST, tags='vehicle')
+
 
     def draw_path(self):
         if not self.path_points or not self.show_path_var.get():
@@ -399,7 +428,14 @@ class PathGuiNode(object):
         self.root.after(100, self.update_gui)
 
 
-if __name__ == '__main__':
-    rospy.init_node('path_gui', disable_signals=True)
+def main():
+    rospy.init_node('path_gui')
     PathGuiNode()
-    rospy.spin()
+
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        pass
+
+if __name__ == '__main__':
+    main()
