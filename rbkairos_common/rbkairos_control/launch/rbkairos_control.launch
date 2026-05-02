@@ -28,8 +28,11 @@
     <arg name="sim" value="$(arg sim)"/>
   </include>
 
-  <!-- Arm and gripper control for simulation -->
+  <!-- Container, arm and gripper control for simulation -->
   <group if="$(arg sim)">
+    
+    <rosparam file="$(find rbkairos_control)/config/container_bottom_controller.yaml" command="load" ns="container_bottom" subst_value="true"/>
+    <node name="controller_spawner_container_bottom" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="container_bottom/container_bottom_controller"/>
 
     <group if="$(arg sim_arm_control)">
 

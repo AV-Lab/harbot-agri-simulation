@@ -159,6 +159,7 @@ install(PROGRAMS
   scripts/moveit_target_reach.py
   scripts/grasp_orange.py
   scripts/gt_odom_tf.py
+  scripts/container_control.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

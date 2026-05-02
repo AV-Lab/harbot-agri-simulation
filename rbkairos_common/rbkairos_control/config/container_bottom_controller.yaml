@@ -1,0 +1,3 @@
+container_bottom_controller:
+  type: position_controllers/JointPositionController
+  joint: $(arg prefix)container_bottom_joint
