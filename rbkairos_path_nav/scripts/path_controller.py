@@ -80,15 +80,16 @@ class PathController(object):
         dx = lookahead_point[0] - self.vehicle_position[0]
         dy = lookahead_point[1] - self.vehicle_position[1]
         
+        vehicle_yaw = self.vehicle_position[2]
         if self.reverse_mode:
-            yaw = self.vehicle_position[2] + math.pi
+            yaw = vehicle_yaw + math.pi
         else:
-            yaw = self.vehicle_position[2]
+            yaw = vehicle_yaw
 
                 
-        # Transform the global position error into the robot's local frame.
-        local_x = math.cos(yaw) * dx + math.sin(yaw) * dy      
-        local_y = -math.sin(yaw) * dx + math.cos(yaw) * dy
+        # Project the world-frame error onto the robot's local axes using dot products.
+        local_x = math.cos(yaw) * dx + math.sin(yaw) * dy   # local_x = (dx, dy) · (cos(yaw), sin(yaw))
+        local_y = -math.sin(yaw) * dx + math.cos(yaw) * dy  # local_y = (dx, dy) · (-sin(yaw), cos(yaw))
         
         # Proportional velocity command: larger local position error -> larger commanded speed.
         vx = self.linear_gain * local_x if not self.reverse_mode else -self.linear_gain * local_x
@@ -105,10 +106,7 @@ class PathController(object):
             vy *= scale        
             
         # Compute the heading error between the target direction and current robot yaw.
-        if math.hypot(dx, dy) < 1e-6:
-            heading_target = yaw
-        else:
-            heading_target = math.atan2(dy, dx)
+        heading_target =  lookahead_point[2]
             
         heading_error = self.normalize_angle(heading_target - yaw)
         raw_vz = self.heading_gain * heading_error
