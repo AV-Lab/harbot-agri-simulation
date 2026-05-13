@@ -1,0 +1,110 @@
+Panels:
+  - Class: rviz/Displays
+    Help Height: 78
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+      Splitter Ratio: 0.5
+    Tree Height: 531
+  - Class: rviz/Time
+    Name: Time
+    SyncMode: 0
+    SyncSource: Robot B Third Person
+Preferences:
+  PromptSaveOnExit: true
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /robot/third_person_camera/image_raw
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Robot A Third Person
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /robot_b/third_person_camera/image_raw
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Robot B Third Person
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz/Image
+      Enabled: false
+      Image Topic: /overhead_camera/image_raw
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Overhead Angled
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: false
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Default Light: true
+    Fixed Frame: world
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+      Hide Inactive Objects: true
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+  Value: true
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 10
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Field of View: 0.7853981852531433
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.75
+      Target Frame: <Fixed Frame>
+      Yaw: 0.785398006439209
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 900
+  Hide Left Dock: false
+  Hide Right Dock: true
+  Overhead Angled:
+    collapsed: false
+  QMainWindow State: 000000ff00000000fd00000003000000000000000000000000fc0200000001fb000000100044006900730070006c0061007900730100000000ffffffff0000002c00ffffff000000010000000000000000fc0200000003fb0000001e004f007600650072006800650061006400200041006e0067006c006500640100000000ffffffff0000002c00fffffffb000000280052006f0062006f00740020004100200054006800690072006400200050006500720073006f006e0300000002000000020000078000000438fb000000280052006f0062006f00740020004200200054006800690072006400200050006500720073006f006e0300000780000000000000078000000438000000030000000000000000fc0100000001fb0000000800540069006d00650100000000ffffffff0000003e00ffffff000000000000000000000004000000040000000800000008fc00000000
+  Robot A Third Person:
+    collapsed: false
+  Robot B Third Person:
+    collapsed: false
+  Time:
+    collapsed: false
+  Width: 1600
+  X: 3184
+  Y: 200

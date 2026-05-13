@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <sdf version='1.7'>
-  <model name='orange_left_bottom'>
+  <model name='support_t'>
+    <static>true</static>
     <link name='body'>
-     <gravity>0</gravity>
+     <gravity>1</gravity>
       <inertial>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0 0 0 0</pose>
         <mass>1</mass>
         <inertia>
           <ixx>0.01</ixx>
@@ -15,24 +16,24 @@
           <izz>0.01</izz>
         </inertia>
       </inertial>
-      <!-- <collision name='body_collision'>
-        <pose>0 0 0 1.57079632679 -0 0</pose>
+      <collision name='body_collision'>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://orange_left_bottom/meshes/orange_left_bottom.obj</uri>
+            <uri>model://support_t/meshes/support_t.stl</uri>
           </mesh>
         </geometry>
-      </collision> -->
-      <visual name='body_visual'>
-        <pose>0 0 0 1.57079632679 -0 0</pose>
+      </collision>
+      <!-- <visual name='body_visual'>
+        <pose>0 0 0 0 0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://orange_left_bottom/meshes/orange_left_bottom.obj</uri>
+            <uri>model://support_t/meshes/support_t.stl</uri>
           </mesh>
         </geometry>
-      </visual>
+      </visual> -->
     </link>
   </model>
 </sdf>

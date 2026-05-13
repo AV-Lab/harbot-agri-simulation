@@ -1,4 +1,4 @@
-# Blender 5.1.0 MTL File: 'greenhouse.blend'
+# Blender 5.1.1 MTL File: 'greenhouse.blend'
 # www.blender.org
 
 newmtl orange-peel
@@ -9,4 +9,4 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
-map_Kd ../textures/orange_surface.jpg
+map_Kd ../textures/unripe_orange.png
