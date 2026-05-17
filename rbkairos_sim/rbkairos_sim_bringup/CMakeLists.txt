@@ -156,10 +156,13 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
+  scripts/approach_orange.py
   scripts/container_control.py
   scripts/grasp_orange.py
   scripts/gt_odom_tf.py
+  scripts/harvest_workflow.py
   scripts/moveit_target_reach.py
+  scripts/unload_orange.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
