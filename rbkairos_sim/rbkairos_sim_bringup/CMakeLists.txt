@@ -155,11 +155,11 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-install(PROGRAMS
-  scripts/moveit_target_reach.py
+catkin_install_python(PROGRAMS
+  scripts/container_control.py
   scripts/grasp_orange.py
   scripts/gt_odom_tf.py
-  scripts/container_control.py
+  scripts/moveit_target_reach.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
