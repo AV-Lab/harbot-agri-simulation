@@ -4,7 +4,9 @@ A ROS workspace for experiments with multiple robots in a greenhouse environment
 
 This repository provides a ROS Noetic and Gazebo Classic simulation setup based on the RBKairos mobile base integrated with a robotic manipulator, adapted for greenhouse-based research experiments.
 
-This project is under active development.
+![Demo preview](https://www.dropbox.com/scl/fi/tjso48cj7z6yin2h1p5di/agri_final_demo_preview.GIF?rlkey=8iv6r655tom4veze2i4s3xgh2&raw=1)
+
+Full demo video: [Download here](https://www.dropbox.com/scl/fi/9pud7ad7zqz1ohbytssr9/agri_final_demo.mp4?rlkey=azn2opi42kuegtdal0o9ienq9&raw=1)
 
 ---
 
@@ -13,7 +15,7 @@ This project is under active development.
 The simulation has been developed and tested with:
 
 - **Ubuntu 20.04**
-- [**ROS Noetic**]
+- **ROS Noetic**
 - **Gazebo Classic (Gazebo 11)**
 
 Recommended hardware (tested configuration):
@@ -37,6 +39,18 @@ This workspace includes the following upstream repositories as the base simulati
 - [universal_robot](https://github.com/fmauch/universal_robot)
 - [wsg50-ros-pkg](https://github.com/RobotnikAutomation/wsg50-ros-pkg)
 - [robotnik_msgs](https://github.com/RobotnikAutomation/robotnik_msgs)
+
+---
+
+## System Overview
+
+Below is a brief overview of the simulation setup:
+
+- **Planning:** Waypoint-to-waypoint navigation uses pre-recorded JSON paths through the greenhouse rows.
+- **Control:** A custom path controller follows the selected path through the mobile base velocity interface. The controller supports holonomic/omnidirectional motion for the RB-Kairos base.
+- **Localization:** Robot pose is currently taken from Gazebo ground-truth odometry.
+- **Perception:** Fruit perception is not implemented yet. The workflow uses configured fruit metadata instead of camera-based detection.
+- **Manipulation:** Fruit reaching is handled with MoveIt. The arm moves to configured fruit target positions and the fruit is attached to the gripper during the simulated grasp.
 
 ---
 
@@ -85,30 +99,48 @@ roslaunch rbkairos_sim_bringup rbkairos_complete.launch
 ```
 
 This starts Gazebo along with the required ROS controllers.
-By default, the full simulation stack is loaded (navigation, localization, and manipulation) using the **RB-Kairos + UR5 + EGH gripper** configuration with **differential drive**.
+The launch file supports spawning the robots at predefined greenhouse waypoints.
 
-To enable omni/holonomic drive:
+Waypoint ranges:
 
-```bash
-roslaunch rbkairos_sim_bringup rbkairos_complete.launch omni_drive:=true
-```
+- robot A uses `w1` to `w20`
+- robot B uses `w21` to `w40` (`w40` is the first corner point for robot B, similar to `w1` for robot A)
 
-To enable MoveIt:
-
-```bash
-roslaunch rbkairos_sim_bringup rbkairos_complete.launch moveit_movegroup_a:=true
-```
-
-For initial testing of orange picking with the UR5 or Franka arm, first run:
+Example launch with robot A at `w1` and robot B at `w40`:
 
 ```bash
-rosrun rbkairos_sim_bringup moveit_target_reach.py _arm:=Franka
+roslaunch rbkairos_sim_bringup rbkairos_complete.launch waypoint_robot_a:=w1 waypoint_robot_b:=w40
 ```
 
-This moves the arm to the target position of an orange. Then run to grape the orange:
+After the simulation is running, start the harvesting workflow:
 
 ```bash
-rosrun rbkairos_sim_bringup grasp_orange.py _arm:=Franka
+rosrun rbkairos_sim_bringup harvest_workflow.py
 ```
 
-> **Note:** This is an initial simulation test flow.
+The workflow asks for:
+
+- robot selection: `a` for `/robot`, `b` for `/robot_b`
+- whether to launch the path GUI
+- whether to run a full automatic test or use manual waypoint selection
+
+Manual mode detects the current waypoint, shows reachable waypoints or unloading stations, navigates using saved paths, and lists the oranges available at the reached waypoint. Selected fruits are harvested one by one.
+
+Automatic mode starts from the current waypoint, harvests all configured ripe fruits, skips configured unripe fruits, moves through the remaining waypoints in order, then navigates to the robot's unloading station and opens the container bottom.
+
+Robot waypoint order in automatic mode:
+
+- robot A: `w1` to `w20`
+- robot B: `w40` to `w21`
+
+The path GUI can be enabled from the workflow prompt. It is started once and kept open while individual path executions are restarted as needed.
+
+---
+
+## Known Limitations
+
+This repository currently models orange harvesting at a simulation-workflow level. Some physical details are simplified:
+
+- Each orange uses a support structure in the Gazebo world. This is a workaround because the current model does not yet simulate a stem that physically holds the orange and breaks when enough force is applied.
+- Fruit detection is not implemented yet. The workflow uses configured fruit metadata and waypoint-to-fruit mappings instead of detecting fruit from sensor data.
+- The harvesting workflow is currently optimized for the Franka arm. UR5 behavior may need additional testing and fixes.
