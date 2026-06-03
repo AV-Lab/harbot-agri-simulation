@@ -16,92 +16,92 @@ from tf.transformations import euler_from_quaternion
 
 WAYPOINTS = {
     "robot_a": {
-        "w1": (-7.5, -12.0, 1.5708),
-        "w2": (-7.5, -8.559429, 1.5708),
-        "w3": (-7.5, -5.118858, 1.5708),
-        "w4": (-7.5, -1.678287, 1.5708),
-        "w5": (-7.5, 1.762284, 1.5708),
-        "w6": (-7.5, 5.202855, 1.5708),
-        "w7": (-7.5, 8.643426, 1.5708),
-        "w8": (-7.5, 12.083997, 1.5708),
-        "w9": (-4.0, 12.083997, -1.5708),
-        "w10": (-4.0, 8.643426, -1.5708),
-        "w11": (-4.0, 5.202855, -1.5708),
-        "w12": (-4.0, 1.762284, -1.5708),
-        "w13": (-4.0, -1.678287, -1.5708),
-        "w14": (-4.0, -5.118858, -1.5708),
-        "w15": (-4.0, -8.559429, -1.5708),
-        "w16": (-4.0, -12.0, -1.5708),
-        "w17": (0.0, -12.0, 1.5708),
-        "w18": (0.0, -8.559429, 1.5708),
-        "w19": (0.0, -5.118858, 1.5708),
-        "w20": (0.0, -1.678287, 1.5708),
+        "a1": (-7.5, -12.0, 1.5708),
+        "a2": (-7.5, -8.559429, 1.5708),
+        "a3": (-7.5, -5.118858, 1.5708),
+        "a4": (-7.5, -1.678287, 1.5708),
+        "a5": (-7.5, 1.762284, 1.5708),
+        "a6": (-7.5, 5.202855, 1.5708),
+        "a7": (-7.5, 8.643426, 1.5708),
+        "a8": (-7.5, 12.083997, 1.5708),
+        "a16": (-4.0, 12.083997, -1.5708),
+        "a15": (-4.0, 8.643426, -1.5708),
+        "a14": (-4.0, 5.202855, -1.5708),
+        "a13": (-4.0, 1.762284, -1.5708),
+        "a12": (-4.0, -1.678287, -1.5708),
+        "a11": (-4.0, -5.118858, -1.5708),
+        "a10": (-4.0, -8.559429, -1.5708),
+        "a9": (-4.0, -12.0, -1.5708),
+        "a17": (0.0, -12.0, 1.5708),
+        "a18": (0.0, -8.559429, 1.5708),
+        "a19": (0.0, -5.118858, 1.5708),
+        "a20": (0.0, -1.678287, 1.5708),
     },
     "robot_b": {
-        "w21": (0.0, 1.762284, -1.5708),
-        "w22": (0.0, 5.202855, -1.5708),
-        "w23": (0.0, 8.643426, -1.5708),
-        "w24": (0.0, 12.083997, -1.5708),
-        "w25": (4.0, 12.083997, 1.5708),
-        "w26": (4.0, 8.643426, 1.5708),
-        "w27": (4.0, 5.202855, 1.5708),
-        "w28": (4.0, 1.762284, 1.5708),
-        "w29": (4.0, -1.678287, 1.5708),
-        "w30": (4.0, -5.118858, 1.5708),
-        "w31": (4.0, -8.559429, 1.5708),
-        "w32": (4.0, -12.0, 1.5708),
-        "w33": (7.5, -12.0, -1.5708),
-        "w34": (7.5, -8.559429, -1.5708),
-        "w35": (7.5, -5.118858, -1.5708),
-        "w36": (7.5, -1.678287, -1.5708),
-        "w37": (7.5, 1.762284, -1.5708),
-        "w38": (7.5, 5.202855, -1.5708),
-        "w39": (7.5, 8.643426, -1.5708),
-        "w40": (7.5, 12.083997, -1.5708),
+        "a21": (0.0, 1.762284, -1.5708),
+        "a22": (0.0, 5.202855, -1.5708),
+        "a23": (0.0, 8.643426, -1.5708),
+        "a24": (0.0, 12.083997, -1.5708),
+        "a32": (4.0, 12.083997, 1.5708),
+        "a31": (4.0, 8.643426, 1.5708),
+        "a30": (4.0, 5.202855, 1.5708),
+        "a29": (4.0, 1.762284, 1.5708),
+        "a28": (4.0, -1.678287, 1.5708),
+        "a27": (4.0, -5.118858, 1.5708),
+        "a26": (4.0, -8.559429, 1.5708),
+        "a25": (4.0, -12.0, 1.5708),
+        "a33": (7.5, -12.0, -1.5708),
+        "a34": (7.5, -8.559429, -1.5708),
+        "a35": (7.5, -5.118858, -1.5708),
+        "a36": (7.5, -1.678287, -1.5708),
+        "a37": (7.5, 1.762284, -1.5708),
+        "a38": (7.5, 5.202855, -1.5708),
+        "a39": (7.5, 8.643426, -1.5708),
+        "a40": (7.5, 12.083997, -1.5708),
     },
 }
 
 FRUIT_OPTIONS = {
-    "w1": ["orange1.1.L.B", "orange1.1.L.T"],
-    "w2": ["orange1.2.L.B", "orange1.2.L.T"],
-    "w3": ["orange1.3.L.B", "orange1.3.L.T"],
-    "w4": ["orange1.4.L.B", "orange1.4.L.T"],
-    "w5": ["orange1.5.L.B", "orange1.5.L.T"],
-    "w6": ["orange1.6.L.B", "orange1.6.L.T"],
-    "w7": ["orange1.7.L.B", "orange1.7.L.T"],
-    "w8": ["orange1.8.L.B", "orange1.8.L.T"],
-    "w9": ["orange1.8.R.B", "orange1.8.R.T", "orange2.8.L.B", "orange2.8.L.T"],
-    "w10": ["orange1.7.R.B", "orange1.7.R.T", "orange2.7.L.B", "orange2.7.L.T"],
-    "w11": ["orange1.6.R.B", "orange1.6.R.T", "orange2.6.L.B", "orange2.6.L.T"],
-    "w12": ["orange1.5.R.B", "orange1.5.R.T", "orange2.5.L.B", "orange2.5.L.T"],
-    "w13": ["orange1.4.R.B", "orange1.4.R.T", "orange2.4.L.B", "orange2.4.L.T"],
-    "w14": ["orange1.3.R.B", "orange1.3.R.T", "orange2.3.L.B", "orange2.3.L.T"],
-    "w15": ["orange1.2.R.B", "orange1.2.R.T", "orange2.2.L.B", "orange2.2.L.T"],
-    "w16": ["orange1.1.R.B", "orange1.1.R.T", "orange2.1.L.B", "orange2.1.L.T"],
-    "w17": ["orange2.1.R.B", "orange2.1.R.T", "orange3.1.L.B", "orange3.1.L.T"],
-    "w18": ["orange2.2.R.B", "orange2.2.R.T", "orange3.2.L.B", "orange3.2.L.T"],
-    "w19": ["orange2.3.R.B", "orange2.3.R.T", "orange3.3.L.B", "orange3.3.L.T"],
-    "w20": ["orange2.4.R.B", "orange2.4.R.T", "orange3.4.L.B", "orange3.4.L.T"],
-    "w21": ["orange2.5.R.B", "orange2.5.R.T", "orange3.5.L.B", "orange3.5.L.T"],
-    "w22": ["orange2.6.R.B", "orange2.6.R.T", "orange3.6.L.B", "orange3.6.L.T"],
-    "w23": ["orange2.7.R.B", "orange2.7.R.T", "orange3.7.L.B", "orange3.7.L.T"],
-    "w24": ["orange2.8.R.B", "orange2.8.R.T", "orange3.8.L.B", "orange3.8.L.T"],
-    "w25": ["orange3.8.R.B", "orange3.8.R.T", "orange4.8.L.B", "orange4.8.L.T"],
-    "w26": ["orange3.7.R.B", "orange3.7.R.T", "orange4.7.L.B", "orange4.7.L.T"],
-    "w27": ["orange3.6.R.B", "orange3.6.R.T", "orange4.6.L.B", "orange4.6.L.T"],
-    "w28": ["orange3.5.R.B", "orange3.5.R.T", "orange4.5.L.B", "orange4.5.L.T"],
-    "w29": ["orange3.4.R.B", "orange3.4.R.T", "orange4.4.L.B", "orange4.4.L.T"],
-    "w30": ["orange3.3.R.B", "orange3.3.R.T", "orange4.3.L.B", "orange4.3.L.T"],
-    "w31": ["orange3.2.R.B", "orange3.2.R.T", "orange4.2.L.B", "orange4.2.L.T"],
-    "w32": ["orange3.1.R.B", "orange3.1.R.T", "orange4.1.L.B", "orange4.1.L.T"],
-    "w33": ["orange4.1.R.B", "orange4.1.R.T"],
-    "w34": ["orange4.2.R.B", "orange4.2.R.T"],
-    "w35": ["orange4.3.R.B", "orange4.3.R.T"],
-    "w36": ["orange4.4.R.B", "orange4.4.R.T"],
-    "w37": ["orange4.5.R.B", "orange4.5.R.T"],
-    "w38": ["orange4.6.R.B", "orange4.6.R.T"],
-    "w39": ["orange4.7.R.B", "orange4.7.R.T"],
-    "w40": ["orange4.8.R.B", "orange4.8.R.T"],
+    "a1": ["orange1.1.L.B", "orange1.1.L.T"],
+    "a2": ["orange1.2.L.B", "orange1.2.L.T"],
+    "a3": ["orange1.3.L.B", "orange1.3.L.T"],
+    "a4": ["orange1.4.L.B", "orange1.4.L.T"],
+    "a5": ["orange1.5.L.B", "orange1.5.L.T"],
+    "a6": ["orange1.6.L.B", "orange1.6.L.T"],
+    "a7": ["orange1.7.L.B", "orange1.7.L.T"],
+    "a8": ["orange1.8.L.B", "orange1.8.L.T"],
+    "a16": ["orange1.8.R.B", "orange1.8.R.T", "orange2.8.L.B", "orange2.8.L.T"],
+    "a15": ["orange1.7.R.B", "orange1.7.R.T", "orange2.7.L.B", "orange2.7.L.T"],
+    "a14": ["orange1.6.R.B", "orange1.6.R.T", "orange2.6.L.B", "orange2.6.L.T"],
+    "a13": ["orange1.5.R.B", "orange1.5.R.T", "orange2.5.L.B", "orange2.5.L.T"],
+    "a12": ["orange1.4.R.B", "orange1.4.R.T", "orange2.4.L.B", "orange2.4.L.T"],
+    "a11": ["orange1.3.R.B", "orange1.3.R.T", "orange2.3.L.B", "orange2.3.L.T"],
+    "a10": ["orange1.2.R.B", "orange1.2.R.T", "orange2.2.L.B", "orange2.2.L.T"],
+    "a9": ["orange1.1.R.B", "orange1.1.R.T", "orange2.1.L.B", "orange2.1.L.T"],
+    "a17": ["orange2.1.R.B", "orange2.1.R.T", "orange3.1.L.B", "orange3.1.L.T"],
+    "a18": ["orange2.2.R.B", "orange2.2.R.T", "orange3.2.L.B", "orange3.2.L.T"],
+    "a19": ["orange2.3.R.B", "orange2.3.R.T", "orange3.3.L.B", "orange3.3.L.T"],
+    "a20": ["orange2.4.R.B", "orange2.4.R.T", "orange3.4.L.B", "orange3.4.L.T"],
+    "a21": ["orange2.5.R.B", "orange2.5.R.T", "orange3.5.L.B", "orange3.5.L.T"],
+    "a22": ["orange2.6.R.B", "orange2.6.R.T", "orange3.6.L.B", "orange3.6.L.T"],
+    "a23": ["orange2.7.R.B", "orange2.7.R.T", "orange3.7.L.B", "orange3.7.L.T"],
+    "a24": ["orange2.8.R.B", "orange2.8.R.T", "orange3.8.L.B", "orange3.8.L.T"],
+    "a32": ["orange3.8.R.B", "orange3.8.R.T", "orange4.8.L.B", "orange4.8.L.T"],
+    "a31": ["orange3.7.R.B", "orange3.7.R.T", "orange4.7.L.B", "orange4.7.L.T"],
+    "a30": ["orange3.6.R.B", "orange3.6.R.T", "orange4.6.L.B", "orange4.6.L.T"],
+    "a29": ["orange3.5.R.B", "orange3.5.R.T", "orange4.5.L.B", "orange4.5.L.T"],
+    "a28": ["orange3.4.R.B", "orange3.4.R.T", "orange4.4.L.B", "orange4.4.L.T"],
+    "a27": ["orange3.3.R.B", "orange3.3.R.T", "orange4.3.L.B", "orange4.3.L.T"],
+    "a26": ["orange3.2.R.B", "orange3.2.R.T", "orange4.2.L.B", "orange4.2.L.T"],
+    "a25": ["orange3.1.R.B", "orange3.1.R.T", "orange4.1.L.B", "orange4.1.L.T"],
+    "a33": ["orange4.1.R.B", "orange4.1.R.T"],
+    "a34": ["orange4.2.R.B", "orange4.2.R.T"],
+    "a35": ["orange4.3.R.B", "orange4.3.R.T"],
+    "a36": ["orange4.4.R.B", "orange4.4.R.T"],
+    "a37": ["orange4.5.R.B", "orange4.5.R.T"],
+    "a38": ["orange4.6.R.B", "orange4.6.R.T"],
+    "a39": ["orange4.7.R.B", "orange4.7.R.T"],
+    "a40": ["orange4.8.R.B", "orange4.8.R.T"],
 }
 
 UNRIPE_ORANGES = {
@@ -158,8 +158,8 @@ ORANGE_ACTION_SUBSCRIBERS = {}
 ORANGE_ACTION_EVENTS = {}
 
 AUTO_TEST_ORDERS = {
-    "robot_a": ["w{}".format(index) for index in range(1, 21)],
-    "robot_b": ["w{}".format(index) for index in range(40, 20, -1)],
+    "robot_a": ["a{}".format(index) for index in range(1, 21)],
+    "robot_b": ["a{}".format(index) for index in range(40, 20, -1)],
 }
 
 
@@ -198,12 +198,12 @@ def ensure_orange_action_subscriber(robot_ns):
 
 
 def waypoint_sort_key(waypoint_name):
-    return int(waypoint_name[1:]) if waypoint_name.startswith("w") and waypoint_name[1:].isdigit() else waypoint_name
+    return int(waypoint_name[1:]) if waypoint_name.startswith("a") and waypoint_name[1:].isdigit() else waypoint_name
 
 
 def destination_sort_key(robot_key, destination_name):
     unloading_label = UNLOADING_STATIONS[robot_key]["label"]
-    if destination_name.startswith("w") and destination_name[1:].isdigit():
+    if destination_name.startswith("a") and destination_name[1:].isdigit():
         return (0, int(destination_name[1:]))
     if destination_name == unloading_label:
         return (1, 0)
@@ -299,7 +299,7 @@ def rospack_find(package_name):
 
 def path_directory(robot_key, node_name):
     package_path = rospack_find("rbkairos_path_nav")
-    if node_name.startswith("w") and node_name[1:].isdigit():
+    if node_name.startswith("a") and node_name[1:].isdigit():
         return os.path.join(
             package_path,
             "paths",
@@ -442,7 +442,7 @@ def prompt_destination(destinations):
 
 
 def build_path_name(robot_key, start_node, destination_node):
-    if start_node.startswith("w") and start_node[1:].isdigit():
+    if start_node.startswith("a") and start_node[1:].isdigit():
         return "{}/wavepoint{}/{}-{}.json".format(
             robot_key,
             start_node[1:],

@@ -101,15 +101,19 @@ roslaunch rbkairos_sim_bringup rbkairos_complete.launch
 This starts Gazebo along with the required ROS controllers.
 The launch file supports spawning the robots at predefined greenhouse waypoints.
 
+The greenhouse waypoint layout used by the navigation and harvesting workflow is shown below. This map is useful when selecting robot spawn waypoints, checking saved path endpoints, and understanding the zigzag traversal order across the rows.
+
+![Greenhouse waypoint map](docs/images/greenhouse_waypoint_map.jpg)
+
 Waypoint ranges:
 
-- robot A uses `w1` to `w20`
-- robot B uses `w21` to `w40` (`w40` is the first corner point for robot B, similar to `w1` for robot A)
+- robot A uses `a1` to `a20`
+- robot B uses `a21` to `a40`
 
-Example launch with robot A at `w1` and robot B at `w40`:
+Example launch with robot A at `a1` and robot B at `a40`:
 
 ```bash
-roslaunch rbkairos_sim_bringup rbkairos_complete.launch waypoint_robot_a:=w1 waypoint_robot_b:=w40
+roslaunch rbkairos_sim_bringup rbkairos_complete.launch waypoint_robot_a:=a1 waypoint_robot_b:=a40
 ```
 
 After the simulation is running, start the harvesting workflow:
@@ -130,8 +134,8 @@ Automatic mode starts from the current waypoint, harvests all configured ripe fr
 
 Robot waypoint order in automatic mode:
 
-- robot A: `w1` to `w20`
-- robot B: `w40` to `w21`
+- robot A: `a1` to `a8`, then `a16` to `a9`, then `a17` to `a20`
+- robot B: `a40` to `a33`, then `a25` to `a32`, then `a24` to `a21`
 
 The path GUI can be enabled from the workflow prompt. It is started once and kept open while individual path executions are restarted as needed.
 
