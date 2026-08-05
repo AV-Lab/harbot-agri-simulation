@@ -13,7 +13,16 @@ from tf.transformations import euler_from_quaternion
 
 class PathGuiNode(object):
     def __init__(self):
+        namespace = rospy.get_namespace().strip('/')
+        self.robot_namespace = namespace or 'robot'
+        self.is_robot_a = self.robot_namespace in ('robot', 'robot_a')
+        self.other_robot_namespace = 'robot_b' if self.is_robot_a else 'robot'
+
         self.odom_topic = rospy.get_param('~odom_topic', 'robotnik_base_control/odom')
+        self.other_odom_topic = rospy.get_param(
+            '~other_odom_topic',
+            '/{}/robotnik_base_control/odom_gt'.format(self.other_robot_namespace)
+        )
         self.global_path_topic = rospy.get_param('~global_path_topic', 'path_nav/path')
         self.desired_velocity_topic = rospy.get_param('~desired_velocity_topic', 'path_nav/desired_speed')
         self.state_flag_topic = rospy.get_param('~state_flag_topic', 'path_nav/status')
@@ -23,8 +32,10 @@ class PathGuiNode(object):
         self.vehicle_width = float(rospy.get_param('~vehicle_width', 0.60))
         self.vehicle_length = float(rospy.get_param('~vehicle_length', 0.70))
         self.path_name = rospy.get_param('~path_name', 'example_straight.json')
+        self.path_clearance_radius = float(rospy.get_param('~path_clearance_radius', 0.80))
 
         self.vehicle_position = [0.0, 0.0, 0.0]
+        self.other_vehicle_position = []
         self.vehicle_velocity = 0.0
         self.path_points = []
         self.desired_speed = 0.0
@@ -32,21 +43,24 @@ class PathGuiNode(object):
         self.proceed_flag = False
         self.scale = 200.0
         self.reverse_mode = False
+        self.self_vehicle_color = 'blue' if self.is_robot_a else 'red'
+        self.other_vehicle_color = 'red' if self.is_robot_a else 'blue'
 
         rospy.Subscriber(self.odom_topic, Odometry, self.odom_callback, queue_size=10)
+        rospy.Subscriber(self.other_odom_topic, Odometry, self.other_odom_callback, queue_size=10)
         rospy.Subscriber(self.global_path_topic, Path, self.path_callback, queue_size=1)
         rospy.Subscriber(self.desired_velocity_topic, Float64, self.velocity_callback, queue_size=1)
         rospy.Subscriber(self.state_flag_topic, String, self.state_callback, queue_size=1)
         rospy.Subscriber(self.proceed_flag_topic, Bool, self.proceed_callback, queue_size=1)
         rospy.Subscriber(self.reverse_mode_topic, Bool, self.reverse_mode_callback, queue_size=1)
-          
+
         self.proceed_pub = rospy.Publisher(self.proceed_flag_topic, Bool, queue_size=1, latch=True)
 
         threading.Thread(target=self.start_gui, daemon=True).start()
 
     def reverse_mode_callback(self, msg):
         self.reverse_mode = msg.data
-    
+
     def odom_callback(self, msg):
         q = msg.pose.pose.orientation
         _, _, yaw = euler_from_quaternion([q.x, q.y, q.z, q.w])
@@ -57,6 +71,15 @@ class PathGuiNode(object):
         ]
         linear = msg.twist.twist.linear
         self.vehicle_velocity = math.sqrt(linear.x ** 2 + linear.y ** 2)
+
+    def other_odom_callback(self, msg):
+        q = msg.pose.pose.orientation
+        _, _, yaw = euler_from_quaternion([q.x, q.y, q.z, q.w])
+        self.other_vehicle_position = [
+            msg.pose.pose.position.x,
+            msg.pose.pose.position.y,
+            yaw
+        ]
 
     def path_callback(self, msg):
         self.path_points = []
@@ -79,7 +102,7 @@ class PathGuiNode(object):
         self.proceed_flag = msg.data
         if self.proceed_flag:
             self.state = 'RUNNING'
-            
+
     def start_planner(self):
         self.proceed_pub.publish(Bool(data=True))
         self.proceed_flag = True
@@ -122,6 +145,9 @@ class PathGuiNode(object):
         self.position_var = tk.StringVar(value='Position: (0.0, 0.0)')
         ttk.Label(status_frame, textvariable=self.position_var).pack(anchor=tk.W)
 
+        self.other_position_var = tk.StringVar(value='Other: n/a')
+        ttk.Label(status_frame, textvariable=self.other_position_var).pack(anchor=tk.W)
+
         self.path_info_var = tk.StringVar(value='Path Points: 0')
         ttk.Label(status_frame, textvariable=self.path_info_var).pack(anchor=tk.W)
 
@@ -140,7 +166,7 @@ class PathGuiNode(object):
 
         ttk.Button(button_row_bottom, text='Start', command=self.start_planner).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_row_bottom, text='Stop', command=self.stop_planner).pack(side=tk.LEFT, padx=5)
-        
+
         self.scale_var = tk.StringVar(value=f'Scale: {self.scale:.1f} px/m')
         ttk.Label(button_row_bottom, textvariable=self.scale_var).pack(side=tk.LEFT, padx=10)
 
@@ -167,15 +193,25 @@ class PathGuiNode(object):
         legend_top_row = ttk.Frame(legend_frame)
         legend_top_row.pack(anchor=tk.W)
 
-        vehicle_canvas = tk.Canvas(legend_top_row, width=15, height=15)
-        vehicle_canvas.create_rectangle(0, 0, 15, 15, fill='blue')
-        vehicle_canvas.pack(side=tk.LEFT, padx=5)
-        ttk.Label(legend_top_row, text='Vehicle').pack(side=tk.LEFT)
+        robot_a_canvas = tk.Canvas(legend_top_row, width=15, height=15, highlightthickness=0)
+        robot_a_canvas.create_rectangle(0, 0, 15, 15, fill='blue')
+        robot_a_canvas.pack(side=tk.LEFT, padx=5)
+        ttk.Label(legend_top_row, text='Robot A').pack(side=tk.LEFT)
 
-        path_canvas = tk.Canvas(legend_top_row, width=15, height=15)
+        robot_b_canvas = tk.Canvas(legend_top_row, width=15, height=15, highlightthickness=0)
+        robot_b_canvas.create_rectangle(0, 0, 15, 15, fill='red')
+        robot_b_canvas.pack(side=tk.LEFT, padx=5)
+        ttk.Label(legend_top_row, text='Robot B').pack(side=tk.LEFT)
+
+        path_canvas = tk.Canvas(legend_top_row, width=15, height=15, highlightthickness=0)
         path_canvas.create_rectangle(0, 0, 15, 15, fill='green')
         path_canvas.pack(side=tk.LEFT, padx=5)
         ttk.Label(legend_top_row, text='Path').pack(side=tk.LEFT)
+
+        area_canvas = tk.Canvas(legend_top_row, width=16, height=16, highlightthickness=0)
+        area_canvas.create_oval(2, 2, 14, 14, outline='#7fbf7f', dash=(2, 2))
+        area_canvas.pack(side=tk.LEFT, padx=5)
+        ttk.Label(legend_top_row, text='Path Area').pack(side=tk.LEFT)
 
         legend_bottom_row = ttk.Frame(legend_frame)
         legend_bottom_row.pack(anchor=tk.W, pady=(6, 0))
@@ -189,7 +225,6 @@ class PathGuiNode(object):
         reverse_line.create_line(20, 8, 2, 8, fill='orange', width=3, arrow=tk.LAST)
         reverse_line.pack(side=tk.LEFT, padx=5)
         ttk.Label(legend_bottom_row, text='Reverse').pack(side=tk.LEFT)
-
 
         canvas_frame = ttk.Frame(main_frame)
         canvas_frame.pack(fill=tk.BOTH, expand=True)
@@ -218,7 +253,6 @@ class PathGuiNode(object):
 
         self.update_gui()
         self.root.mainloop()
-
 
     def scroll_start(self, event):
         self.canvas.scan_mark(event.x, event.y)
@@ -282,15 +316,15 @@ class PathGuiNode(object):
             self.zoom_out()
 
     def world_to_canvas(self, x_value, y_value):
-        canvas_x = -x_value * self.scale
+        canvas_x = x_value * self.scale
         canvas_y = -y_value * self.scale
         return canvas_x, canvas_y
 
-    def draw_vehicle(self):
-        if not self.vehicle_position:
+    def draw_vehicle_shape(self, position, fill_color, tags, draw_direction=False, direction_color='black', direction_arrow=tk.LAST, direction_width=2):
+        if not position:
             return
 
-        x_value, y_value, yaw = self.vehicle_position
+        x_value, y_value, yaw = position
         length = self.vehicle_length
         width = self.vehicle_width
 
@@ -308,19 +342,53 @@ class PathGuiNode(object):
             canvas_x, canvas_y = self.world_to_canvas(x_value + rot_x, y_value + rot_y)
             rotated_corners.extend([canvas_x, canvas_y])
 
-        self.canvas.create_polygon(rotated_corners, fill='blue', outline='black', width=1, tags='vehicle')
+        self.canvas.create_polygon(rotated_corners, fill=fill_color, outline='black', width=1, tags=tags)
 
-        front_x = x_value + min(length * 0.45, 0.35) * math.cos(yaw)
-        front_y = y_value + min(length * 0.45, 0.35) * math.sin(yaw)
-        canvas_x, canvas_y = self.world_to_canvas(x_value, y_value)
-        canvas_front_x, canvas_front_y = self.world_to_canvas(front_x, front_y)
-        if self.reverse_mode:
-            self.canvas.create_line(canvas_x, canvas_y, canvas_front_x, canvas_front_y,
-                                fill='orange', width=3, arrow=tk.FIRST, tags='vehicle')
-        else:
-            self.canvas.create_line(canvas_x, canvas_y, canvas_front_x, canvas_front_y,
-                                fill='deepskyblue', width=3, arrow=tk.LAST, tags='vehicle')
+        if draw_direction:
+            front_x = x_value + min(length * 0.45, 0.35) * math.cos(yaw)
+            front_y = y_value + min(length * 0.45, 0.35) * math.sin(yaw)
+            canvas_x, canvas_y = self.world_to_canvas(x_value, y_value)
+            canvas_front_x, canvas_front_y = self.world_to_canvas(front_x, front_y)
+            self.canvas.create_line(
+                canvas_x,
+                canvas_y,
+                canvas_front_x,
+                canvas_front_y,
+                fill=direction_color,
+                width=direction_width,
+                arrow=direction_arrow,
+                tags=tags
+            )
 
+    def draw_vehicle(self):
+        if not self.vehicle_position:
+            return
+
+        direction_color = 'orange' if self.reverse_mode else 'deepskyblue'
+        direction_arrow = tk.FIRST if self.reverse_mode else tk.LAST
+        self.draw_vehicle_shape(
+            self.vehicle_position,
+            self.self_vehicle_color,
+            'vehicle',
+            draw_direction=True,
+            direction_color=direction_color,
+            direction_arrow=direction_arrow,
+            direction_width=3
+        )
+
+    def draw_other_vehicle(self):
+        if not self.other_vehicle_position:
+            return
+
+        self.draw_vehicle_shape(
+            self.other_vehicle_position,
+            self.other_vehicle_color,
+            'other_vehicle',
+            draw_direction=True,
+            direction_color='black',
+            direction_arrow=tk.LAST,
+            direction_width=2
+        )
 
     def draw_path(self):
         if not self.path_points or not self.show_path_var.get():
@@ -328,20 +396,37 @@ class PathGuiNode(object):
 
         point_radius = max(1.5, min(3.0, self.scale * 0.04))
         line_width = max(1, min(2, int(self.scale * 0.03)))
+        area_radius = max(2.0, self.path_clearance_radius * self.scale)
 
         points = []
         for point in self.path_points:
             canvas_x, canvas_y = self.world_to_canvas(point[0], point[1])
             points.extend([canvas_x, canvas_y])
+            self.canvas.create_oval(
+                canvas_x - area_radius,
+                canvas_y - area_radius,
+                canvas_x + area_radius,
+                canvas_y + area_radius,
+                outline='#7fbf7f',
+                dash=(2, 2),
+                width=1,
+                tags='path_area'
+            )
 
         if len(points) >= 4:
             self.canvas.create_line(points, fill='green', width=line_width, tags='path')
 
         for point in self.path_points:
             canvas_x, canvas_y = self.world_to_canvas(point[0], point[1])
-            self.canvas.create_oval(canvas_x-point_radius, canvas_y-point_radius,
-                                    canvas_x+point_radius, canvas_y+point_radius,
-                                    fill='green', outline='green', tags='path')
+            self.canvas.create_oval(
+                canvas_x - point_radius,
+                canvas_y - point_radius,
+                canvas_x + point_radius,
+                canvas_y + point_radius,
+                fill='green',
+                outline='green',
+                tags='path'
+            )
 
     def draw_grid(self):
         if not self.show_grid_var.get():
@@ -391,11 +476,19 @@ class PathGuiNode(object):
 
         if self.vehicle_position:
             self.position_var.set(f'Position: ({self.vehicle_position[0]:.2f}, {self.vehicle_position[1]:.2f})')
+        if self.other_vehicle_position:
+            self.other_position_var.set(
+                f'Other: ({self.other_vehicle_position[0]:.2f}, {self.other_vehicle_position[1]:.2f})'
+            )
+        else:
+            self.other_position_var.set('Other: n/a')
 
         if self.state == 'RUNNING':
             self.state_label.configure(foreground='green')
         elif self.state == 'STOPPED_AT_POINT':
             self.state_label.configure(foreground='orange')
+        elif self.state in ('WAITING_FOR_PATH_CLEAR', 'WAITING_FOR_CLEAR_CONFIRMATION'):
+            self.state_label.configure(foreground='darkorange')
         elif self.state == 'STOPPED':
             self.state_label.configure(foreground='red')
         elif self.state == 'FINISHED':
@@ -407,6 +500,7 @@ class PathGuiNode(object):
         self.canvas.delete('all')
         self.draw_grid()
         self.draw_path()
+        self.draw_other_vehicle()
         self.draw_vehicle()
         self.update_status_display()
         self.root.update_idletasks()
@@ -415,6 +509,7 @@ class PathGuiNode(object):
         self.canvas.delete('all')
         self.draw_grid()
         self.draw_path()
+        self.draw_other_vehicle()
         self.draw_vehicle()
         self.update_status_display()
 

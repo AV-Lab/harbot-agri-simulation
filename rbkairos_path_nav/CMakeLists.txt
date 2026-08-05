@@ -19,6 +19,7 @@ install(PROGRAMS
   scripts/path_planner.py
   scripts/path_gui.py
   scripts/path_controller.py
+  scripts/path_distance_check.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
