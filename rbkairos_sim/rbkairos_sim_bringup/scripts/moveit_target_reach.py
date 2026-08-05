@@ -41,7 +41,7 @@ class MoveItTargetReach(object):
         self.ee_link = 'robot_hand_tcp'
         self.gripper_joint = 'robot_finger_joint1'
         self.gripper_cmd_topic = '/robot/gripper/pos_traj_controller/command'
-        self.gripper_open_pos = 0.5
+        self.gripper_open_pos = 0.039
         self.arm_cmd_topic = self.robot_ns + '/arm/pos_traj_controller/command'
         self.arm_joints = [
             'robot_joint1',
@@ -225,7 +225,7 @@ class MoveItTargetReach(object):
             'robot_joint6',
             'robot_joint7',
         ]
-        self.gripper_open_pos = 0.5
+        self.gripper_open_pos = 0.039
 
         if self.arm_type.lower() == 'ur5':
             self.move_group_name = 'ur5_arm'

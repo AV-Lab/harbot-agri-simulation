@@ -95,7 +95,7 @@ class OrangeUnloader(object):
     def open_gripper(self):
         cmd = self.build_joint_command(
             [self.gripper_joint],
-            [0.5],
+            [0.039],
             2.0
         )
         self.gripper_pub.publish(cmd)

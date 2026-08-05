@@ -33,6 +33,7 @@
   <xacro:property name="arm_orientation_r" value="0"/>
   <xacro:property name="arm_orientation_p" value="0"/>
   <xacro:property name="arm_orientation_y" value="${-PI}"/>
+  <xacro:property name="wrist_camera_parent" value="$(arg arm_id)_hand"/>
 
   <xacro:macro name="rbkairos_franka" params="prefix publish_bf hq gpu:=false">
 
@@ -50,13 +51,13 @@
 
         <xacro:if value="$(arg launch_wrist_camera)">
           <xacro:sensor_d435
-            parent="$(arg arm_id)_gripper_adapter_plate"
+            parent="${wrist_camera_parent}"
             name="$(arg arm_id)_wrist_d435"
             topics_ns="$(arg arm_id)_wrist_d435"
             align_depth="true"
             enable_pointCloud="true"
             visualize="false">
-            <origin xyz="0.035 0.043 0.0" rpy="${-PI/2} ${-PI/1} 0"/>
+            <origin xyz="0.045 0.0 -0.02" rpy="${-PI} ${-PI/2} 0"/>
           </xacro:sensor_d435>
         </xacro:if>
         
