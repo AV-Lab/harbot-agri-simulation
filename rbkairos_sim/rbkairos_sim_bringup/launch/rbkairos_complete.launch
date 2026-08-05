@@ -33,7 +33,7 @@
     <arg name="move_base_robot_a" default="false"/>
     <arg name="amcl_and_mapserver_a" default="false"/>
     <arg name="launch_pad_a" default="true"/>
-    <arg name="waypoint_robot_a" default=""/>
+    <arg name="waypoint_robot_a" default="a3"/>
     <!-- spawn position robot a -->
     <arg name="x_init_pose_robot_a" default="$(eval {'a1': -7.5, 'a2': -7.5, 'a3': -7.5, 'a4': -7.5, 'a5': -7.5, 'a6': -7.5, 'a7': -7.5, 'a8': -7.5, 'a16': -4.0, 'a15': -4.0, 'a14': -4.0, 'a13': -4.0, 'a12': -4.0, 'a11': -4.0, 'a10': -4.0, 'a9': -4.0, 'a17': 0.0, 'a18': 0.0, 'a19': 0.0, 'a20': 0.0}.get(arg('waypoint_robot_a').lower(), -7.5))" />
     <arg name="y_init_pose_robot_a" default="$(eval {'a1': -12.0, 'a2': -8.559429, 'a3': -5.118858, 'a4': -1.678287, 'a5': 1.762284, 'a6': 5.202855, 'a7': 8.643426, 'a8': 12.083997, 'a16': 12.083997, 'a15': 8.643426, 'a14': 5.202855, 'a13': 1.762284, 'a12': -1.678287, 'a11': -5.118858, 'a10': -8.559429, 'a9': -12.0, 'a17': -12.0, 'a18': -8.559429, 'a19': -5.118858, 'a20': -1.678287}.get(arg('waypoint_robot_a').lower(), -12.0))" />
@@ -63,7 +63,7 @@
     <arg name="move_base_robot_b" default="false"/>
     <arg name="amcl_and_mapserver_b" default="false"/>
     <arg name="launch_pad_b" default="true"/>
-    <arg name="waypoint_robot_b" default=""/>
+    <arg name="waypoint_robot_b" default="a40"/>
     <!-- spawn position robot b -->
     <arg name="x_init_pose_robot_b" default="$(eval {'a40': 7.5, 'a39': 7.5, 'a38': 7.5, 'a37': 7.5, 'a36': 7.5, 'a35': 7.5, 'a34': 7.5, 'a33': 7.5, 'a25': 4.0, 'a26': 4.0, 'a27': 4.0, 'a28': 4.0, 'a29': 4.0, 'a30': 4.0, 'a31': 4.0, 'a32': 4.0, 'a24': 0.0, 'a23': 0.0, 'a22': 0.0, 'a21': 0.0}.get(arg('waypoint_robot_b').lower(), 7.5))" />
     <arg name="y_init_pose_robot_b" default="$(eval {'a40': 12.083997, 'a39': 8.643426, 'a38': 5.202855, 'a37': 1.762284, 'a36': -1.678287, 'a35': -5.118858, 'a34': -8.559429, 'a33': -12.0, 'a25': -12.0, 'a26': -8.559429, 'a27': -5.118858, 'a28': -1.678287, 'a29': 1.762284, 'a30': 5.202855, 'a31': 8.643426, 'a32': 12.083997, 'a24': 12.083997, 'a23': 8.643426, 'a22': 5.202855, 'a21': 1.762284}.get(arg('waypoint_robot_b').lower(), 12.083997))" />
@@ -203,6 +203,13 @@
 
 
     </include>
+
+    <node name="delayed_gazebo_unpause"
+      pkg="rosservice"
+      type="rosservice"
+      args="call /gazebo/unpause_physics"
+      launch-prefix="bash -c 'sleep 20; $0 $@'"
+      output="screen" />
 
     <group if="$(arg launch_gt_odom_tf)">
         <node if="$(arg launch_robot_a)" pkg="rbkairos_sim_bringup" type="gt_odom_tf.py" name="gt_odom_tf_$(arg id_robot_a)" output="screen">

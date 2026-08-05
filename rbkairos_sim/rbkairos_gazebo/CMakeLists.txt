@@ -26,6 +26,7 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-install(DIRECTORY launch worlds config rviz models
+
+install(DIRECTORY launch worlds config rviz models urdf
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 

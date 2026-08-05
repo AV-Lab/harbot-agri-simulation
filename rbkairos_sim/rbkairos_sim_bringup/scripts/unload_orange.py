@@ -30,6 +30,7 @@ class OrangeUnloader(object):
         ]
 
         self.arm_initial_pos = [0.000, -0.784, 0.000, -2.100, 0.000, 1.569, 0.782]
+        self.arm_drop_pos = [0.001, 0.615, -0.000, -1.754, 0.000, 2.463, 0.785]
         self.orange_action_topic = self.robot_ns + '/orange_action'
 
         self.configure_robot()
@@ -57,6 +58,29 @@ class OrangeUnloader(object):
             self.gripper_cmd_topic = '/robot_b/gripper/pos_traj_controller/command'
             self.arm_cmd_topic = '/robot_b/arm/pos_traj_controller/command'
 
+    def set_link_attachment(self, action, model_name_1, link_name_1, model_name_2, link_name_2):
+        service_name = "/link_attacher_node/{}".format(action)
+
+        try:
+            rospy.wait_for_service(service_name, timeout=0.5)
+        except rospy.ROSException:
+            rospy.logwarn("%s service is not available", service_name)
+            return False
+
+        req = AttachRequest()
+        req.model_name_1 = model_name_1
+        req.link_name_1 = link_name_1
+        req.model_name_2 = model_name_2
+        req.link_name_2 = link_name_2
+
+        try:
+            service = rospy.ServiceProxy(service_name, Attach)
+            result = service(req)
+            return result.ok
+        except rospy.ServiceException as exc:
+            rospy.logwarn("%s service failed: %s", service_name, str(exc))
+            return False
+
     def build_joint_command(self, joint_names, positions, duration):
         cmd = JointTrajectory()
         cmd.joint_names = joint_names
@@ -71,7 +95,7 @@ class OrangeUnloader(object):
     def open_gripper(self):
         cmd = self.build_joint_command(
             [self.gripper_joint],
-            [0.039],
+            [0.25],
             2.0
         )
         self.gripper_pub.publish(cmd)
@@ -80,6 +104,14 @@ class OrangeUnloader(object):
         cmd = self.build_joint_command(
             self.arm_joints,
             self.arm_initial_pos,
+            3.0
+        )
+        self.arm_pub.publish(cmd)
+
+    def move_arm_to_drop_position(self):
+        cmd = self.build_joint_command(
+            self.arm_joints,
+            self.arm_drop_pos,
             3.0
         )
         self.arm_pub.publish(cmd)
@@ -94,33 +126,26 @@ class OrangeUnloader(object):
 
         return 'body'
 
-    def detach_model_if_needed(self, model_link):
-        try:
-            rospy.wait_for_service('/link_attacher_node/detach', timeout=0.5)
-        except rospy.ROSException:
-            return
-
-        detach_srv = rospy.ServiceProxy('/link_attacher_node/detach', Attach)
-
-        req = AttachRequest()
-        req.model_name_1 = self.robot_model
-        req.link_name_1 = self.robot_link
-        req.model_name_2 = self.orange_model
-        req.link_name_2 = model_link
-
-        try:
-            detach_srv(req)
-        except rospy.ServiceException:
-            pass
-
     def run(self):
         if not self.orange_model:
             rospy.logerr('Parameter ~orange is required')
             return
 
         model_link = self.get_model_link_name()
-        self.detach_model_if_needed(model_link)
 
+        rospy.sleep(1.0)
+        
+        rospy.loginfo('Moving orange to drop position')
+        self.move_arm_to_drop_position()
+        rospy.sleep(5.0)
+
+        self.set_link_attachment(
+            'detach',
+            self.robot_model,
+            self.robot_link,
+            self.orange_model,
+            model_link,
+        )
         rospy.sleep(1.0)
 
         rospy.loginfo('Unloading orange')

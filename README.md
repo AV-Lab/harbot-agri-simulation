@@ -39,6 +39,7 @@ This workspace includes the following upstream repositories as the base simulati
 - [universal_robot](https://github.com/fmauch/universal_robot)
 - [wsg50-ros-pkg](https://github.com/RobotnikAutomation/wsg50-ros-pkg)
 - [robotnik_msgs](https://github.com/RobotnikAutomation/robotnik_msgs)
+- [franka_ros](https://github.com/frankarobotics/franka_ros.git)
 
 ---
 

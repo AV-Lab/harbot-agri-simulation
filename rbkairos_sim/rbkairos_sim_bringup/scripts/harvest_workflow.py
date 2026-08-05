@@ -106,21 +106,17 @@ FRUIT_OPTIONS = {
 
 UNRIPE_ORANGES = {
     "orange1.2.L.T",
-    "orange1.5.L.T",
-    "orange1.8.L.T",
-    "orange2.7.L.T",
-    "orange1.6.R.T",
-    "orange2.4.L.T",
-    "orange1.3.R.T",
+    "orange1.7.L.B",
+    "orange1.4.R.B",
     "orange2.1.L.T",
-    "orange2.2.R.T",
-    "orange3.3.L.T",
-    "orange3.6.L.T",
-    "orange2.8.R.T",
-    "orange3.7.R.T",
-    "orange4.4.L.T",
+    "orange2.7.L.T",
+    "orange2.5.R.T",
+    "orange3.4.L.B",
     "orange3.1.R.T",
-    "orange4.6.R.T",
+    "orange3.7.R.B",
+    "orange4.4.L.T",
+    "orange4.2.R.T",
+    "orange4.8.R.B",
 }
 
 ROBOT_ALIASES = {
@@ -553,7 +549,7 @@ def send_proceed_flag(robot_ns):
     publisher.publish(Bool(data=True))
 
 
-def wait_for_orange_action_true(robot_ns, process_handle, step_label, timeout=ORANGE_ACTION_TIMEOUT):
+def wait_for_orange_action_result(robot_ns, process_handle, step_label, timeout=ORANGE_ACTION_TIMEOUT):
     ensure_orange_action_subscriber(robot_ns)
     start_time = time.monotonic()
     deadline = time.time() + timeout
@@ -561,9 +557,8 @@ def wait_for_orange_action_true(robot_ns, process_handle, step_label, timeout=OR
 
     while not rospy.is_shutdown():
         latest_event = ORANGE_ACTION_EVENTS.get(robot_ns)
-        if latest_event and latest_event["value"] and latest_event["time"] >= start_time:
-            # info("{} reported orange_action=True.".format(step_label))
-            return
+        if latest_event and latest_event["time"] >= start_time:
+            return bool(latest_event["value"])
 
         if process_handle.poll() is not None:
             if process_exit_time is None:
@@ -583,7 +578,20 @@ def wait_for_orange_action_true(robot_ns, process_handle, step_label, timeout=OR
         rospy.sleep(min(0.1, remaining_time))
 
 
-def run_orange_script_step(robot_ns, orange_name, step_label, script_name, extra_params=None):
+def wait_for_orange_action_true(robot_ns, process_handle, step_label, timeout=ORANGE_ACTION_TIMEOUT):
+    if wait_for_orange_action_result(robot_ns, process_handle, step_label, timeout):
+        return
+    raise RuntimeError("{} reported orange_action=False.".format(step_label))
+
+
+def run_orange_script_step(
+    robot_ns,
+    orange_name,
+    step_label,
+    script_name,
+    extra_params=None,
+    allow_failure_result=False,
+):
     private_params = {
         "orange": orange_name,
     }
@@ -595,10 +603,15 @@ def run_orange_script_step(robot_ns, orange_name, step_label, script_name, extra
 
     try:
         process_handle = launch_ros_script(script_name, private_params)
-        wait_for_orange_action_true(robot_ns, process_handle, step_label)
+        step_succeeded = wait_for_orange_action_result(robot_ns, process_handle, step_label)
         rospy.sleep(STEP_SHUTDOWN_DELAY)
     finally:
         shutdown_process(process_handle)
+
+    if not step_succeeded and not allow_failure_result:
+        raise RuntimeError("{} reported orange_action=False.".format(step_label))
+
+    return step_succeeded
 
 
 def execute_orange_pick(robot_ns, orange_name):
@@ -621,7 +634,7 @@ def execute_orange_pick(robot_ns, orange_name):
             "arm": PICK_ARM_TYPE,
         },
     )
-    run_orange_script_step(
+    grasp_succeeded = run_orange_script_step(
         robot_ns,
         orange_name,
         "Step 3/4: Grasp and retract fruit",
@@ -630,7 +643,13 @@ def execute_orange_pick(robot_ns, orange_name):
             "robot_ns": robot_ns,
             "arm": PICK_ARM_TYPE,
         },
+        allow_failure_result=True,
     )
+
+    if not grasp_succeeded:
+        info("Grasp failed for {}. Skipping unload for this fruit.".format(orange_name))
+        return False
+
     run_orange_script_step(
         robot_ns,
         orange_name,
@@ -641,6 +660,7 @@ def execute_orange_pick(robot_ns, orange_name):
         },
     )
     info("Resetting environment.")
+    return True
 
 
 def execute_fruit_sequence(robot_ns, selected_fruits):
@@ -654,10 +674,14 @@ def execute_fruit_sequence(robot_ns, selected_fruits):
 
         info("Executing complete harvesting workflow for {}.".format(orange_name))
         try:
-            execute_orange_pick(robot_ns, orange_name)
+            harvested = execute_orange_pick(robot_ns, orange_name)
         except (OSError, RuntimeError, rospy.ROSException) as exc:
             info("Harvesting workflow failed for {}: {}".format(orange_name, exc))
             return False
+
+        if not harvested:
+            rospy.sleep(INTER_ORANGE_DELAY)
+            continue
 
         info("Completed harvesting workflow for {}.".format(orange_name))
         rospy.sleep(INTER_ORANGE_DELAY)

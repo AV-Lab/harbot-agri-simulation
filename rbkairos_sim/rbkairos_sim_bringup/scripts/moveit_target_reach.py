@@ -7,9 +7,11 @@ import rospy
 import rospkg
 import moveit_commander
 from std_msgs.msg import Bool
+from nav_msgs.msg import Odometry
 from visualization_msgs.msg import Marker
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PointStamped
 from moveit_commander import PlanningSceneInterface
+from gazebo_ros_link_attacher.srv import Attach, AttachRequest
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 
@@ -20,7 +22,14 @@ class MoveItTargetReach(object):
         self.config_file_name = 'orange_metadata.json'
 
         self.robot_ns = rospy.get_param('~robot_ns', '/robot')
+        self.detected_pose_topic = rospy.get_param(
+            '~detected_pose_topic',
+            self.robot_ns + '/detected_orange_pose_world'
+        )
+        self.detection_timeout = float(rospy.get_param('~detection_timeout', 10.0))
         self.orange_model = rospy.get_param('~orange', '').strip()
+        self.robot_model = 'robot'
+        self.robot_base_link = 'robot_base_footprint'
         self.arm_type = rospy.get_param('~arm', 'Franka')
 
 
@@ -28,21 +37,34 @@ class MoveItTargetReach(object):
         self.ee_link = 'robot_hand_tcp'
         self.gripper_joint = 'robot_finger_joint1'
         self.gripper_cmd_topic = '/robot/gripper/pos_traj_controller/command'
-        self.gripper_open_pos = 0.038
+        self.gripper_open_pos = 0.40
+        self.arm_cmd_topic = self.robot_ns + '/arm/pos_traj_controller/command'
+        self.arm_joints = [
+            'robot_joint1',
+            'robot_joint2',
+            'robot_joint3',
+            'robot_joint4',
+            'robot_joint5',
+            'robot_joint6',
+            'robot_joint7',
+        ]
+        self.arm_pub = None
 
+        self.diameter = 0.07
         self.planner_id = 'OMPL'
+        self.latest_odom = None
         self.planning_time = 20.0
         self.planning_attempts = 20
         self.position_tolerance = 0.01
-        self.no_solution_retries = 3
+        self.no_solution_retries = 5
         self.move_group_wait_timeout = 30.0
-        self.move_group_connect_retries = 3
+        self.move_group_connect_retries = 5
         self.move_group_connect_retry_delay = 2.0
 
         self.target = {
-            'orange_name': '',
-            'diameter': 0.0,
-            'object_position': [0.0, 0.0, 0.0],
+            'orange_name': self.orange_model,
+            'diameter': self.diameter,
+            'object_position': None,
             'box_position': [0.0, 0.0, 0.0],
             'box_size': [0.0, 0.0, 0.0],
         }
@@ -50,51 +72,117 @@ class MoveItTargetReach(object):
         self.orange_action_topic = self.robot_ns + '/orange_action'
         self.object_marker_topic = self.robot_ns + '/detected_object_marker'
         self.target_marker_topic = self.robot_ns + '/target_point_marker'
+        self.odom_topic = self.robot_ns + '/robotnik_base_control/odom_gt'
 
         self.object_marker_pub = rospy.Publisher(self.object_marker_topic, Marker, queue_size=1, latch=True)
         self.target_marker_pub = rospy.Publisher(self.target_marker_topic, Marker, queue_size=1, latch=True)
         self.orange_action_pub = rospy.Publisher(self.orange_action_topic, Bool, queue_size=1)
+        
+        rospy.Subscriber(self.odom_topic, Odometry, self.odom_cb, queue_size=1)
 
-    def load_target_from_config(self):
-        package_path = rospkg.RosPack().get_path(self.package_name)
-        config_path = os.path.join(package_path, 'config', self.config_file_name)
+    
+    def odom_cb(self, msg):
+        self.latest_odom = msg
 
-        with open(config_path, 'r', encoding='utf-8') as handle:
-            metadata = json.load(handle)
+    def detected_x_direction(self, detected_x):
+        if self.latest_odom is None:
+            raise RuntimeError('No odom received yet')
 
-        orange_entry = metadata['orange_models'][self.orange_model]
-        variant_name = orange_entry['variant']
-        variant_entry = metadata['variants'][variant_name]
-        world_pose = orange_entry['world_pose']
-        orange_position = variant_entry['orange_position']
-        box_position = variant_entry['stem_box_position']
-        diameter = float(metadata['orange_diameter'])
-        box_size = [float(value) for value in metadata['stem_box']['size']]
+        robot_x = self.latest_odom.pose.pose.position.x
+        diff = detected_x - robot_x
 
-        self.target = {
-            'orange_name': self.orange_model,
-            'diameter': diameter,
-            'object_position': [
-                float(orange_position[0]) + float(world_pose[0]),
-                float(orange_position[1]) + float(world_pose[1]),
-                float(orange_position[2]) + float(world_pose[2]),
-            ],
-            'box_position': [
-                float(box_position[0]) + float(world_pose[0]),
-                float(box_position[1]) + float(world_pose[1]),
-                float(box_position[2]) + float(world_pose[2]),
-            ],
-            'box_size': box_size,
-            'config_path': config_path,
-        }
+        if diff > 0:
+            return 1
+        elif diff < 0:
+            return -1
+        return 0
+    
+    def set_link_attachment(self, action, model_name_1, link_name_1, model_name_2, link_name_2):
+        service_name = "/link_attacher_node/{}".format(action)
+
+        try:
+            rospy.wait_for_service(service_name, timeout=0.5)
+        except rospy.ROSException:
+            rospy.logwarn("%s service is not available", service_name)
+            return False
+
+        req = AttachRequest()
+        req.model_name_1 = model_name_1
+        req.link_name_1 = link_name_1
+        req.model_name_2 = model_name_2
+        req.link_name_2 = link_name_2
+
+        try:
+            service = rospy.ServiceProxy(service_name, Attach)
+            rospy.sleep(0.5)
+            result = service(req)
+            return result.ok
+        except rospy.ServiceException as exc:
+            rospy.logwarn("%s service failed: %s", service_name, str(exc))
+            return False
+
+
+    def load_orange_detection(self):
+        rospy.loginfo('Waiting for detected orange pose on %s', self.detected_pose_topic)
+
+        try:
+            msg = rospy.wait_for_message(
+                self.detected_pose_topic,
+                PointStamped,
+                timeout=self.detection_timeout
+            )
+        except rospy.ROSException as exc:
+            raise RuntimeError(
+                'No detected orange pose received on {} within {:.1f} seconds'.format(
+                    self.detected_pose_topic,
+                    self.detection_timeout,
+                )
+            ) from exc
+
+        if msg.header.frame_id != self.marker_frame:
+            raise RuntimeError(
+                'Expected detected orange pose in frame {}, got {}'.format(
+                    self.marker_frame,
+                    msg.header.frame_id,
+                )
+            )
+        offset_direction = self.detected_x_direction(msg.point.x)
+        
+        self.target['object_position'] = [
+            msg.point.x + (self.diameter / 2.0) * offset_direction,
+            msg.point.y,
+            msg.point.z,
+        ]
+
+        if self.target['object_position'] is None:
+            raise RuntimeError('No detected orange position available')
+
+        rospy.loginfo(
+            'Detected MoveIt target: [%.5f, %.5f, %.5f]',
+            self.target['object_position'][0],
+            self.target['object_position'][1],
+            self.target['object_position'][2],
+        )
 
     def configure_robot(self):
         self.robot_ns = '/robot'
+        self.robot_model = 'robot'
+        self.robot_base_link = 'robot_base_footprint'
         self.move_group_name = 'arm'
         self.ee_link = 'robot_hand_tcp'
         self.gripper_joint = 'robot_finger_joint1'
         self.gripper_cmd_topic = '/robot/gripper/pos_traj_controller/command'
-        self.gripper_open_pos = 0.038
+        self.arm_cmd_topic = '/robot/arm/pos_traj_controller/command'
+        self.arm_joints = [
+            'robot_joint1',
+            'robot_joint2',
+            'robot_joint3',
+            'robot_joint4',
+            'robot_joint5',
+            'robot_joint6',
+            'robot_joint7',
+        ]
+        self.gripper_open_pos = 0.40
 
         if self.arm_type.lower() == 'ur5':
             self.move_group_name = 'ur5_arm'
@@ -104,7 +192,10 @@ class MoveItTargetReach(object):
 
         if rospy.get_param('~robot_ns', '/robot').lower() == '/robot_b':
             self.robot_ns = '/robot_b'
+            self.robot_model = 'robot_b'
+            self.robot_base_link = 'robot_b_base_footprint'
             self.gripper_cmd_topic = '/robot_b/gripper/pos_traj_controller/command'
+            self.arm_cmd_topic = '/robot_b/arm/pos_traj_controller/command'
 
             if self.arm_type.lower() == 'ur5':
                 self.ee_link = 'robot_b_egh_gripper_grasp_link'
@@ -112,6 +203,15 @@ class MoveItTargetReach(object):
             else:
                 self.ee_link = 'robot_b_hand_tcp'
                 self.gripper_joint = 'robot_b_finger_joint1'
+                self.arm_joints = [
+                    'robot_b_joint1',
+                    'robot_b_joint2',
+                    'robot_b_joint3',
+                    'robot_b_joint4',
+                    'robot_b_joint5',
+                    'robot_b_joint6',
+                    'robot_b_joint7',
+                ]
 
     def create_object_marker(self):
         marker = Marker()
@@ -246,6 +346,88 @@ class MoveItTargetReach(object):
 
         pub.publish(cmd)
 
+    def build_joint_command(self, joint_names, positions, duration):
+        cmd = JointTrajectory()
+        cmd.joint_names = joint_names
+
+        point = JointTrajectoryPoint()
+        point.positions = positions
+        point.time_from_start = rospy.Duration(duration)
+
+        cmd.points = [point]
+        return cmd
+
+    def move_arm(self, positions, duration=3.0):
+        cmd = self.build_joint_command(
+            self.arm_joints,
+            positions,
+            duration
+        )
+        self.arm_pub.publish(cmd)
+
+    def scan_position_for_orange(self):
+        poses = {
+            'back_right': {
+                'top': [-0.249, -0.914, -0.461, -2.035, 1.494, 0.906, -0.273],
+                'bottom': [-0.429, 0.233, 0.030, -1.904, 1.325, 1.211, -1.360],
+            },
+            'back_left': {
+                'top': [-0.125, 0.653, 0.982, -0.622, -2.408, 1.137, 1.831],
+                'bottom': [0.163, -1.037, 0.807, -2.724, -0.755, 1.074, 2.606],
+            },
+            'front_right': {
+                'top': [-0.241, -1.294, -0.601, -1.975, 1.576, 0.852, 0.225],
+                'bottom': [-0.510, -0.155, -0.050, -2.357, 1.190, 1.105, -1.470],
+            },
+            'front_left': {
+                'top': [-0.734, -0.632, 0.671, -1.777, -1.178, 1.575, 2.058],
+                'bottom': [-2.086, -1.062, -1.309, -2.582, -2.480, 4.206, 2.007],
+            },
+        }
+
+        try:
+            orange_id, orange_index, side, height = self.orange_model.split('.')
+            row = int(orange_id.replace('orange', ''))
+            index = int(orange_index)
+            side = side.upper()
+            height = height.upper()
+            if index < 1 or index > 8:
+                raise ValueError
+        except ValueError as exc:
+            raise RuntimeError('Invalid orange model name: {}'.format(self.orange_model)) from exc
+
+        if side == 'L':
+            if row in (1, 4) or (row == 3 and index <= 4):
+                pose_group = 'back_right'
+            elif row == 2 or (row == 3 and index >= 5):
+                pose_group = 'front_left'
+            else:
+                raise RuntimeError('No scan pose for {}'.format(self.orange_model))
+        elif side == 'R':
+            if row == 3 or (row == 2 and index <= 4):
+                pose_group = 'back_left'
+            elif row in (1, 4) or (row == 2 and index >= 5):
+                pose_group = 'front_right'
+            else:
+                raise RuntimeError('No scan pose for {}'.format(self.orange_model))
+        else:
+            raise RuntimeError('No scan pose for {}'.format(self.orange_model))
+
+        if height == 'B':
+            return poses[pose_group]['bottom']
+        if height == 'T':
+            return poses[pose_group]['top']
+
+        raise RuntimeError('No scan pose for {}'.format(self.orange_model))
+
+    def move_arm_to_scan_position(self):
+        if self.arm_type.lower() != 'franka':
+            rospy.logwarn('Scan pose is only configured for Franka; skipping')
+            return
+
+        self.move_arm(self.scan_position_for_orange())
+        rospy.loginfo('Moved arm to scan pose for %s', self.orange_model)
+
     def create_move_group_commander(self):
         wait_timeout = float(rospy.get_param('~move_group_wait_timeout', self.move_group_wait_timeout))
         retries = max(0, int(rospy.get_param('~move_group_connect_retries', self.move_group_connect_retries)))
@@ -280,6 +462,18 @@ class MoveItTargetReach(object):
         scene = PlanningSceneInterface(ns=self.robot_ns)
         group = self.create_move_group_commander()
         gripper_pub = rospy.Publisher(self.gripper_cmd_topic, JointTrajectory, queue_size=1)
+        
+        if self.set_link_attachment(
+            'attach',
+            self.robot_model,
+            self.robot_base_link,
+            self.orange_model,
+            'body',
+        ):
+            rospy.sleep(0.5)
+            rospy.loginfo("ATTCHED")
+        else:
+            rospy.logwarn('Base attach failed for %s', self.orange_model)
 
         group.set_planner_id(self.planner_id)
         group.set_planning_time(self.planning_time)
@@ -338,13 +532,18 @@ class MoveItTargetReach(object):
             rospy.logerr('Set ~orange to an orange model name, for example orange2.4.R.T')
             return
 
-        try:
-            self.load_target_from_config()
-        except Exception as exc:
-            rospy.logerr('Failed to load orange metadata for %s: %s', self.orange_model, str(exc))
-            return
 
         self.configure_robot()
+        self.arm_pub = rospy.Publisher(self.arm_cmd_topic, JointTrajectory, queue_size=1)
+        rospy.sleep(1.5)
+        self.move_arm_to_scan_position()
+        rospy.sleep(5.0)
+
+        try:
+            self.load_orange_detection()
+        except Exception as exc:
+            rospy.logerr('Failed to get detected orange pose: %s', str(exc))
+            return
 
         object_marker = self.create_object_marker()
         target_marker = self.create_target_marker()
