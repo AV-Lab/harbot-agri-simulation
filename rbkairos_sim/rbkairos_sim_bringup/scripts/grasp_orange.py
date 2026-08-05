@@ -14,14 +14,14 @@ class OrangeGrasper(object):
         self.robot_ns = rospy.get_param('~robot_ns', '/robot_b')
         self.orange_model = rospy.get_param('~orange', '').strip()
         self.arm_type = rospy.get_param('~arm', 'Franka').lower()
-        self.grasp_success_probability = float(rospy.get_param('~grasp_success_probability', 0.36)) # prob from real-world experiments  
+        self.grasp_success_probability = float(rospy.get_param('~grasp_success_probability', 0.91)) # prob from real-world experiments  
         self.orange_link = 'body'
 
         self.robot_model = 'robot'
         self.robot_base_link = 'robot_base_footprint'
         self.gripper_link = 'robot_link7'
         self.gripper_joint = 'robot_finger_joint1'
-        self.gripper_close_pos = 0.035
+        self.gripper_close_pos = -0.1
         self.move_group_name = 'arm'
 
         self.arm_joints = [
@@ -128,7 +128,7 @@ class OrangeGrasper(object):
 
             self.gripper_link = prefix + '_link7'
             self.gripper_joint = prefix + '_finger_joint1'
-            self.gripper_close_pos = 0.035
+            self.gripper_close_pos = -0.1
 
         elif self.arm_type == 'ur5':
             prefix = 'robot_b' if self.robot_ns == '/robot_b' else 'robot'
