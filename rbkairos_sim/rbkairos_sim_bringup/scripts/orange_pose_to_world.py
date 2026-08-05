@@ -33,20 +33,20 @@ class OrangePoseToWorld(object):
             return
 
         self.pub.publish(world_pose)
-        rospy.loginfo_throttle(
-            1.0,
-            'Published orange world pose: [%.3f, %.3f, %.3f]',
-            world_pose.point.x,
-            world_pose.point.y,
-            world_pose.point.z,
-        )
+        # rospy.loginfo_throttle(
+        #     1.0,
+        #     'Published orange world pose: [%.3f, %.3f, %.3f]',
+        #     world_pose.point.x,
+        #     world_pose.point.y,
+        #     world_pose.point.z,
+        # )
 
     def run(self):
         rospy.spin()
 
 
 def main():
-    rospy.init_node('orange_pose_to_world')
+    rospy.init_node('orange_pose_to_world', anonymous=True)
     OrangePoseToWorld().run()
 
 

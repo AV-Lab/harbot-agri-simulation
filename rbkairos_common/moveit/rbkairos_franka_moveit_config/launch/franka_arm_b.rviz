@@ -175,25 +175,46 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          robot_b_hand:
+          robot_b_gripper_adapter_plate:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          robot_b_hand_sc:
+          robot_b_gripper_base:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+            Value: true
+          robot_b_gripper_bolts:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          robot_b_gripper_finger_1:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          robot_b_gripper_finger_2:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          robot_b_gripper_finger_3:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          robot_b_gripper_finger_4:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           robot_b_hand_tcp:
             Alpha: 1
             Show Axes: false
             Show Trail: false
           robot_b_imu_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          robot_b_leftfinger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -283,12 +304,48 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-          robot_b_rightfinger:
+          robot_b_third_person_camera_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_bottom_screw_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_color_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_color_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_depth_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_depth_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_left_ir_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_left_ir_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          robot_b_third_person_camera_link:
+          robot_b_wrist_d435_right_ir_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_right_ir_optical_frame:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -313,7 +370,7 @@ Visualization Manager:
         Colliding Link Color: 0; 0; 0
         Goal State Alpha: 1
         Goal State Color: 250; 128; 0
-        Interactive Marker Size: 0.2
+        Interactive Marker Size: 0.20000000298023224
         Joint Violation Color: 255; 0; 255
         Planning Group: arm
         Query Goal State: true
@@ -442,25 +499,46 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          robot_b_hand:
+          robot_b_gripper_adapter_plate:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          robot_b_hand_sc:
+          robot_b_gripper_base:
             Alpha: 1
             Show Axes: false
             Show Trail: false
+            Value: true
+          robot_b_gripper_bolts:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          robot_b_gripper_finger_1:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          robot_b_gripper_finger_2:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          robot_b_gripper_finger_3:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
+          robot_b_gripper_finger_4:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+            Value: true
           robot_b_hand_tcp:
             Alpha: 1
             Show Axes: false
             Show Trail: false
           robot_b_imu_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          robot_b_leftfinger:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -550,12 +628,48 @@ Visualization Manager:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-          robot_b_rightfinger:
+          robot_b_third_person_camera_link:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_bottom_screw_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_color_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_color_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_depth_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_depth_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_left_ir_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_left_ir_optical_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
             Value: true
-          robot_b_third_person_camera_link:
+          robot_b_wrist_d435_right_ir_frame:
+            Alpha: 1
+            Show Axes: false
+            Show Trail: false
+          robot_b_wrist_d435_right_ir_optical_frame:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -564,22 +678,6 @@ Visualization Manager:
         Show Robot Visual: true
       Value: true
       Velocity_Scaling_Factor: 0.3
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: false
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-      Name: RobotModel
-      Robot Description: /robot_b/robot_description
-      TF Prefix: ""
-      Update Interval: 0
-      Value: false
-      Visual Enabled: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /robot_b/detected_object_marker
@@ -588,10 +686,10 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
-    - Class: rviz/Marker
+    - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /robot_b/target_point_marker
-      Name: Target Point Marker
+      Marker Topic: /robot_b/selected_collision_markers
+      Name: MoveIt Collisions
       Namespaces:
         {}
       Queue Size: 100
@@ -649,4 +747,4 @@ Window Geometry:
     collapsed: false
   Width: 1920
   X: 412
-  Y: 168
+  Y: 94

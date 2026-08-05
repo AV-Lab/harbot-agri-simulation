@@ -15,7 +15,7 @@ from std_msgs.msg import String
 class HSVObjectDetector:
     def __init__(self):
         rospy.init_node("hsv_object_detector", anonymous=True)
-        rospy.sleep(3.0) 
+        rospy.sleep(0.1) 
 
         self.bridge = CvBridge()
         self.camera_info = None
@@ -26,6 +26,19 @@ class HSVObjectDetector:
 
         self.robot_ns = rospy.get_param('~robot_ns', '/robot')
         self.robot_name = self.robot_ns.strip('/')
+
+        self.window_name = "{} - DETECTION".format(
+            self.robot_name.upper().replace("_", " ")
+        )
+
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        cv2.resizeWindow(self.window_name, 1920, 1080)
+
+        if self.robot_name == "robot_a":
+            cv2.moveWindow(self.window_name, 0, 0)
+        elif self.robot_name == "robot_b":
+            cv2.moveWindow(self.window_name, 1920, 0)
+
         self.camera_name = self.robot_name + '_wrist_d435'
         self.camera_frame = self.camera_name + '_depth_optical_frame'
 
@@ -105,7 +118,7 @@ class HSVObjectDetector:
 
         valid_contours = [c for c in contours if cv2.contourArea(c) >= 500]
         if not valid_contours:
-            cv2.imshow("Camera", frame)
+            cv2.imshow(self.window_name, frame)
             cv2.waitKey(1)
             return
 
@@ -163,8 +176,8 @@ class HSVObjectDetector:
                     self.color_pub.publish(String(self.color_name))
 
 
-                    rospy.loginfo("✅ [%s] Position: %.3f %.3f %.3f | Size: %.3f x %.3f x %.3f m",
-                                self.color_name, X, Y, Z, width_m, height_m, thickness_z)
+                    # rospy.loginfo("✅ [%s] Position: %.3f %.3f %.3f | Size: %.3f x %.3f x %.3f m",
+                    #             self.color_name, X, Y, Z, width_m, height_m, thickness_z)
 
                     self.stable_start_time = None
             else:
@@ -179,7 +192,7 @@ class HSVObjectDetector:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         # cv2.imshow("Mask", mask)
-        cv2.imshow("Camera", frame)
+        cv2.imshow(self.window_name, frame)
         cv2.waitKey(1)
 
 if __name__ == '__main__':

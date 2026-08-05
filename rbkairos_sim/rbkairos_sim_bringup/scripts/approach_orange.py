@@ -44,6 +44,17 @@ class OrangeApproach(object):
     def stop_robot(self):
         self.pub.publish(Twist())
 
+    def publish_result(self, value):
+        msg = Bool(data=value)
+        for _ in range(2):
+            if rospy.is_shutdown():
+                return
+            self.orange_action_pub.publish(msg)
+            try:
+                rospy.sleep(0.1)
+            except rospy.exceptions.ROSInterruptException:
+                return
+
     def calculate_dx(self):
         current_x = self.latest_odom.pose.pose.position.x
 
@@ -51,6 +62,7 @@ class OrangeApproach(object):
         if len(parts) < 4:
             rospy.logwarn('Invalid orange name: %s', self.orange_model)
             self.dx = 0.0
+            self.goal_x = current_x
             return
 
         # Example: orange2.1.R.B
@@ -62,6 +74,7 @@ class OrangeApproach(object):
         if not column_id_str.isdigit():
             rospy.logwarn('Could not parse column number from: %s', self.orange_model)
             self.dx = 0.0
+            self.goal_x = current_x
             return
 
         column_id = int(column_id_str)
@@ -79,17 +92,14 @@ class OrangeApproach(object):
 
         key = (column_id, side)
         if key not in target_x_map:
-            rospy.logwarn('No target_x defined for %s', str(key))
+            # rospy.logwarn('No target_x defined for %s', str(key))
             self.dx = 0.0
+            self.goal_x = current_x
             return
 
         target_x = target_x_map[key]
-        error_x = target_x - current_x
-
-        # number of 0.5m steps needed
-        multiple_factor = round(error_x / 0.5)
-
-        self.dx = multiple_factor * 0.5
+        self.dx = target_x - current_x
+        self.goal_x = target_x
 
     def publish_cmd(self, _event):
         if self.latest_odom is None or self.done:
@@ -98,8 +108,7 @@ class OrangeApproach(object):
         if self.goal_x is None:
             self.calculate_dx()
             start_x = self.latest_odom.pose.pose.position.x
-            self.goal_x = start_x + self.dx
-            rospy.loginfo('start_x=%.4f  goal_x=%.4f', start_x, self.goal_x)
+            rospy.loginfo('start_x=%.4f  goal_x=%.4f  dx=%.4f', start_x, self.goal_x, self.dx)
             return
 
         current_x = self.latest_odom.pose.pose.position.x
@@ -109,21 +118,16 @@ class OrangeApproach(object):
             self.done = True
             self.stop_robot()
             rospy.loginfo('Reached near orange')
-            rospy.sleep(2.0)
-            self.orange_action_pub.publish(Bool(data=True))
+            rospy.sleep(0.1)
+            self.publish_result(True)
             rospy.signal_shutdown('orange approach complete')
             return
 
         world_vx = self.speed if remaining_x > 0.0 else -self.speed
 
         cmd = Twist()
-        if abs(self.yaw - 1.5708) < self.yaw_tolerance:
-            cmd.linear.x = 0.0
-            cmd.linear.y = -world_vx
-
-        elif abs(self.yaw + 1.5708) < self.yaw_tolerance:
-            cmd.linear.x = 0.0
-            cmd.linear.y = world_vx
+        cmd.linear.x = math.cos(self.yaw) * world_vx
+        cmd.linear.y = -math.sin(self.yaw) * world_vx
         self.pub.publish(cmd)
 
 

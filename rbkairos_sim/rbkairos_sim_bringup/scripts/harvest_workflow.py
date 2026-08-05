@@ -10,7 +10,7 @@ import signal
 import argparse
 import subprocess
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Bool, String
+from std_msgs.msg import Bool, String, Float64
 from tf.transformations import euler_from_quaternion
 
 
@@ -118,6 +118,14 @@ UNRIPE_ORANGES = {
     "orange4.2.R.T",
     "orange4.8.R.B",
 }
+# UNRIPE_ORANGES = {
+#     "orange1.2.L.T",
+#     "orange2.1.L.T",
+#     "orange2.7.L.T",
+#     "orange2.5.R.T",
+#     "orange4.4.L.T",
+#     "orange4.2.R.T",
+# }
 
 ROBOT_ALIASES = {
     "a": "robot_a",
@@ -130,11 +138,23 @@ ROBOT_ALIASES = {
 UNLOADING_STATIONS = {
     "robot_a": {
         "label": "ul1",
-        "points": ["ul1_1", "ul1_2"],
+        "labels": ["ul1", "ul2"],
+        "points": ["ul1_1", "ul1_2", "ul2_2"],
+        "point_labels": {
+            "ul1_1": "ul1",
+            "ul1_2": "ul1",
+            "ul2_2": "ul2",
+        },
     },
     "robot_b": {
         "label": "ul2",
-        "points": ["ul2_1", "ul2_2"],
+        "labels": ["ul1", "ul2"],
+        "points": ["ul1_2", "ul2_1", "ul2_2"],
+        "point_labels": {
+            "ul1_2": "ul1",
+            "ul2_1": "ul2",
+            "ul2_2": "ul2",
+        },
     },
 }
 
@@ -144,19 +164,92 @@ COLOR_DETAIL = "\033[92m" if USE_COLOR else ""
 COLOR_RESET = "\033[0m" if USE_COLOR else ""
 
 PICK_ARM_TYPE = "Franka"
-ORANGE_ACTION_TIMEOUT = 120.0
-STEP_SHUTDOWN_DELAY = 2.0
+ORANGE_ACTION_TIMEOUT = 500.0
+STEP_SHUTDOWN_DELAY = 0.1
 INTER_ORANGE_DELAY = 2.0
 PROCESS_EXIT_GRACE_DELAY = 1.0
+MAX_PICK_ATTEMPTS = 3
 UNLOAD_ACTION = "open"
 
 ORANGE_ACTION_SUBSCRIBERS = {}
 ORANGE_ACTION_EVENTS = {}
 
+MOVEIT_PLANNING_TIME_SUBSCRIBERS = {}
+MOVEIT_PLANNING_TIME_EVENTS = {}
+MOVEIT_PLANNING_DONE_TIME_SUBSCRIBERS = {}
+MOVEIT_PLANNING_DONE_TIME_EVENTS = {}
+
 AUTO_TEST_ORDERS = {
     "robot_a": ["a{}".format(index) for index in range(1, 21)],
     "robot_b": ["a{}".format(index) for index in range(40, 20, -1)],
 }
+
+def moveit_planning_time_callback_factory(robot_ns):
+    def _callback(message):
+        MOVEIT_PLANNING_TIME_EVENTS[robot_ns] = {
+            "value": float(message.data),
+            "time": time.monotonic(),
+        }
+    return _callback
+
+
+def ensure_moveit_planning_time_subscriber(robot_ns):
+    if robot_ns in MOVEIT_PLANNING_TIME_SUBSCRIBERS:
+        return
+
+    topic_name = "{}/moveit_planning_time_sec".format(robot_ns)
+    MOVEIT_PLANNING_TIME_SUBSCRIBERS[robot_ns] = rospy.Subscriber(
+        topic_name,
+        Float64,
+        moveit_planning_time_callback_factory(robot_ns),
+        queue_size=10,
+    )
+
+
+def get_moveit_planning_time_since(robot_ns, start_time, timeout=1.0):
+    deadline = time.monotonic() + timeout
+    while not rospy.is_shutdown():
+        latest_event = MOVEIT_PLANNING_TIME_EVENTS.get(robot_ns)
+        if latest_event and latest_event["time"] >= start_time:
+            return float(latest_event["value"])
+        if time.monotonic() >= deadline:
+            break
+        rospy.sleep(0.05)
+    return 0.0
+
+
+def moveit_planning_done_time_callback_factory(robot_ns):
+    def _callback(message):
+        MOVEIT_PLANNING_DONE_TIME_EVENTS[robot_ns] = {
+            "value": float(message.data),
+            "time": time.monotonic(),
+        }
+    return _callback
+
+
+def ensure_moveit_planning_done_time_subscriber(robot_ns):
+    if robot_ns in MOVEIT_PLANNING_DONE_TIME_SUBSCRIBERS:
+        return
+
+    topic_name = "{}/moveit_planning_done_time".format(robot_ns)
+    MOVEIT_PLANNING_DONE_TIME_SUBSCRIBERS[robot_ns] = rospy.Subscriber(
+        topic_name,
+        Float64,
+        moveit_planning_done_time_callback_factory(robot_ns),
+        queue_size=10,
+    )
+
+
+def get_moveit_planning_done_time_since(robot_ns, start_time, timeout=1.0):
+    deadline = time.monotonic() + timeout
+    while not rospy.is_shutdown():
+        latest_event = MOVEIT_PLANNING_DONE_TIME_EVENTS.get(robot_ns)
+        if latest_event and latest_event["time"] >= start_time:
+            return float(latest_event["value"])
+        if time.monotonic() >= deadline:
+            break
+        rospy.sleep(0.05)
+    return 0.0
 
 
 def info(text):
@@ -198,11 +291,13 @@ def waypoint_sort_key(waypoint_name):
 
 
 def destination_sort_key(robot_key, destination_name):
-    unloading_label = UNLOADING_STATIONS[robot_key]["label"]
     if destination_name.startswith("a") and destination_name[1:].isdigit():
         return (0, int(destination_name[1:]))
-    if destination_name == unloading_label:
-        return (1, 0)
+
+    unloading_labels = unloading_station_labels(robot_key)
+    if destination_name in unloading_labels:
+        return (1, unloading_labels.index(destination_name))
+
     return (2, destination_name)
 
 
@@ -309,13 +404,39 @@ def loading_station_label(robot_key):
     return UNLOADING_STATIONS[robot_key]["label"]
 
 
+def unloading_station_labels(robot_key):
+    station_config = UNLOADING_STATIONS[robot_key]
+    return station_config.get("labels", [station_config["label"]])
+
+
+def unloading_station_label_for_point(robot_key, node_name):
+    station_config = UNLOADING_STATIONS[robot_key]
+    if node_name not in station_config["points"]:
+        return None
+    return station_config.get("point_labels", {}).get(node_name, station_config["label"])
+
+
+def unloading_points_for_label(robot_key, unloading_label):
+    station_config = UNLOADING_STATIONS[robot_key]
+    point_labels = station_config.get("point_labels", {})
+    return [
+        point_name for point_name in station_config["points"]
+        if point_labels.get(point_name, station_config["label"]) == unloading_label
+    ]
+
+
+def is_unloading_label(robot_key, node_name):
+    return node_name in unloading_station_labels(robot_key)
+
+
 def is_unloading_point(robot_key, node_name):
     return node_name in UNLOADING_STATIONS[robot_key]["points"]
 
 
 def display_node_name(robot_key, node_name):
-    if is_unloading_point(robot_key, node_name):
-        return loading_station_label(robot_key)
+    unloading_label = unloading_station_label_for_point(robot_key, node_name)
+    if unloading_label is not None:
+        return unloading_label
     return node_name
 
 
@@ -352,11 +473,10 @@ def available_destinations(robot_key, current_node):
 
 def resolve_destination_node(robot_key, current_node, selected_destination):
     raw_destinations = list_raw_destinations(robot_key, current_node)
-    unloading_label = loading_station_label(robot_key)
-    if selected_destination != unloading_label:
+    if not is_unloading_label(robot_key, selected_destination):
         return selected_destination
 
-    unloading_points = set(UNLOADING_STATIONS[robot_key]["points"])
+    unloading_points = set(unloading_points_for_label(robot_key, selected_destination))
     for destination in sorted(raw_destinations):
         if destination in unloading_points:
             return destination
@@ -466,8 +586,8 @@ def launch_navigation(robot_ns, path_name, gui_enabled):
     return subprocess.Popen(
         command,
         preexec_fn=os.setsid,
-        stdout=None,
-        stderr=None,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
 
@@ -488,8 +608,8 @@ def launch_persistent_path_gui(robot_ns):
     return subprocess.Popen(
         command,
         preexec_fn=os.setsid,
-        stdout=None,
-        stderr=None,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
 
@@ -672,16 +792,32 @@ def execute_fruit_sequence(robot_ns, selected_fruits):
             info("{} is unripe. Skipping harvest.".format(orange_name))
             continue
 
-        info("Executing complete harvesting workflow for {}.".format(orange_name))
-        try:
-            harvested = execute_orange_pick(robot_ns, orange_name)
-        except (OSError, RuntimeError, rospy.ROSException) as exc:
-            info("Harvesting workflow failed for {}: {}".format(orange_name, exc))
-            return False
+        harvested = False
+        for attempt in range(1, MAX_PICK_ATTEMPTS + 1):
+            if attempt > 1:
+                info("Retrying harvesting workflow for {} (attempt {}/{}).".format(
+                    orange_name,
+                    attempt,
+                    MAX_PICK_ATTEMPTS,
+                ))
+            else:
+                info("Executing complete harvesting workflow for {}.".format(orange_name))
+
+            try:
+                harvested = execute_orange_pick(robot_ns, orange_name)
+            except (OSError, RuntimeError, rospy.ROSException) as exc:
+                info("Harvesting workflow failed for {}: {}".format(orange_name, exc))
+                harvested = False
+
+            if harvested:
+                break
+
+            if attempt < MAX_PICK_ATTEMPTS:
+                rospy.sleep(INTER_ORANGE_DELAY)
 
         if not harvested:
-            rospy.sleep(INTER_ORANGE_DELAY)
-            continue
+            info("Giving up on {} after {} attempts.".format(orange_name, MAX_PICK_ATTEMPTS))
+            return False
 
         info("Completed harvesting workflow for {}.".format(orange_name))
         rospy.sleep(INTER_ORANGE_DELAY)

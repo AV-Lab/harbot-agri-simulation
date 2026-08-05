@@ -36,7 +36,7 @@ class PathPlanner(object):
         self.proceed_flag_topic = rospy.get_param('~proceed_flag_topic', 'path_nav/proceed_flag')
         self.desired_speed_topic = rospy.get_param('~desired_speed_topic', 'path_nav/desired_speed')
         self.reverse_mode_topic = rospy.get_param('~reverse_mode_topic', 'path_nav/reverse_mode')
-        self.path_clearance_radius = float(rospy.get_param('~path_clearance_radius', 0.80))
+        self.path_clearance_radius = float(rospy.get_param('~path_clearance_radius', 0.72))
         self.shared_area_approach_distance = float(
             rospy.get_param('~shared_area_approach_distance', self.path_clearance_radius * 2.0)
         )

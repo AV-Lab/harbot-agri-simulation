@@ -21,10 +21,10 @@ class ContainerBottomCommand(object):
             rospy.logerr('Invalid action: %s. Use open or close.', self.action)
             return
 
-        rospy.sleep(1.0)
+        rospy.sleep(0.5)
         self.pub.publish(Float64(data=value))
-        rospy.loginfo('Container bottom command sent: %s', self.action)
-        rospy.sleep(1.0)
+        rospy.loginfo('Container %s', 'opened' if self.action == 'open' else 'closed')
+        rospy.sleep(0.5)
 
 
 def main():

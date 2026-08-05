@@ -343,7 +343,7 @@
     </include>
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange1.5.L.T</name>
       <pose>-7.01416 1.897684 1.44646 0 0 0</pose>
     </include>
@@ -403,7 +403,7 @@
     </include>
 
     <include>
-      <uri>model://orange</uri>
+      <uri>model://unripe_orange</uri>
       <name>orange1.7.L.B</name>
       <pose>-6.94655 8.243026 1.04181 0 0 0</pose>
     </include>
@@ -415,7 +415,7 @@
     </include>
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange1.8.L.T</name>
       <pose>-7.01416 12.219397 1.44646 0 0 0</pose>
     </include>
@@ -490,7 +490,7 @@
 
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange1.3.R.T</name>
       <pose>-5.00881 -5.545958 1.44646 0 0 0</pose>
     </include>
@@ -527,7 +527,7 @@
     </include>
 
     <include>
-      <uri>model://orange</uri>
+      <uri>model://unripe_orange</uri>
       <name>orange1.4.R.B</name>
       <pose>-5.07641 -1.567687 1.04181 0 0 0</pose>
     </include>
@@ -565,7 +565,7 @@
 
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange1.6.R.T</name>
       <pose>-5.00881 4.775755 1.44646 0 0 0</pose>
     </include>
@@ -713,7 +713,7 @@
     </include>
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange2.4.L.T</name>
       <pose>-3.01416 -1.542887 1.44646 0 0 0</pose>
     </include>
@@ -859,7 +859,7 @@
 
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange2.2.R.T</name>
       <pose>-1.00881 -8.986529 1.44646 0 0 0</pose>
     </include>
@@ -934,7 +934,7 @@
 
 
     <include>
-      <uri>model://orange</uri>
+      <uri>model://unripe_orange</uri>
       <name>orange2.5.R.T</name>
       <pose>-1.00881 1.335184 1.44646 0 0 0</pose>
     </include>
@@ -1009,7 +1009,7 @@
 
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange2.8.R.T</name>
       <pose>-1.00881 11.656897 1.44646 0 0 0</pose>
     </include>
@@ -1083,7 +1083,7 @@
     </include>
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange3.3.L.T</name>
       <pose>0.98584 -4.983458 1.44646 0 0 0</pose>
     </include>
@@ -1119,7 +1119,7 @@
     </include>
 
     <include>
-      <uri>model://orange</uri>
+      <uri>model://unripe_orange</uri>
       <name>orange3.4.L.B</name>
       <pose>1.05345 -2.078687 1.04181 0 0 0</pose>
     </include>
@@ -1155,7 +1155,7 @@
     </include>
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange3.6.L.T</name>
       <pose>0.98584 5.338255 1.44646 0 0 0</pose>
     </include>
@@ -1378,7 +1378,7 @@
 
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange3.7.R.T</name>
       <pose>2.99119 8.216326 1.44646 0 0 0</pose>
     </include>
@@ -1390,7 +1390,7 @@
     </include>
 
     <include>
-      <uri>model://orange</uri>
+      <uri>model://unripe_orange</uri>
       <name>orange3.7.R.B</name>
       <pose>2.92359 8.754026 1.04181 0 0 0</pose>
     </include>
@@ -1647,7 +1647,7 @@
 
 
     <include>
-      <uri>model://orange</uri>
+      <uri>model://unripe_orange</uri>
       <name>orange4.2.R.T</name>
       <pose>6.99119 -8.986529 1.44646 0 0 0</pose>
     </include>
@@ -1747,7 +1747,7 @@
 
 
     <include>
-      <uri>model://unripe_orange</uri>
+      <uri>model://orange</uri>
       <name>orange4.6.R.T</name>
       <pose>6.99119 4.775755 1.44646 0 0 0</pose>
     </include>
@@ -1809,7 +1809,7 @@
     </include>
 
     <include>
-      <uri>model://orange</uri>
+      <uri>model://unripe_orange</uri>
       <name>orange4.8.R.B</name>
       <pose>6.92359 12.194597 1.04181 0 0 0</pose>
     </include>

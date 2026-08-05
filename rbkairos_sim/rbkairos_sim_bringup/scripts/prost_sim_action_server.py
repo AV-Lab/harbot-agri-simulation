@@ -24,8 +24,8 @@ class ProstSimActionServer(object):
         self.gui_enabled = bool(rospy.get_param("~gui", False))
         self.arm_type = rospy.get_param("~arm", workflow.PICK_ARM_TYPE)
         self.default_timeout = float(rospy.get_param("~default_timeout", 120.0))
-        self.nav_start_delay = float(rospy.get_param("~nav_start_delay", 5.0))
-        self.nav_finish_delay = float(rospy.get_param("~nav_finish_delay", 3.0))
+        self.nav_start_delay = float(rospy.get_param("~nav_start_delay", 1.1))
+        self.nav_finish_delay = float(rospy.get_param("~nav_finish_delay", 1.1))
         self.container_action = rospy.get_param("~container_action", "open")
 
         self.held_orange = None
@@ -39,8 +39,10 @@ class ProstSimActionServer(object):
         )
 
     def handle_action(self, request):
+        moveit_planning_time_sec = 0.0
+        post_moveit_planning_grasp_time_sec = 0.0
         if not self.lock.acquire(False):
-            return ActionServerResponse(False, "Server is already executing an action.")
+            return ActionServerResponse(False, "Server is already executing an action.", 0.0, 0.0)
 
         try:
             action_id = request.action_id.strip()
@@ -48,19 +50,18 @@ class ProstSimActionServer(object):
             timeout = float(request.timeout) if request.timeout > 0.0 else self.default_timeout
 
             if len(arr) != 6:
-                return ActionServerResponse(False, "Input must be float64[6].")
+                return ActionServerResponse(False, "Input must be float64[6].", 0.0, 0.0)
 
-            rospy.loginfo(
-                "Sim action request: action_id=%s input=%s timeout=%.1f",
-                action_id,
-                arr,
-                timeout,
-            )
+            # rospy.loginfo(
+            #     "Sim action request: action_id=%s input=%s",
+            #     action_id,
+            #     arr,
+            # )
 
             if action_id == "navigate":
                 ok, message = self.action_navigate(arr, timeout)
             elif action_id == "grasp_fruit":
-                ok, message = self.action_grasp_fruit(arr, timeout)
+                ok, message, moveit_planning_time_sec, post_moveit_planning_grasp_time_sec = self.action_grasp_fruit(arr, timeout)
             elif action_id == "load_to_bin":
                 ok, message = self.action_load_to_bin(arr, timeout)
             elif action_id == "unload":
@@ -74,11 +75,11 @@ class ProstSimActionServer(object):
                 )
 
             rospy.loginfo("Sim action result: success=%s message=%s", ok, message)
-            return ActionServerResponse(ok, message)
+            return ActionServerResponse(ok, message, moveit_planning_time_sec, post_moveit_planning_grasp_time_sec)
 
         except Exception as exc:
             rospy.logerr("Sim action failed: %s", exc)
-            return ActionServerResponse(False, str(exc))
+            return ActionServerResponse(False, str(exc), 0.0, 0.0)
         finally:
             self.lock.release()
 
@@ -138,6 +139,9 @@ class ProstSimActionServer(object):
         self.assert_orange_available_here(orange_name)
 
         start_time = time.time()
+        moveit_planning_time_sec = 0.0
+        moveit_planning_done_time = 0.0
+        post_moveit_planning_grasp_time_sec = 0.0
         steps = [
             (
                 "Step 1/3: Approach target fruit",
@@ -157,20 +161,47 @@ class ProstSimActionServer(object):
         ]
 
         for label, script_name, params in steps:
-            step_succeeded = self.run_orange_script_step(
-                orange_name,
-                label,
-                script_name,
-                params,
-                self.remaining_timeout(start_time, timeout),
-                allow_failure_result=script_name == "grasp_orange.py",
-            )
+            step_succeeded = False
+            step_result_time = 0.0
+            moveit_reach_attempt = 0
+            while not rospy.is_shutdown():
+                step_succeeded, step_moveit_planning_time_sec, step_moveit_planning_done_time, step_result_time = self.run_orange_script_step(
+                    orange_name,
+                    label,
+                    script_name,
+                    params,
+                    self.remaining_timeout(start_time, timeout),
+                    allow_failure_result=script_name in ("moveit_target_reach.py", "grasp_orange.py"),
+                )
+                moveit_planning_time_sec += step_moveit_planning_time_sec
+                if step_moveit_planning_done_time > 0.0:
+                    moveit_planning_done_time = step_moveit_planning_done_time
+                if script_name != "moveit_target_reach.py" or step_succeeded:
+                    break
+
+                moveit_reach_attempt += 1
+                # rospy.logwarn(
+                #     "MoveIt reach failed for %s after internal planning attempts; retrying reach step (retry %d).",
+                #     orange_name,
+                #     moveit_reach_attempt,
+                # )
+                rospy.sleep(0.1)
+
+            if rospy.is_shutdown():
+                raise RuntimeError("ROS shutdown while executing {}.".format(label))
+            if script_name == "grasp_orange.py" and moveit_planning_done_time > 0.0:
+                post_moveit_planning_grasp_time_sec = step_result_time - moveit_planning_done_time
+                # rospy.loginfo(
+                #     "\033[91m[POST MOVEIT TIMER STOP] %s elapsed %.3f sec\033[0m",
+                #     orange_name,
+                #     post_moveit_planning_grasp_time_sec,
+                # )
             if script_name == "grasp_orange.py" and not step_succeeded:
                 self.held_orange = None
-                return False, "Grasp failed for {}.".format(orange_name)
+                return False, "Grasp failed for {}.".format(orange_name), moveit_planning_time_sec, post_moveit_planning_grasp_time_sec
 
         self.held_orange = orange_name
-        return True, "Grasped {}.".format(orange_name)
+        return True, "Grasped {}.".format(orange_name), moveit_planning_time_sec, post_moveit_planning_grasp_time_sec
 
     def action_load_to_bin(self, arr, timeout):
         orange_name = self.decode_orange(arr)
@@ -260,13 +291,13 @@ class ProstSimActionServer(object):
         return waypoint_name
 
     def validate_unloading_label(self, unloading_label):
-        expected_label = workflow.loading_station_label(self.robot_key)
-        if unloading_label != expected_label:
+        valid_labels = workflow.unloading_station_labels(self.robot_key)
+        if unloading_label not in valid_labels:
             raise ValueError(
                 "{} is not valid for {}. This robot uses {}.".format(
                     unloading_label,
                     self.robot_key,
-                    expected_label,
+                    ", ".join(valid_labels),
                 )
             )
         return unloading_label
@@ -357,9 +388,17 @@ class ProstSimActionServer(object):
         private_params = {"orange": orange_name}
         private_params.update(extra_params)
 
+        moveit_planning_time_sec = 0.0
+        moveit_planning_done_time = 0.0
+        step_result_time = 0.0
+        if script_name == "moveit_target_reach.py":
+            workflow.ensure_moveit_planning_time_subscriber(self.robot_ns)
+            workflow.ensure_moveit_planning_done_time_subscriber(self.robot_ns)
+
         rospy.loginfo("%s for %s", step_label, orange_name)
         process_handle = None
         try:
+            step_start_time = time.monotonic()
             process_handle = workflow.launch_ros_script(script_name, private_params)
             step_succeeded = workflow.wait_for_orange_action_result(
                 self.robot_ns,
@@ -367,6 +406,16 @@ class ProstSimActionServer(object):
                 step_label,
                 timeout=timeout,
             )
+            step_result_time = time.monotonic()
+            if script_name == "moveit_target_reach.py":
+                moveit_planning_time_sec = workflow.get_moveit_planning_time_since(
+                    self.robot_ns,
+                    step_start_time,
+                )
+                moveit_planning_done_time = workflow.get_moveit_planning_done_time_since(
+                    self.robot_ns,
+                    step_start_time,
+                )
             rospy.sleep(workflow.STEP_SHUTDOWN_DELAY)
         finally:
             workflow.shutdown_process(process_handle)
@@ -374,7 +423,7 @@ class ProstSimActionServer(object):
         if not step_succeeded and not allow_failure_result:
             raise RuntimeError("{} reported orange_action=False.".format(step_label))
 
-        return step_succeeded
+        return step_succeeded, moveit_planning_time_sec, moveit_planning_done_time, step_result_time
 
     def wait_for_navigation_finish(self, process_handle, timeout):
         status_topic = "{}/path_nav/status".format(self.robot_ns)

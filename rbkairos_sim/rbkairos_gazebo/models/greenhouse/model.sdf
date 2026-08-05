@@ -226,7 +226,6 @@
     </link>
 
     <!-- stems_link -->
-    <!-- Collision is disabled temporarily since moveit doesn't see it as collision-->
     <link name="stems_link">
       <pose>0 0 0 0 0 0</pose>
       <visual name="stems_link_visual">
@@ -238,7 +237,7 @@
           </mesh>
         </geometry>
       </visual>
-      <!-- <collision name="stems_link_collision">
+      <collision name="stems_link_collision">
         <pose>0 0 0 1.57079632679 0 0</pose>
         <geometry>
           <mesh>
@@ -246,7 +245,7 @@
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
-      </collision> -->
+      </collision>
       <inertial>
         <pose>0 0 0 0 0 0</pose>
         <mass>1.0</mass>
@@ -262,7 +261,6 @@
     </link>
 
     <!-- orange_stem -->
-    <!-- Collision is disabled temporarily since moveit doesn't see it as collision-->
     <link name="orange_stem">
       <pose>0 0 0 0 0 0</pose>
       <visual name="orange_stem_visual">
@@ -280,7 +278,7 @@
           <emissive>0 0 0 1</emissive>
         </material>
       </visual>
-      <!-- <collision name="orange_stem_collision">
+      <collision name="orange_stem_collision">
         <pose>0 0 0 1.57079632679 0 0</pose>
         <geometry>
           <mesh>
@@ -288,7 +286,7 @@
             <scale>1 1 1</scale>
           </mesh>
         </geometry>
-      </collision> -->
+      </collision>
       <inertial>
         <pose>0 0 0 0 0 0</pose>
         <mass>1.0</mass>

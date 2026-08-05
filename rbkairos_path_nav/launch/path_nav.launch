@@ -2,7 +2,7 @@
   <arg name="robot_ns" default="robot"/>
   <arg name="odom_topic" default="robotnik_base_control/odom_gt"/>
   <arg name="cmd_vel_topic" default="robotnik_base_control/cmd_vel"/>
-  <arg name="path_name" default="robot_a.json"/>
+  <arg name="path_name" default="robot_a/wavepoint16/a16-a20.json"/>
   <arg name="path_topic" default="path_nav/path"/>
   <arg name="desired_speed_topic" default="path_nav/desired_speed"/>
   <arg name="status_topic" default="path_nav/status"/>
@@ -11,7 +11,7 @@
   <arg name="other_robot_ns" default="$(eval 'robot_b' if arg('robot_ns').strip('/') in ['robot', 'robot_a'] else 'robot')"/>
   <arg name="other_odom_topic" default="$(eval '/{}/{}'.format(arg('other_robot_ns'), arg('odom_topic').lstrip('/')))"/>
   <arg name="other_path_topic" default="$(eval '/{}/{}'.format(arg('other_robot_ns'), arg('path_topic').lstrip('/')))"/>
-  <arg name="path_clearance_radius" default="0.80"/>
+  <arg name="path_clearance_radius" default="0.72"/>
   <arg name="shared_area_approach_distance" default="1.60"/>
   <arg name="clear_confirmation_seconds" default="2.50"/>
 

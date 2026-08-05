@@ -95,7 +95,7 @@ class OrangeUnloader(object):
     def open_gripper(self):
         cmd = self.build_joint_command(
             [self.gripper_joint],
-            [0.25],
+            [0.5],
             2.0
         )
         self.gripper_pub.publish(cmd)
@@ -133,11 +133,11 @@ class OrangeUnloader(object):
 
         model_link = self.get_model_link_name()
 
-        rospy.sleep(1.0)
+        rospy.sleep(0.5)
         
         rospy.loginfo('Moving orange to drop position')
         self.move_arm_to_drop_position()
-        rospy.sleep(5.0)
+        rospy.sleep(4.0)
 
         self.set_link_attachment(
             'detach',
@@ -146,17 +146,17 @@ class OrangeUnloader(object):
             self.orange_model,
             model_link,
         )
-        rospy.sleep(1.0)
+        rospy.sleep(0.1)
 
         rospy.loginfo('Unloading orange')
         self.open_gripper()
 
-        rospy.sleep(1.0)
+        rospy.sleep(0.5)
 
         rospy.loginfo('Unloaded orange. Returning to initial position')
         self.move_arm_to_initial_position()
 
-        rospy.sleep(3.0)
+        rospy.sleep(0.5)
 
         rospy.loginfo('Arm returned to initial position')
         self.orange_action_pub.publish(Bool(data=True))
