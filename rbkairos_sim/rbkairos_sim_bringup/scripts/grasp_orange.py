@@ -73,9 +73,8 @@ class OrangeGrasper(object):
                 rospy.wait_for_service(service_name, timeout=1.0)
                 service = rospy.ServiceProxy(service_name, Attach)
                 result = service(req)
-                rospy.sleep(0.3)
+                rospy.sleep(0.1)
                 if result.ok:
-                    rospy.sleep(0.3)
                     return True
 
                 rospy.logwarn(
@@ -98,7 +97,7 @@ class OrangeGrasper(object):
                 )
 
             if attempt < attempts:
-                rospy.sleep(0.5)
+                rospy.sleep(0.1)
 
         return False
 
@@ -253,7 +252,6 @@ class OrangeGrasper(object):
                     self.orange_model,
                     self.grasp_success_probability,
                 )
-                rospy.sleep(1.0)
                 if not self.move_arm_to_initial_position_with_moveit():
                     self.orange_action_pub.publish(Bool(data=False))
                     return
@@ -262,7 +260,7 @@ class OrangeGrasper(object):
                 self.orange_action_pub.publish(Bool(data=False))
                 return                
             
-            rospy.sleep(0.5)
+            rospy.sleep(0.1)
             
             if not self.set_link_attachment(
                 'attach',
@@ -289,7 +287,6 @@ class OrangeGrasper(object):
                 return
 
             rospy.loginfo('Grasping orange')
-            rospy.sleep(2.0)
 
             self.close_gripper()
             rospy.sleep(2.0)
@@ -298,7 +295,6 @@ class OrangeGrasper(object):
             if not self.move_arm_to_initial_position_with_moveit():
                 self.orange_action_pub.publish(Bool(data=False))
                 return
-            rospy.sleep(1.0)
 
             rospy.loginfo('Arm moved to holding position')
             self.orange_action_pub.publish(Bool(data=True))

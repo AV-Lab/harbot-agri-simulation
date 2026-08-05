@@ -114,12 +114,8 @@
     <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg prefix)base_link" reason="Adjacent"/>
-    <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg arm_id)_link1" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg arm_id)_link1_sc" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg arm_id)_link2" reason="Never"/>
@@ -131,12 +127,8 @@
     <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg prefix)base_link" reason="Default"/>
-    <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link0_sc" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg arm_id)_link1_sc" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg arm_id)_link2" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg arm_id)_link2_sc" reason="Default"/>
@@ -149,12 +141,8 @@
     <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg prefix)base_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg arm_id)_link2" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg arm_id)_link2_sc" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg arm_id)_link3" reason="Never"/>
@@ -164,12 +152,8 @@
     <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg prefix)base_link" reason="Default"/>
-    <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link1_sc" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg arm_id)_link2_sc" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg arm_id)_link3" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg arm_id)_link3_sc" reason="Default"/>
@@ -184,12 +168,8 @@
     <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg prefix)base_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg arm_id)_link3" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg arm_id)_link3_sc" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg arm_id)_link4" reason="Never"/>
@@ -202,12 +182,8 @@
     <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg prefix)base_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link2_sc" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg arm_id)_link3_sc" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg arm_id)_link4" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg arm_id)_link4_sc" reason="Default"/>
@@ -220,12 +196,8 @@
     <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg prefix)base_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link3" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg arm_id)_link4" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg arm_id)_link4_sc" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg arm_id)_link5" reason="Never"/>
@@ -236,12 +208,8 @@
     <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg prefix)base_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link3_sc" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg arm_id)_link4_sc" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg arm_id)_link5" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg arm_id)_link5_sc" reason="Default"/>
@@ -252,12 +220,8 @@
     <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg prefix)base_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link4" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg arm_id)_link5" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg arm_id)_link5_sc" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg arm_id)_link6" reason="Never"/>
@@ -267,12 +231,8 @@
     <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg prefix)base_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link4_sc" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg arm_id)_link5_sc" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg arm_id)_link6" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg arm_id)_link6_sc" reason="Default"/>
@@ -280,94 +240,44 @@
     <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg arm_id)_link7_sc" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link5" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg arm_id)_link6_sc" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg arm_id)_link7" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link5_sc" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg arm_id)_link6_sc" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg arm_id)_link7" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg arm_id)_link7_sc" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link6" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg arm_id)_link7" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg arm_id)_link7_sc" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link6_sc" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg arm_id)_link7_sc" reason="Adjacent"/>
     <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg prefix)back_left_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)back_left_wheel_link" link2="$(arg prefix)back_right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)back_left_wheel_link" link2="$(arg prefix)base_link" reason="Adjacent"/>
-    <disable_collisions link1="$(arg prefix)back_left_wheel_link" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)back_left_wheel_link" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)back_left_wheel_link" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)back_left_wheel_link" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)back_left_wheel_link" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)back_left_wheel_link" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)back_right_wheel_link" link2="$(arg prefix)base_link" reason="Adjacent"/>
-    <disable_collisions link1="$(arg prefix)back_right_wheel_link" link2="$(arg prefix)front_laser_base_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)back_right_wheel_link" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)back_right_wheel_link" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)back_right_wheel_link" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)back_right_wheel_link" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)back_right_wheel_link" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)base_link" link2="$(arg prefix)front_laser_base_link" reason="Adjacent"/>
     <disable_collisions link1="$(arg prefix)base_link" link2="$(arg prefix)front_left_wheel_link" reason="Adjacent"/>
-    <disable_collisions link1="$(arg prefix)base_link" link2="$(arg prefix)front_rgbd_camera_link" reason="Adjacent"/>
     <disable_collisions link1="$(arg prefix)base_link" link2="$(arg prefix)front_right_wheel_link" reason="Adjacent"/>
-    <disable_collisions link1="$(arg prefix)base_link" link2="$(arg prefix)imu_link" reason="Adjacent"/>
-    <disable_collisions link1="$(arg prefix)base_link" link2="$(arg prefix)rear_laser_base_link" reason="Adjacent"/>
-    <disable_collisions link1="$(arg prefix)front_laser_base_link" link2="$(arg prefix)front_left_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_laser_base_link" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_laser_base_link" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_laser_base_link" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_laser_base_link" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_left_wheel_link" link2="$(arg prefix)front_rgbd_camera_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)front_left_wheel_link" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_left_wheel_link" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_left_wheel_link" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_rgbd_camera_link" link2="$(arg prefix)front_right_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_rgbd_camera_link" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_rgbd_camera_link" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_right_wheel_link" link2="$(arg prefix)imu_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)front_right_wheel_link" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)imu_link" link2="$(arg prefix)rear_laser_base_link" reason="Never"/>
 </robot>

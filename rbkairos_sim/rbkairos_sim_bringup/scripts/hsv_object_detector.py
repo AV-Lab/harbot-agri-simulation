@@ -31,13 +31,13 @@ class HSVObjectDetector:
             self.robot_name.upper().replace("_", " ")
         )
 
-        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(self.window_name, 1920, 1080)
+        # cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        # cv2.resizeWindow(self.window_name, 1920, 1080)
 
-        if self.robot_name == "robot_a":
-            cv2.moveWindow(self.window_name, 0, 0)
-        elif self.robot_name == "robot_b":
-            cv2.moveWindow(self.window_name, 1920, 0)
+        # if self.robot_name == "robot_a":
+        #     cv2.moveWindow(self.window_name, 0, 0)
+        # elif self.robot_name == "robot_b":
+        #     cv2.moveWindow(self.window_name, 1920, 0)
 
         self.camera_name = self.robot_name + '_wrist_d435'
         self.camera_frame = self.camera_name + '_depth_optical_frame'
@@ -118,7 +118,7 @@ class HSVObjectDetector:
 
         valid_contours = [c for c in contours if cv2.contourArea(c) >= 500]
         if not valid_contours:
-            cv2.imshow(self.window_name, frame)
+            # cv2.imshow(self.window_name, frame)
             cv2.waitKey(1)
             return
 
@@ -185,15 +185,15 @@ class HSVObjectDetector:
 
         self.last_position = position
 
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv2.circle(frame, (cx_pixel, cy_pixel), 8, (255, 0, 255), -1)
-        cv2.circle(frame, (int(cx), int(cy)), 6, (255, 255, 255), 2)
-        cv2.putText(frame, f"{self.color_name}: {Z:.2f}m", (x, y-10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        # cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        # cv2.circle(frame, (cx_pixel, cy_pixel), 8, (255, 0, 255), -1)
+        # cv2.circle(frame, (int(cx), int(cy)), 6, (255, 255, 255), 2)
+        # cv2.putText(frame, f"{self.color_name}: {Z:.2f}m", (x, y-10),
+        #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        # cv2.imshow("Mask", mask)
-        cv2.imshow(self.window_name, frame)
-        cv2.waitKey(1)
+        # # cv2.imshow("Mask", mask)
+        # cv2.imshow(self.window_name, frame)
+        # cv2.waitKey(1)
 
 if __name__ == '__main__':
     try:

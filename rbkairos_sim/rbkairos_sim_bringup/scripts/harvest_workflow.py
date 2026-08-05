@@ -104,28 +104,28 @@ FRUIT_OPTIONS = {
     "a40": ["orange4.8.R.B", "orange4.8.R.T"],
 }
 
-UNRIPE_ORANGES = {
-    "orange1.2.L.T",
-    "orange1.7.L.B",
-    "orange1.4.R.B",
-    "orange2.1.L.T",
-    "orange2.7.L.T",
-    "orange2.5.R.T",
-    "orange3.4.L.B",
-    "orange3.1.R.T",
-    "orange3.7.R.B",
-    "orange4.4.L.T",
-    "orange4.2.R.T",
-    "orange4.8.R.B",
-}
 # UNRIPE_ORANGES = {
 #     "orange1.2.L.T",
+#     "orange1.7.L.B",
+#     "orange1.4.R.B",
 #     "orange2.1.L.T",
 #     "orange2.7.L.T",
 #     "orange2.5.R.T",
+#     "orange3.4.L.B",
+#     "orange3.1.R.T",
+#     "orange3.7.R.B",
 #     "orange4.4.L.T",
 #     "orange4.2.R.T",
+#     "orange4.8.R.B",
 # }
+UNRIPE_ORANGES = {
+    "orange1.2.L.T",
+    "orange2.1.L.T",
+    "orange2.7.L.T",
+    "orange2.5.R.T",
+    "orange4.4.L.T",
+    "orange4.2.R.T",
+}
 
 ROBOT_ALIASES = {
     "a": "robot_a",

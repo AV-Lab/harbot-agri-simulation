@@ -1,6 +1,6 @@
 <launch>
    
-    <node pkg="rviz"
+    <!-- <node pkg="rviz"
           type="rviz"
           name="camera_views_rviz"
           args="-d $(find rbkairos_gazebo)/rviz/rbkairos_camera_views.rviz"
@@ -32,22 +32,22 @@
       name="franka_arm_a_rviz"
       args="-d $(find rbkairos_franka_moveit_config)/launch/franka_arm_a.rviz"
       output="screen"
-      launch-prefix="bash -c 'sleep 15; exec &quot;$@&quot;' _" />
+      launch-prefix="bash -c 'sleep 15; exec &quot;$@&quot;' _" /> -->
 
     <node pkg="rbkairos_sim_bringup"
           type="hsv_object_detector.py"
           name="hsv_object_detector_robot"
           output="screen"
-          launch-prefix="bash -c 'sleep 25; exec &quot;$@&quot;' _">
+          launch-prefix="bash -c 'sleep 1; exec &quot;$@&quot;' _">
         <param name="robot_ns" value="/robot" />
     </node>
 
-    <!-- <node pkg="rbkairos_sim_bringup"
+    <node pkg="rbkairos_sim_bringup"
           type="prost_sim_action_server.py"
           name="prost_sim_action_server_robot"
           output="screen"
-          launch-prefix="bash -c 'sleep 35; exec &quot;$@&quot;' _">
+          launch-prefix="bash -c 'sleep 5; exec &quot;$@&quot;' _">
         <param name="robot_ns" value="/robot" />
-    </node> -->
+    </node>
 
 </launch>
