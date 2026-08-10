@@ -13,8 +13,6 @@ Panels:
     Name: Selection
   - Class: rviz/Tool Properties
     Expanded:
-      - /2D Pose Estimate1
-      - /2D Nav Goal1
       - /Publish Point1
     Name: Tool Properties
     Splitter Ratio: 0.588679016
@@ -27,7 +25,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: A Front LaserScan
+    SyncSource: ""
 Toolbars:
   toolButtonStyle: 2
 Visualization Manager:
@@ -270,131 +268,6 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/LaserScan
-      Color: 255; 255; 255
-      Color Transformer: Intensity
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 0
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: A Front LaserScan
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.0299999993
-      Style: Flat Squares
-      Topic: /robot/front_laser/scan
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/LaserScan
-      Color: 255; 255; 255
-      Color Transformer: Intensity
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 0
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: A Rear LaserScan
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.0299999993
-      Style: Flat Squares
-      Topic: /robot/rear_laser/scan
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
-    - Class: rviz/Camera
-      Enabled: true
-      Image Rendering: background and overlay
-      Image Topic: /robot/front_rgbd_camera/rgb/image_raw
-      Name: A Front RGBD Camera
-      Overlay Alpha: 0.5
-      Queue Size: 2
-      Transport Hint: raw
-      Unreliable: false
-      Value: true
-      Visibility:
-        A Front LaserScan: true
-        A Front PointCloud: true
-        A Rear LaserScan: true
-        A RobotModel: true
-        A amcl particles: true
-        Grid: true
-        Map: true
-        Marker: true
-        TF: true
-        Value: true
-        global_costmap: true
-        global_plan: true
-        local_costmap: true
-        local_plan: true
-      Zoom Factor: 1
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: RGB8
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: A Front PointCloud
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.00999999978
-      Style: Flat Squares
-      Topic: /robot/front_rgbd_camera/depth/points
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /robot/move_base/TebLocalPlannerROS/teb_markers
-      Name: Marker
-      Namespaces:
-        RobotFootprintModel: true
-        ViaPoints: true
-      Queue Size: 100
-      Value: true
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
@@ -570,103 +443,11 @@ Visualization Manager:
                     {}
       Update Interval: 0
       Value: true
-    - Alpha: 0.699999988
-      Class: rviz/Map
-      Color Scheme: map
-      Draw Behind: false
-      Enabled: true
-      Name: Map
-      Topic: /robot/map
-      Unreliable: false
-      Use Timestamp: false
-      Value: true
-    - Alpha: 1
-      Arrow Length: 0.300000012
-      Axes Length: 0.300000012
-      Axes Radius: 0.00999999978
-      Class: rviz/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.0700000003
-      Head Radius: 0.0299999993
-      Name: A amcl particles
-      Shaft Length: 0.230000004
-      Shaft Radius: 0.00999999978
-      Shape: Arrow (Flat)
-      Topic: /robot/particlecloud
-      Unreliable: false
-      Value: true
-    - Alpha: 0.699999988
-      Class: rviz/Map
-      Color Scheme: map
-      Draw Behind: false
-      Enabled: true
-      Name: global_costmap
-      Topic: /robot/move_base/global_costmap/costmap
-      Unreliable: false
-      Use Timestamp: false
-      Value: true
-    - Alpha: 0.699999988
-      Class: rviz/Map
-      Color Scheme: costmap
-      Draw Behind: false
-      Enabled: true
-      Name: local_costmap
-      Topic: /robot/move_base/local_costmap/costmap
-      Unreliable: false
-      Use Timestamp: false
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 25; 255; 0
-      Enabled: true
-      Head Diameter: 0.300000012
-      Head Length: 0.200000003
-      Length: 0.300000012
-      Line Style: Lines
-      Line Width: 0.0299999993
-      Name: global_plan
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.0299999993
-      Shaft Diameter: 0.100000001
-      Shaft Length: 0.100000001
-      Topic: /robot/move_base/NavfnROS/plan
-      Unreliable: false
-      Value: true
-    - Alpha: 1
-      Buffer Length: 1
-      Class: rviz/Path
-      Color: 255; 85; 0
-      Enabled: true
-      Head Diameter: 0.300000012
-      Head Length: 0.200000003
-      Length: 0.300000012
-      Line Style: Billboards
-      Line Width: 0.0299999993
-      Name: local_plan
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Pose Color: 255; 85; 255
-      Pose Style: None
-      Radius: 0.0299999993
-      Shaft Diameter: 0.100000001
-      Shaft Length: 0.100000001
-      Topic: /robot/move_base/TebLocalPlannerROS/local_plan
-      Unreliable: false
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: robot_map
+    Fixed Frame: world
     Frame Rate: 30
   Name: root
   Tools:
@@ -676,10 +457,6 @@ Visualization Manager:
     - Class: rviz/Select
     - Class: rviz/FocusCamera
     - Class: rviz/Measure
-    - Class: rviz/SetInitialPose
-      Topic: robot/initialpose
-    - Class: rviz/SetGoal
-      Topic: robot/move_base_simple/goal
     - Class: rviz/PublishPoint
       Single click: true
       Topic: /clicked_point

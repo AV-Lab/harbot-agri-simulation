@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 project(roboticsgroup_gazebo_plugins)
 
 # Set CMP0054
@@ -31,10 +31,7 @@ include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE
 add_library(roboticsgroup_gazebo_mimic_joint_plugin src/mimic_joint_plugin.cpp)
 target_link_libraries(roboticsgroup_gazebo_mimic_joint_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
-add_library(roboticsgroup_gazebo_disable_link_plugin src/disable_link_plugin.cpp)
-target_link_libraries(roboticsgroup_gazebo_disable_link_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-
-install(TARGETS roboticsgroup_gazebo_mimic_joint_plugin roboticsgroup_gazebo_disable_link_plugin
+install(TARGETS roboticsgroup_gazebo_mimic_joint_plugin
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

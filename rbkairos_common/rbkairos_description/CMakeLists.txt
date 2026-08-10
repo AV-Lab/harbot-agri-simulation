@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(rbkairos_description)
 
-find_package(catkin REQUIRED COMPONENTS roslaunch urdf xacro robotnik_sensors)
+find_package(catkin REQUIRED COMPONENTS urdf xacro)
 
 catkin_package(
   CATKIN_DEPENDS urdf xacro
@@ -10,6 +10,6 @@ catkin_package(
 include_directories(${catkin_INCLUDE_DIRS})
 
 install(
-  DIRECTORY launch meshes urdf robots
+  DIRECTORY meshes urdf robots
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

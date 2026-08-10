@@ -8,8 +8,6 @@ from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import PointStamped
 import message_filters
 import time
-import yaml
-import os
 from std_msgs.msg import String
 
 class HSVObjectDetector:
@@ -45,8 +43,10 @@ class HSVObjectDetector:
         # Get selected color from param
         self.color_name = rospy.get_param("~color_name", "orange")
 
-        # Load HSV config from param
-        self.color_ranges = self.load_color_config()
+        self.color_ranges = {
+            "lower": np.array([5, 150, 50], dtype=np.uint8),
+            "upper": np.array([25, 255, 240], dtype=np.uint8),
+        }
 
         # Publishers
         self.pub = rospy.Publisher(self.robot_ns + '/object_position', PointStamped, queue_size=1)
@@ -64,31 +64,6 @@ class HSVObjectDetector:
 
         rospy.loginfo("🎯 Detecting objects of color: %s", self.color_name)
         rospy.spin()
-
-    def load_color_config(self):
-        config_path = rospy.get_param("~color_config", "/root/catkin_ws/src/harbot-agri-simulation/rbkairos_sim/rbkairos_sim_bringup/config/hsv_colors.yaml")
-        if not config_path or not os.path.isfile(config_path):
-            rospy.logwarn("⚠️ No valid color config file found, using default green range.")
-            return {
-                "lower": np.array([40, 70, 70], dtype=np.uint8),
-                "upper": np.array([80, 255, 255], dtype=np.uint8)
-            }
-
-        with open(config_path, 'r') as f:
-            data = yaml.safe_load(f)
-
-        if self.color_name not in data:
-            rospy.logwarn("⚠️ Color '%s' not found in config. Using default green.", self.color_name)
-            return {
-                "lower": np.array([40, 70, 70], dtype=np.uint8),
-                "upper": np.array([80, 255, 255], dtype=np.uint8)
-            }
-
-        bounds = data[self.color_name]
-        return {
-            "lower": np.array(bounds["lower"], dtype=np.uint8),
-            "upper": np.array(bounds["upper"], dtype=np.uint8)
-        }
 
     def camera_info_callback(self, msg):
         self.camera_info = msg

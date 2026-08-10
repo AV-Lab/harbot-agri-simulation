@@ -19,14 +19,14 @@
 <!--WHEEL TIRE -->
     <joint name="${prefix}_wheel_joint" type="continuous">
       <parent link="${parent}"/>
-      <child link="${prefix}_wheel"/>
+      <child link="${prefix}_wheel_link"/>
       <xacro:insert_block name="origin" />
       <axis xyz="0 1 0" rpy="0 0 0" />
       <limit effort="100" velocity="100"/>
       <joint_properties damping="0.0" friction="0.0"/>
     </joint>
 
-    <link name="${prefix}_wheel">
+    <link name="${prefix}_wheel_link">
       <visual>
         <!-- HIGH RESOLUTION WHEELS -->
         <xacro:if value="${hq}">
@@ -75,7 +75,7 @@
       </actuator>
      </transmission>
 
-    <gazebo reference="${prefix}_wheel">
+    <gazebo reference="${prefix}_wheel_link">
 			<mu1 value="2.0"/>
 			<mu2 value="0.4"/>
 			<kp value="10000000.0" />

@@ -1,17 +1,12 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(rbkairos_control)
 
 
-find_package(catkin REQUIRED
-    joint_state_controller
-    velocity_controllers
-)
+find_package(catkin REQUIRED)
 
 catkin_package()
 
-include_directories(${catkin_INCLUDE_DIRS})
-
 install(
-  DIRECTORY config
+  DIRECTORY config launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

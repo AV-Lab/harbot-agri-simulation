@@ -20,21 +20,16 @@
 
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>gazebo_ros</build_depend>
-  <build_depend>gazebo_ros_control</build_depend>
-  <build_depend>position_controllers</build_depend>
-  <build_depend>joint_trajectory_controller</build_depend>
-
+  <run_depend>gazebo_ros_link_attacher</run_depend>
   <run_depend>gazebo_ros</run_depend>
   <run_depend>gazebo_ros_control</run_depend>
+  <run_depend>rbkairos_control</run_depend>
   <run_depend>rbkairos_description</run_depend>
+  <run_depend>rbkairos_franka_moveit_config</run_depend>
+  <run_depend>rbkairos_ur5_egh_moveit_config</run_depend>
   <run_depend>xacro</run_depend>
-  <run_depend>hector_gazebo_plugins</run_depend>
   <run_depend>gazebo_plugins</run_depend>
-  <run_depend>position_controllers</run_depend>
-  <run_depend>joint_trajectory_controller</run_depend>
   <run_depend>roboticsgroup_gazebo_plugins</run_depend>
-  <run_depend>realsense2_description</run_depend>
   <run_depend>realsense_d435_gazebo</run_depend>
   <run_depend>robot_state_publisher</run_depend>
   <run_depend>rviz</run_depend>

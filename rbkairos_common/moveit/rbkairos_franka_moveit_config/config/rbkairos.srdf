@@ -6,6 +6,7 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="rbkairos">
     <xacro:arg name="prefix" default="robot_"/>
     <xacro:arg name="arm_id" default="$(eval arg('prefix')[:-1] if arg('prefix').endswith('_') else arg('prefix'))"/>
+    <xacro:arg name="launch_camera" default="true"/>
     <!--GROUPS: Representation of a set of joints and links. This can be useful for specifying DOF to plan for, defining arms, end effectors, etc-->
     <!--LINKS: When a link is specified, the parent joint of that link (if it exists) is automatically included-->
     <!--JOINTS: When a joint is specified, the child link of that joint (which will always exist) is automatically included-->
@@ -25,12 +26,14 @@
         <joint name="$(arg arm_id)_joint7" value="0"/>
     </group_state>
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
-    <virtual_joint name="arm_base_joint" type="fixed" parent_frame="$(arg prefix)_odom" child_link="$(arg arm_id)_base_footprint"/>
+    <virtual_joint name="arm_base_joint" type="fixed" parent_frame="$(arg prefix)odom" child_link="$(arg arm_id)_base_footprint"/>
     <!--PASSIVE JOINT: Purpose: this element is used to mark joints that are not actuated-->
     <passive_joint name="$(arg arm_id)_finger_joint1"/>
     <passive_joint name="$(arg arm_id)_finger_joint2"/>
     <passive_joint name="$(arg arm_id)_finger_joint3"/>
     <passive_joint name="$(arg arm_id)_finger_joint4"/>
+    <passive_joint name="$(arg arm_id)_finger_joint5"/>
+    <passive_joint name="$(arg arm_id)_finger_joint6"/>
     <passive_joint name="$(arg prefix)back_left_wheel_joint"/>
     <passive_joint name="$(arg prefix)back_right_wheel_joint"/>
     <passive_joint name="$(arg prefix)front_left_wheel_joint"/>
@@ -50,6 +53,7 @@
     <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg arm_id)_gripper_finger_2" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg arm_id)_gripper_finger_3" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link7" link2="$(arg arm_id)_gripper_finger_4" reason="Default"/>
+    <xacro:if value="$(arg launch_camera)">
     <disable_collisions link1="$(arg arm_id)_link0" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link1" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_link2" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
@@ -74,6 +78,7 @@
     <disable_collisions link1="$(arg arm_id)_gripper_finger_2" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_gripper_finger_3" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
     <disable_collisions link1="$(arg arm_id)_gripper_finger_4" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
+    </xacro:if>
     <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg arm_id)_gripper_adapter_plate" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg arm_id)_gripper_base" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_link7_sc" link2="$(arg arm_id)_gripper_bolts" reason="Default"/>
@@ -116,8 +121,10 @@
     <disable_collisions link1="$(arg arm_id)_gripper_bolts" link2="$(arg arm_id)_gripper_finger_5" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_gripper_bolts" link2="$(arg arm_id)_gripper_finger_6" reason="Default"/>
 
-    <disable_collisions link1="$(arg arm_id)_gripper_finger_5" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
-    <disable_collisions link1="$(arg arm_id)_gripper_finger_6" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
+    <xacro:if value="$(arg launch_camera)">
+        <disable_collisions link1="$(arg arm_id)_gripper_finger_5" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
+        <disable_collisions link1="$(arg arm_id)_gripper_finger_6" link2="$(arg arm_id)_wrist_d435_link" reason="Never"/>
+    </xacro:if>
 
     <disable_collisions link1="$(arg arm_id)_gripper_finger_1" link2="$(arg arm_id)_gripper_finger_5" reason="Default"/>
     <disable_collisions link1="$(arg arm_id)_gripper_finger_1" link2="$(arg arm_id)_gripper_finger_6" reason="Default"/>

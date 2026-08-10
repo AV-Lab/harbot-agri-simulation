@@ -7,8 +7,7 @@
 	<arg name="debug" default="false"/>
 	<arg name="launch_rviz" default="false"/>
 	<arg name="rviz_config" default="$(find rbkairos_gazebo)/rviz/rbkairos_greenhouse.rviz"/>
-	<!--arg name="world" default="office.world"/--> <!-- located in summit_xl_gazebo/worlds -->
-	<arg name="world" default="$(find rbkairos_gazebo)/worlds/office.world"/> <!-- Changed to absolute path-->
+	<arg name="world" default="$(find rbkairos_gazebo)/worlds/greenhouse.world"/>
 
 	<!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
 	<include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -16,7 +15,7 @@
 		<arg name="debug" value="$(arg debug)" />
 		<arg name="paused" value="true"/>
 		<arg name="use_sim_time" value="true"/>
-		<arg name="gui" value="false"/>
+		<arg name="gui" value="true"/>
 		<arg name="headless" value="false"/>
 	</include>
 	

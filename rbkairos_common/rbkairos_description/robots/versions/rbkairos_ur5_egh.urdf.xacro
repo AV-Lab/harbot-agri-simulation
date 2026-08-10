@@ -16,10 +16,6 @@
   <!-- Include EGH TODO -->
   <xacro:include filename="$(find egh_gripper_description)/urdf/egh_gripper.urdf.xacro" />
 
-  <!-- Import all available sensors -->
-  <xacro:include filename="$(find robotnik_sensors)/urdf/all_sensors.urdf.xacro" />
-
-
   <!-- Flag to select the high or low quality model -->
   <xacro:property name="hq" value="true" />
 
@@ -29,7 +25,6 @@
   <xacro:arg name="launch_gripper" default="true"/>
   <xacro:arg name="launch_camera" default="false"/>
   <xacro:arg name="load_kinematics_file" default="false"/> <!-- Necesarry for ur_description compatible with official ur drivers-->
-  <xacro:arg name="use_gpu_for_simulation" default="false"/>
 
   <xacro:property name="arm_position_x" value="0.1883"/>
   <xacro:property name="arm_position_y" value="0"/>
@@ -38,7 +33,7 @@
   <xacro:property name="arm_orientation_p" value="0"/>
   <xacro:property name="arm_orientation_y" value="${3*pi/4}"/>
   
-  <xacro:macro name="rbkairos_ur5_egh" params="prefix publish_bf hq load_kinematics_file gpu:=false">
+  <xacro:macro name="rbkairos_ur5_egh" params="prefix publish_bf hq load_kinematics_file">
 
     <!-- *************** -->
     <!-- Robots Elements -->
@@ -47,7 +42,7 @@
     <!-- Here we create the robot elements using the xacro:macros imported at the beggining of this file -->
 
     <!-- RBKAIROS base -->
-    <xacro:rbkairos_base prefix="$(arg prefix)" publish_bf="true" hq="true" gpu="${gpu}" use_omni_wheels="$(arg ros_planar_move_plugin)"/>
+    <xacro:rbkairos_base prefix="$(arg prefix)" publish_bf="true" hq="true" use_omni_wheels="$(arg ros_planar_move_plugin)"/>
 
     <!-- UR-5 ARM -->
     <xacro:if value="$(arg launch_arm)">
@@ -67,13 +62,6 @@
         </xacro:egh_gripper>
       </xacro:if>
 
-      <!-- Intel Realsense -->
-      <xacro:if value="$(arg launch_camera)">
-        <xacro:sensor_r430 prefix="$(arg prefix)wrist_rgbd" parent="$(arg prefix)arm_tool0" prefix_topic="wrist_rgbd">
-          <origin xyz="-0.075 0.0 0.065" rpy="0 ${-pi/2} 0"/>
-        </xacro:sensor_r430>
-      </xacro:if>
-
     </xacro:if>
 
     <!-- Gazebo ros control pluggins -->
@@ -83,6 +71,6 @@
     </xacro:if>
   </xacro:macro>
 
-  <xacro:rbkairos_ur5_egh prefix="$(arg prefix)" publish_bf="true" hq="true" load_kinematics_file="$(arg load_kinematics_file)" gpu="$(arg use_gpu_for_simulation)"/>
+  <xacro:rbkairos_ur5_egh prefix="$(arg prefix)" publish_bf="true" hq="true" load_kinematics_file="$(arg load_kinematics_file)"/>
 
 </robot>

@@ -2,16 +2,15 @@
   <!-- By default we do not overwrite the URDF. Change the following to true to change the default behavior -->
   <arg name="load_robot_description" default="false"/>
   <arg name="prefix" default="robot_"/>
-  <arg name="launch_camera" default="false"/>
 
   <!-- The name of the parameter under which the URDF is loaded -->
   <arg name="robot_description" default="robot_description"/>
 
   <!-- Load universal robot description format (URDF) -->
-  <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro --inorder load_kinematics_file:=true prefix:=$(arg prefix) '$(find rbkairos_description)/robots/versions/rbkairos_ur5_egh.urdf.xacro'"/>
+  <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro load_kinematics_file:=true prefix:=$(arg prefix) '$(find rbkairos_description)/robots/versions/rbkairos_ur5_egh.urdf.xacro'"/>
 
   <!-- The semantic description that corresponds to the URDF -->
-  <param name="$(arg robot_description)_semantic" command="$(find xacro)/xacro --inorder '$(find rbkairos_ur5_egh_moveit_config)/config/rbkairos.srdf' prefix:=$(arg prefix) launch_camera:=$(arg launch_camera)" />
+  <param name="$(arg robot_description)_semantic" command="$(find xacro)/xacro '$(find rbkairos_ur5_egh_moveit_config)/config/rbkairos.srdf' prefix:=$(arg prefix)" />
 
   <!-- Load updated joint limits (override information from URDF) -->
   <group ns="$(arg robot_description)_planning">

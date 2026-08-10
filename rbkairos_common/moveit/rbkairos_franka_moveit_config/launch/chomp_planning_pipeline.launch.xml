@@ -1,8 +1,9 @@
 <launch>
-  <arg name="arm_id" default="fr3" />
+  <arg name="arm_id" default="panda" />
   <arg name="start_state_max_bounds_error" default="0.1" />
   <arg name="jiggle_fraction" default="0.05" />
-  <!-- The request adapters (plugins) used when planning. ORDER MATTERS! -->
+
+  <!-- The request adapters (plugins) used when planning. ORDER MATTERS. -->
   <arg name="planning_adapters"
        default="default_planner_request_adapters/LimitMaxCartesianLinkSpeed
                 default_planner_request_adapters/AddTimeParameterization
@@ -10,8 +11,7 @@
                 default_planner_request_adapters/FixWorkspaceBounds
                 default_planner_request_adapters/FixStartStateBounds
                 default_planner_request_adapters/FixStartStateCollision
-                default_planner_request_adapters/FixStartStatePathConstraints"
-                />
+                default_planner_request_adapters/FixStartStatePathConstraints" />
 
   <param name="planning_plugin" value="chomp_interface/CHOMPPlanner" />
   <param name="request_adapters" value="$(arg planning_adapters)" />

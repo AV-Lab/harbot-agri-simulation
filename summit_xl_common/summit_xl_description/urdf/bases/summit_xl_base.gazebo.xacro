@@ -14,7 +14,23 @@
     </gazebo>
 	</xacro:macro>
 
-	<!-- skid steering plugin -->
+	<!-- Ground-truth odometry shared by the omni and rubber-wheel modes. -->
+	<xacro:macro name="ground_truth_odometry" params="prefix">
+		<gazebo>
+			<plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
+				<alwaysOn>true</alwaysOn>
+				<updateRate>50.0</updateRate>
+				<bodyName>${prefix}base_footprint</bodyName>
+				<topicName>robotnik_base_control/odom_gt</topicName>
+				<gaussianNoise>0.01</gaussianNoise>
+				<frameName>world</frameName>
+				<xyzOffsets>0 0 0</xyzOffsets>
+				<rpyOffsets>0 0 0</rpyOffsets>
+			</plugin>
+		</gazebo>
+	</xacro:macro>
+
+		<!-- skid steering plugin -->
 	<xacro:macro name="skid_steering" params="prefix publish_tf">
     <gazebo>
       <plugin name="skid_steer_drive_controller" filename="libgazebo_ros_skid_steer_drive.so">
@@ -65,22 +81,12 @@
 				<odometryRate>50.0</odometryRate>
 				<robotBaseFrame>${prefix}base_footprint</robotBaseFrame>
 				<publishTF>${publish_tf}</publishTF>
-				<enableYAxis>true</enableYAxis>
-				</plugin>
-			</gazebo>
-			<gazebo>
-				<plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
-					<alwaysOn>true</alwaysOn>
-					<updateRate>50.0</updateRate>
-					<bodyName>${prefix}base_footprint</bodyName>
-					<topicName>robotnik_base_control/odom_gt</topicName>
-					<gaussianNoise>0.01</gaussianNoise>
-					<frameName>world</frameName>
-					<xyzOffsets>0 0 0</xyzOffsets>
-					<rpyOffsets>0 0 0</rpyOffsets>
-				</plugin>
-			</gazebo>
-		</xacro:unless>
+				<cmdTimeout>0.5</cmdTimeout>
+					<enableYAxis>true</enableYAxis>
+					</plugin>
+				</gazebo>
+				<xacro:ground_truth_odometry prefix="${prefix}"/>
+			</xacro:unless>
   </xacro:macro>
 
   	<xacro:macro name="skid_steering" params="prefix publish_tf force_based">
@@ -111,6 +117,7 @@
 				<odometryRate>50.0</odometryRate>
 				<robotBaseFrame>${prefix}base_footprint</robotBaseFrame>
 				<publishTF>${publish_tf}</publishTF>
+				<cmdTimeout>0.5</cmdTimeout>
 				<enableYAxis>false</enableYAxis>
 				</plugin>
 			</gazebo>

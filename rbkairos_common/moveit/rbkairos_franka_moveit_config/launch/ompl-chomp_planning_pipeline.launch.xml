@@ -1,5 +1,5 @@
 <launch>
-  <arg name="arm_id" default="fr3" />
+  <arg name="arm_id" default="panda" />
   <!-- load OMPL planning pipeline, but add the CHOMP planning adapter. -->
   <include file="$(find rbkairos_franka_moveit_config)/launch/ompl_planning_pipeline.launch.xml">
     <arg name="arm_id" value="$(arg arm_id)" />

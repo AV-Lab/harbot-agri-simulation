@@ -1,9 +1,6 @@
 <launch>
   <!-- This file summarizes all settings required for trajectory execution  -->
 
-  <!-- Define moveit controller manager plugin: fake, simple, or ros_control -->
-  <arg name="moveit_controller_manager" />
-  <arg name="fake_execution_type" default="interpolate" />
   <arg name="prefix" default="robot_" />
   <arg name="arm_id" default="$(eval arg('prefix')[:-1] if arg('prefix').endswith('_') else arg('prefix'))" />
 
@@ -18,8 +15,9 @@
   <!-- Allowed joint-value tolerance for validation that trajectory's first point matches current robot state -->
   <param name="trajectory_execution/allowed_start_tolerance" value="0.01"/> <!-- default 0.01 -->
 
-  <!-- We use pass_all_args=true here to pass fake_execution_type, which is required by fake controllers, but not by real-robot controllers.
-       As real-robot controller_manager.launch files shouldn't be required to define this argument, we use the trick of passing all args. -->
-  <include file="$(dirname)/$(arg moveit_controller_manager)_moveit_controller_manager.launch.xml" pass_all_args="true" />
+  <include file="$(dirname)/simple_moveit_controller_manager.launch.xml">
+    <arg name="prefix" value="$(arg prefix)" />
+    <arg name="arm_id" value="$(arg arm_id)" />
+  </include>
 
 </launch>

@@ -4,27 +4,29 @@
 
   <xacro:include filename="$(find summit_xl_description)/urdf/bases/summit_xl_base.gazebo.xacro" />
 
-  <xacro:macro name="summit_xls_base" params="prefix publish_bf hq">
+  <xacro:macro name="summit_xls_base" params="prefix publish_bf hq base_footprint_collision:=true">
 
   <!-- Robot mechanical and motor parameters -->
   <xacro:property name="PI" value="3.1415926535897931"/>
   <xacro:property name="wheel_radius" value="0.127" />
 
-	<!-- BASE FOOTPRINT -->
+		<!-- BASE FOOTPRINT -->
 	  <xacro:if value="${publish_bf}">
 		<link name="${prefix}base_footprint">
-		  <visual>
-			  <origin xyz="0 0 0" rpy="0 0 0" />
-			  <geometry>
-				 <box size="0.001 0.001 0.001" />
-			  </geometry>
-		  </visual>
-      <collision>
-      <geometry>
-        <box size="0.001 0.001 0.001" />
-      </geometry>
-    </collision>
-		</link>
+			  <visual>
+				  <origin xyz="0 0 0" rpy="0 0 0" />
+				  <geometry>
+					 <box size="0.001 0.001 0.001" />
+				  </geometry>
+			  </visual>
+			  <xacro:if value="${base_footprint_collision}">
+				<collision>
+				  <geometry>
+					<box size="0.001 0.001 0.001" />
+				  </geometry>
+				</collision>
+			  </xacro:if>
+			</link>
 
 		<joint name="${prefix}base_footprint_joint" type="fixed">
 		  <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0" /> <!-- ${wheel_radius} property must be defined inside wheel description -->

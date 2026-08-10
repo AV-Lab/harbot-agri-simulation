@@ -1,6 +1,6 @@
 <launch>
   <!-- Stomp Plugin for MoveIt -->
-  <arg name="arm_id" default="fr3" />
+  <arg name="arm_id" default="panda" />
   <arg name="planning_plugin" value="stomp_moveit/StompPlannerManager" />
 
   <arg name="start_state_max_bounds_error" value="0.1" />

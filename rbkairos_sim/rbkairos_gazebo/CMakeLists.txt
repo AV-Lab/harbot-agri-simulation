@@ -1,14 +1,10 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(rbkairos_gazebo)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  gazebo_ros
-  gazebo_ros_control
-  position_controllers
-  joint_trajectory_controller)
+find_package(catkin REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -27,6 +23,5 @@ catkin_package(
 )
 
 
-install(DIRECTORY launch worlds config rviz models urdf
+install(DIRECTORY launch worlds rviz models
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-

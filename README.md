@@ -28,17 +28,14 @@ Recommended hardware (tested configuration):
 
 ## Included Base Packages
 
-This workspace includes the following upstream repositories as the base simulation framework. Some packages may be modified or extended for the HARBOT use case.
+This workspace retains the upstream components needed by the current simulation. The imported repositories have been pruned and adapted for the HARBOT use case; legacy Summit navigation, localization, and gamepad packages are not included.
 
 - [rbkairos_sim](https://github.com/RobotnikAutomation/rbkairos_sim)
 - [egh_gripper_common](https://github.com/RobotnikAutomation/egh_gripper_common)
 - [rbkairos_common](https://github.com/RobotnikAutomation/rbkairos_common)
 - [roboticsgroup_gazebo_plugins](https://github.com/RobotnikAutomation/roboticsgroup_gazebo_plugins)
-- [robotnik_sensors](https://github.com/RobotnikAutomation/robotnik_sensors)
 - [summit_xl_common](https://github.com/RobotnikAutomation/summit_xl_common)
 - [universal_robot](https://github.com/fmauch/universal_robot)
-- [wsg50-ros-pkg](https://github.com/RobotnikAutomation/wsg50-ros-pkg)
-- [robotnik_msgs](https://github.com/RobotnikAutomation/robotnik_msgs)
 - [franka_ros](https://github.com/frankarobotics/franka_ros.git)
 
 ---
@@ -50,8 +47,8 @@ Below is a brief overview of the simulation setup:
 - **Planning:** Waypoint-to-waypoint navigation uses pre-recorded JSON paths through the greenhouse rows.
 - **Control:** A custom path controller follows the selected path through the mobile base velocity interface. The controller supports holonomic/omnidirectional motion for the RB-Kairos base.
 - **Localization:** Robot pose is currently taken from Gazebo ground-truth odometry.
-- **Perception:** Fruit perception is not implemented yet. The workflow uses configured fruit metadata instead of camera-based detection.
-- **Manipulation:** Fruit reaching is handled with MoveIt. The arm moves to configured fruit target positions and the fruit is attached to the gripper during the simulated grasp.
+- **Perception:** The Franka wrist D435 supplies synchronized color and depth images. An HSV detector estimates the selected orange's 3D position; waypoint-to-fruit names and ripeness are still configured in the workflow.
+- **Manipulation:** MoveIt plans the arm to the detected 3D target. The simulated grasp then attaches the selected fruit to the gripper.
 
 ---
 
@@ -64,12 +61,16 @@ cd ~/catkin_ws/src
 git clone https://github.com/AV-Lab/harbot-agri-simulation.git
 ```
 
+The current simulation also expects the source-only packages `realsense_d435_gazebo` and [`rbkairos_etf_services`](https://github.com/Syed-Abbas-Hussain/rbkairos_etf_services/tree/SIM-integration) in the same workspace. They are already present in `harbot_agri_sim`, but are not vendored here and have no rosdep definitions. Add them to `~/catkin_ws/src` before installing dependencies.
+
 Install dependencies:
 
 ```bash
 cd ~/catkin_ws
-rosdep install --from-paths src --ignore-src -r -y
+rosdep install --from-paths src --ignore-src -r -y --skip-keys=stomp_moveit
 ```
+
+The default OMPL/RRTConnect arm planner and the retained OMPL-CHOMP pipeline use released ROS Noetic packages. The optional STOMP pipeline is also retained, but `stomp_moveit` must be [added to the workspace from source](https://moveit.github.io/moveit_tutorials/doc/stomp_planner/stomp_planner_tutorial.html) before selecting it because it has no Ubuntu 20.04/Noetic rosdep definition.
 
 Build the workspace:
 
@@ -117,6 +118,8 @@ Example launch with robot A at `a1` and robot B at `a40`:
 roslaunch rbkairos_sim_bringup rbkairos_complete.launch waypoint_robot_a:=a1 waypoint_robot_b:=a40
 ```
 
+For a Franka robot, select a retained MoveIt pipeline with `moveit_pipeline_a:=ompl`, `stomp`, or `ompl_chomp` (and the corresponding `_b`/`_c` argument for another robot).
+
 After the simulation is running, start the harvesting workflow:
 
 ```bash
@@ -147,5 +150,5 @@ The path GUI can be enabled from the workflow prompt. It is started once and kep
 This repository currently models orange harvesting at a simulation-workflow level. Some physical details are simplified:
 
 - Each orange uses a support structure in the Gazebo world. This is a workaround because the current model does not yet simulate a stem that physically holds the orange and breaks when enough force is applied.
-- Fruit detection is not implemented yet. The workflow uses configured fruit metadata and waypoint-to-fruit mappings instead of detecting fruit from sensor data.
-- The harvesting workflow is currently optimized for the Franka arm. UR5 behavior may need additional testing and fixes.
+- Orange position is camera-detected, but fruit identity, waypoint membership, and ripeness are still configured rather than classified visually.
+- The harvesting workflow currently targets the Franka wrist-camera and gripper conventions. The UR5 simulation and basic MoveIt planning/execution work, but its end-to-end perception and grasp workflow still needs adaptation after the planned D435 port.

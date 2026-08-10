@@ -1,13 +1,4 @@
-# Settings for ros_control control loop
-hardware_control_loop:
-   loop_hz: &loop_hz 500
-
-# Publish all joint states ----------------------------------
-joint_state_controller:
-   type: joint_state_controller/JointStateController
-   publish_rate: *loop_hz
-
-# Joint Trajectory Controller - position based -------------------------------
+# Franka joint trajectory controller used by MoveIt in simulation.
 pos_traj_controller:
    type: position_controllers/JointTrajectoryController
    joints:
@@ -29,5 +20,5 @@ pos_traj_controller:
       $(arg arm_id)_joint6: {trajectory: 0.2, goal: 0.1}
       $(arg arm_id)_joint7: {trajectory: 0.2, goal: 0.1}
    stop_trajectory_duration: 0.5
-   state_publish_rate: *loop_hz
+   state_publish_rate: 500
    action_monitor_rate: 10

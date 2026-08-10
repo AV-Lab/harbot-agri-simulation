@@ -4,7 +4,7 @@
   <arg name="debug" default="false" />
   <arg unless="$(arg debug)" name="launch_prefix" value="" />
   <arg     if="$(arg debug)" name="launch_prefix"
-           value="gdb -x $(dirname)/gdb_settings.gdb --ex run --args" />
+           value="gdb --ex run --args" />
 
   <!-- Verbose Mode Option -->
   <arg name="info" default="$(arg debug)" />
@@ -14,8 +14,6 @@
   <!-- move_group settings -->
   <arg name="pipeline" default="ompl" />
   <arg name="allow_trajectory_execution" default="true"/>
-  <arg name="moveit_controller_manager" default="simple" />
-  <arg name="fake_execution_type" default="interpolate"/>
   <arg name="max_safe_path_cost" default="1"/>
   <arg name="publish_monitored_planning_scene" default="true"/>
 
@@ -38,11 +36,13 @@
   -->
 
   <arg name="load_robot_description" default="false" />
+  <arg name="launch_camera" default="true" />
   <arg name="prefix" default="robot_" />
   <arg name="arm_id" default="$(eval arg('prefix')[:-1] if arg('prefix').endswith('_') else arg('prefix'))" />
   <!-- load URDF, SRDF and joint_limits configuration -->
   <include file="$(dirname)/planning_context.launch">
     <arg name="load_robot_description" value="$(arg load_robot_description)" />
+    <arg name="launch_camera" value="$(arg launch_camera)" />
     <arg name="prefix" value="$(arg prefix)" />
     <arg name="arm_id" value="$(arg arm_id)" />
   </include>
@@ -51,27 +51,26 @@
   <group ns="move_group/planning_pipelines">
 
     <!-- OMPL -->
-    <include file="$(dirname)/planning_pipeline.launch.xml">
-      <arg name="pipeline" value="ompl" />
+    <include ns="ompl" file="$(dirname)/ompl_planning_pipeline.launch.xml">
       <arg name="arm_id" value="$(arg arm_id)" />
     </include>
 
-    <!-- CHOMP -->
-    <include file="$(dirname)/planning_pipeline.launch.xml">
-      <arg name="pipeline" value="chomp" />
+    <!-- Optional retained arm-planning pipelines. -->
+    <include ns="stomp" if="$(eval arg('pipeline') == 'stomp')"
+             file="$(dirname)/stomp_planning_pipeline.launch.xml">
       <arg name="arm_id" value="$(arg arm_id)" />
     </include>
-
-    <!-- Pilz Industrial Motion -->
-    <include file="$(dirname)/planning_pipeline.launch.xml">
-      <arg name="pipeline" value="pilz_industrial_motion_planner" />
+    <include ns="ompl_chomp" if="$(eval arg('pipeline') == 'ompl_chomp')"
+             file="$(dirname)/ompl-chomp_planning_pipeline.launch.xml">
       <arg name="arm_id" value="$(arg arm_id)" />
     </include>
-
-    <!-- Support custom planning pipeline -->
-    <include if="$(eval arg('pipeline') not in ['ompl', 'chomp', 'pilz_industrial_motion_planner'])"
-             file="$(dirname)/planning_pipeline.launch.xml">
-      <arg name="pipeline" value="$(arg pipeline)" />
+    <include ns="chomp" if="$(eval arg('pipeline') == 'chomp')"
+             file="$(dirname)/chomp_planning_pipeline.launch.xml">
+      <arg name="arm_id" value="$(arg arm_id)" />
+    </include>
+    <include ns="pilz_industrial_motion_planner"
+             if="$(eval arg('pipeline') == 'pilz_industrial_motion_planner')"
+             file="$(dirname)/pilz_industrial_motion_planner_planning_pipeline.launch.xml">
       <arg name="arm_id" value="$(arg arm_id)" />
     </include>
   </group>
@@ -79,15 +78,8 @@
   <!-- Trajectory Execution Functionality -->
   <include ns="move_group" file="$(dirname)/trajectory_execution.launch.xml" if="$(arg allow_trajectory_execution)">
     <arg name="moveit_manage_controllers" value="true" />
-    <arg name="moveit_controller_manager" value="$(arg moveit_controller_manager)" />
-    <arg name="fake_execution_type" value="$(arg fake_execution_type)" />
     <arg name="prefix" value="$(arg prefix)" />
     <arg name="arm_id" value="$(arg arm_id)" />
-  </include>
-
-  <!-- Sensors Functionality -->
-  <include ns="move_group" file="$(dirname)/sensor_manager.launch.xml" if="$(arg allow_trajectory_execution)">
-    <arg name="moveit_sensor_manager" value="rbkairos" />
   </include>
 
   <!-- Start the actual move_group node/action server -->
