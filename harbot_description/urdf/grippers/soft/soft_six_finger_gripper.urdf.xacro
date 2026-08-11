@@ -1,0 +1,307 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="soft_finger_gripper" params="arm_id parent offset:=0.0021">
+  <xacro:property name="sixty_deg" value="${pi/3}"/>
+    
+    <joint name="${arm_id}_gripper_adapter_plate_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${arm_id}_gripper_adapter_plate"/>
+      <origin xyz="0 0 0" rpy="${pi/2} ${pi/2} ${-pi/4}"/>
+    </joint>
+
+    <link name="${arm_id}_gripper_adapter_plate">
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_adapter_plate.obj" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_adapter_plate.obj" scale="1 1 1"/>
+        </geometry>
+      </collision>
+    </link>
+
+
+    <joint name="${arm_id}_gripper_base_joint" type="fixed">
+      <parent link="${arm_id}_gripper_adapter_plate"/>
+      <child link="${arm_id}_gripper_base"/>
+      <origin xyz="-0.033194 0 0.000584" rpy="${pi/2} 0 0"/>
+    </joint>
+
+    <link name="${arm_id}_gripper_base">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/six_finger_gripper_base.obj" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/six_finger_gripper_base.obj" scale="1 1 1"/>
+        </geometry>
+      </collision>
+    </link>
+
+
+    <joint name="${arm_id}_gripper_bolts_joint" type="fixed">
+      <parent link="${arm_id}_gripper_adapter_plate"/>
+      <child link="${arm_id}_gripper_bolts"/>
+      <origin xyz="-0.019021 0 0.00059" rpy="${pi/2} 0 0"/>
+    </joint>
+
+    <link name="${arm_id}_gripper_bolts">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/six_finger_gripper_bolts.obj" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/six_finger_gripper_bolts.obj" scale="1 1 1"/>
+        </geometry>
+      </collision>
+    </link>
+
+    
+
+    <joint name="${arm_id}_finger_joint1" type="revolute">
+      <parent link="${arm_id}_gripper_adapter_plate"/>
+      <child link="${arm_id}_gripper_finger_1"/>
+      <origin xyz="${-0.040392 + offset} 0.0 0.052677" rpy="${pi/2} 0 0"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="-0.15" upper="0.5" effort="5" velocity="1.0"/>
+      <dynamics damping="0.1"/>
+    </joint>
+
+    <link name="${arm_id}_gripper_finger_1">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.05"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.000005"/>
+      </inertial>
+      <visual>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </collision>
+    </link>
+
+
+    <joint name="${arm_id}_finger_joint2" type="revolute">
+      <parent link="${arm_id}_gripper_adapter_plate"/>
+      <child link="${arm_id}_gripper_finger_2"/>
+      <origin xyz="${-0.040392 + offset} 0.045106 0.026639" rpy="${pi/2 + -sixty_deg} 0 0"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="-0.15" upper="0.5" effort="5" velocity="1.0"/>
+      <mimic joint="${arm_id}_finger_joint1" multiplier="1.0" offset="0.0"/>
+      <dynamics damping="0.1"/>
+    </joint>
+
+    <link name="${arm_id}_gripper_finger_2">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.05"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.000005"/>
+      </inertial>
+      <visual>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </collision>
+    </link>
+
+
+    <joint name="${arm_id}_finger_joint3" type="revolute">
+      <parent link="${arm_id}_gripper_adapter_plate"/>
+      <child link="${arm_id}_gripper_finger_3"/>
+      <origin xyz="${-0.040392 + offset} 0.045113 -0.025447" rpy="${-pi/2 + sixty_deg} 0 0"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="-0.15" upper="0.5" effort="5" velocity="1.0"/>
+      <mimic joint="${arm_id}_finger_joint1" multiplier="1.0" offset="0.0"/>
+      <dynamics damping="0.1"/>
+    </joint>
+
+    <link name="${arm_id}_gripper_finger_3">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.05"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.000005"/>
+      </inertial>
+      <visual>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </collision>
+    </link>
+
+
+    <joint name="${arm_id}_finger_joint4" type="revolute">
+      <parent link="${arm_id}_gripper_adapter_plate"/>
+      <child link="${arm_id}_gripper_finger_4"/>
+      <origin xyz="${-0.040392 + offset} 0.0 -0.051497" rpy="${-pi/2} 0 0"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="-0.15" upper="0.5" effort="5" velocity="1.0"/>
+      <mimic joint="${arm_id}_finger_joint1" multiplier="1.0" offset="0.0"/>
+      <dynamics damping="0.1"/>
+    </joint>
+
+    <link name="${arm_id}_gripper_finger_4">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.05"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.000005"/>
+      </inertial>
+      <visual>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${arm_id}_finger_joint5" type="revolute">
+      <parent link="${arm_id}_gripper_adapter_plate"/>
+      <child link="${arm_id}_gripper_finger_5"/>
+      <origin xyz="${-0.040392 + offset} -0.045106 -0.025459" rpy="${-pi/2 + -sixty_deg} 0 0"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="-0.15" upper="0.5" effort="5" velocity="1.0"/>
+      <mimic joint="${arm_id}_finger_joint1" multiplier="1.0" offset="0.0"/>
+      <dynamics damping="0.1"/>
+    </joint>
+
+    <link name="${arm_id}_gripper_finger_5">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.05"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.000005"/>
+      </inertial>
+      <visual>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${arm_id}_finger_joint6" type="revolute">
+      <parent link="${arm_id}_gripper_adapter_plate"/>
+      <child link="${arm_id}_gripper_finger_6"/>
+      <origin xyz="${-0.040392 + offset} -0.045115 0.026623" rpy="${pi/2 + sixty_deg} 0 0"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="-0.15" upper="0.5" effort="5" velocity="1.0"/>
+      <mimic joint="${arm_id}_finger_joint1" multiplier="1.0" offset="0.0"/>
+      <dynamics damping="0.1"/>
+    </joint>
+
+    <link name="${arm_id}_gripper_finger_6">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.05"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.000005"/>
+      </inertial>
+      <visual>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="${-offset} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://harbot_description/meshes/grippers/soft/gripper_finger.obj" scale="1 1 1"/>
+        </geometry>
+      </collision>
+    </link>
+
+
+    <joint name="${arm_id}_hand_tcp_joint" type="fixed">
+      <parent link="${arm_id}_gripper_adapter_plate"/>
+      <child link="${arm_id}_hand_tcp"/>
+      <origin xyz="-0.11 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${arm_id}_hand_tcp"/>
+    
+    
+    <gazebo>
+      <plugin name="${arm_id}_finger_joint2_mimic_joint_plugin" filename="libroboticsgroup_gazebo_mimic_joint_plugin.so">
+        <joint>${arm_id}_finger_joint1</joint>
+        <mimicJoint>${arm_id}_finger_joint2</mimicJoint>
+        <multiplier>1.0</multiplier>
+        <offset>0.0</offset>
+        <maxEffort>5.0</maxEffort>
+      </plugin>
+
+      <plugin name="${arm_id}_finger_joint3_mimic_joint_plugin" filename="libroboticsgroup_gazebo_mimic_joint_plugin.so">
+        <joint>${arm_id}_finger_joint1</joint>
+        <mimicJoint>${arm_id}_finger_joint3</mimicJoint>
+        <multiplier>1.0</multiplier>
+        <offset>0.0</offset>
+        <maxEffort>5.0</maxEffort>
+      </plugin>
+
+      <plugin name="${arm_id}_finger_joint4_mimic_joint_plugin" filename="libroboticsgroup_gazebo_mimic_joint_plugin.so">
+        <joint>${arm_id}_finger_joint1</joint>
+        <mimicJoint>${arm_id}_finger_joint4</mimicJoint>
+        <multiplier>1.0</multiplier>
+        <offset>0.0</offset>
+        <maxEffort>5.0</maxEffort>
+      </plugin>
+
+      <plugin name="${arm_id}_finger_joint5_mimic_joint_plugin" filename="libroboticsgroup_gazebo_mimic_joint_plugin.so">
+        <joint>${arm_id}_finger_joint1</joint>
+        <mimicJoint>${arm_id}_finger_joint5</mimicJoint>
+        <multiplier>1.0</multiplier>
+        <offset>0.0</offset>
+        <maxEffort>5.0</maxEffort>
+      </plugin>
+
+      <plugin name="${arm_id}_finger_joint6_mimic_joint_plugin" filename="libroboticsgroup_gazebo_mimic_joint_plugin.so">
+        <joint>${arm_id}_finger_joint1</joint>
+        <mimicJoint>${arm_id}_finger_joint6</mimicJoint>
+        <multiplier>1.0</multiplier>
+        <offset>0.0</offset>
+        <maxEffort>5.0</maxEffort>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>

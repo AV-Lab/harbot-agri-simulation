@@ -1,0 +1,11 @@
+<launch>
+  <arg name="prefix" default="robot_" />
+  <arg name="arm_id" default="$(eval arg('prefix')[:-1] if arg('prefix').endswith('_') else arg('prefix'))" />
+
+  <!-- Define the MoveIt controller manager plugin to use for trajectory execution -->
+  <param name="moveit_controller_manager" value="moveit_simple_controller_manager/MoveItSimpleControllerManager" />
+
+  <!-- Load controller list to the parameter server -->
+  <rosparam file="$(find harbot_moveit)/config/franka_6f/simple_moveit_controllers.yaml" subst_value="true" />
+  <rosparam file="$(find harbot_moveit)/config/franka_6f/ros_controllers.yaml" subst_value="true" />
+</launch>

@@ -1,0 +1,53 @@
+<launch>
+   
+    <!-- <node pkg="rviz"
+          type="rviz"
+          name="camera_views_rviz"
+          args="-d $(find harbot_simulation)/rviz/rbkairos_camera_views.rviz"
+          output="screen"
+          launch-prefix="bash -c 'sleep 10; exec &quot;$@&quot;' _" /> -->
+   
+
+
+
+
+
+    <node pkg="harbot_navigation"
+          type="path_gui.py"
+          name="path_gui"
+          ns="/robot"
+          output="screen"
+          launch-prefix="bash -c 'sleep 2; exec &quot;$@&quot;' _">
+        <param name="odom_topic" value="robotnik_base_control/odom_gt" />
+        <param name="other_odom_topic" value="/robot_b/robotnik_base_control/odom_gt" />
+        <param name="global_path_topic" value="path_nav/path" />
+        <param name="desired_velocity_topic" value="path_nav/desired_speed" />
+        <param name="state_flag_topic" value="path_nav/status" />
+        <param name="proceed_flag_topic" value="path_nav/proceed_flag" />
+        <param name="reverse_mode_topic" value="path_nav/reverse_mode" />
+    </node>
+    
+      <!-- <node pkg="rviz"
+      type="rviz"
+      name="franka_arm_a_rviz"
+      args="-d $(find harbot_moveit)/launch/franka_6f/franka_arm_a.rviz"
+      output="screen"
+      launch-prefix="bash -c 'sleep 15; exec &quot;$@&quot;' _" /> -->
+
+    <!-- <node pkg="harbot_harvest"
+          type="hsv_object_detector.py"
+          name="hsv_object_detector_robot"
+          output="screen"
+          launch-prefix="bash -c 'sleep 1; exec &quot;$@&quot;' _">
+        <param name="robot_ns" value="/robot" />
+    </node>
+
+    <node pkg="harbot_harvest"
+          type="prost_sim_action_server.py"
+          name="prost_sim_action_server_robot"
+          output="screen"
+          launch-prefix="bash -c 'sleep 5; exec &quot;$@&quot;' _">
+        <param name="robot_ns" value="/robot" />
+    </node> -->
+
+</launch>

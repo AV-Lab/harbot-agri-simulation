@@ -1,0 +1,181 @@
+<?xml version="1.0"?>
+<robot name="rbkairos" xmlns:xacro="http://wiki.ros.org/xacro">
+
+  	<!-- ***************** -->
+  	<!-- Imported elements -->
+  	<!-- ***************** -->
+
+  	<!-- First we import all posible elements defined in the urdf.xacro files. All these elements are defined as macro:xacros -->
+
+  	<!-- Import summit XL base elements -->
+  	<xacro:include filename="$(find harbot_description)/urdf/base/summit_xl/summit_xls_base.urdf.xacro" />
+
+	<!-- Import summit XL wheels -->
+	<xacro:include filename="$(find harbot_description)/urdf/base/summit_xl/wheels/omni_wheel.urdf.xacro" />
+	<xacro:include filename="$(find harbot_description)/urdf/base/summit_xl/wheels/rubber_wheel.urdf.xacro" />
+
+	<!-- Wheel parameters -->
+		<xacro:property name="wheel_offset_x" value="0.2225" />    <!-- x,y,z in translation from base_link to the center of the wheel -->
+		<xacro:property name="wheel_offset_y" value="0.2045" />
+		<xacro:property name="wheel_offset_z" value="0.0" />
+		<!-- Rubber wheels are 17 mm smaller in radius than the omni wheels. -->
+		<xacro:property name="rubber_wheel_offset_z" value="${wheel_offset_z - 0.017}" />
+
+  	<!-- Flag to select the high or low quality model -->
+  	<xacro:property name="hq" value="true" />
+
+  	<xacro:arg name="prefix" default="summit_xl_"/>
+  	<xacro:arg name="ros_planar_move_plugin" default="false"/>
+
+
+    <xacro:macro name="rbkairos_base" params="prefix publish_bf hq use_omni_wheels:=false">
+
+  		<!-- *************** -->
+  		<!-- Robots Elements -->
+  		<!-- *************** -->
+
+  		<!-- Here we create the robot elements using the xacro:macros imported at the beggining of this file -->
+
+  		<!-- Summit XL base -->
+		<xacro:summit_xls_base
+			prefix="$(arg prefix)"
+			publish_bf="true"
+			hq="${hq}"
+			base_footprint_collision="${use_omni_wheels}" />
+
+  		<joint name="$(arg prefix)container_joint" type="fixed">
+  			<origin xyz="-0.3595 0 0.204123" rpy="0 0 0"/>
+  			<parent link="$(arg prefix)base_link"/>
+  			<child link="$(arg prefix)container_link"/>
+  		</joint>
+
+  		<link name="$(arg prefix)container_link">
+  			<inertial>
+  				<mass value="0.001"/>
+  				<origin xyz="0 0 0" rpy="0 0 0"/>
+  				<inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+  			</inertial>
+			<visual>
+  				<origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+  				<geometry>
+  					<mesh filename="package://harbot_description/meshes/structures/container/container.obj"/>
+  				</geometry>
+			</visual>
+  			<collision>
+  				<origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+  				<geometry>
+  					<mesh filename="package://harbot_description/meshes/structures/container/container.obj"/>
+  				</geometry>
+  			</collision>
+  		</link>
+
+		<joint name="$(arg prefix)container_side_joint" type="fixed">
+  			<origin xyz="-0.3595 0 0.204123" rpy="0 0 0"/>
+  			<parent link="$(arg prefix)base_link"/>
+  			<child link="$(arg prefix)container_side_link"/>
+  		</joint>
+
+  		<link name="$(arg prefix)container_side_link">
+  			<inertial>
+  				<mass value="0.001"/>
+  				<origin xyz="0 0 0" rpy="0 0 0"/>
+  				<inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+  			</inertial>
+			<visual>
+  				<origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+  				<geometry>
+  					<mesh filename="package://harbot_description/meshes/structures/container/container_side.obj"/>
+  				</geometry>
+			</visual>
+  			<collision>
+  				<origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+  				<geometry>
+  					<mesh filename="package://harbot_description/meshes/structures/container/container_side.obj"/>
+  				</geometry>
+  			</collision>
+  		</link>
+
+		<joint name="$(arg prefix)container_bottom_joint" type="revolute">
+  			<origin xyz="-0.3715 0 0.204123" rpy="0 0 0"/>
+  			<parent link="$(arg prefix)base_link"/>
+  			<child link="$(arg prefix)container_bottom_link"/>
+			<axis xyz="0 -1 0"/>
+			<limit lower="0" upper="0.7854" effort="150" velocity="0.5"/>
+ 		    <dynamics damping="8.0" friction="12.0"/>
+  		</joint>
+
+  		<link name="$(arg prefix)container_bottom_link">
+  			<inertial>
+  				<mass value="1.5"/>
+  				<origin xyz="0 0 0" rpy="0 0 0"/>
+  				<inertia ixx="0.020" ixy="0.0" ixz="0.0" iyy="0.070" iyz="0.0" izz="0.090"/>
+  			</inertial>
+  			<visual>
+  				<origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+  				<geometry>
+  					<mesh filename="package://harbot_description/meshes/structures/container/container_bottom.obj"/>
+  				</geometry>
+			</visual>
+  			<collision>
+  				<origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+  				<geometry>
+  					<mesh filename="package://harbot_description/meshes/structures/container/container_bottom.obj"/>
+  				</geometry>
+  			</collision>
+  		</link>		
+
+		<transmission name="$(arg prefix)container_bottom_trans">
+			<type>transmission_interface/SimpleTransmission</type>
+			<joint name="$(arg prefix)container_bottom_joint">
+				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+			</joint>
+			<actuator name="$(arg prefix)container_bottom_motor">
+				<hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+				<mechanicalReduction>1</mechanicalReduction>
+			</actuator>
+		</transmission>
+
+		<xacro:if value="${use_omni_wheels}">
+			<xacro:omni_wheel prefix="$(arg prefix)front_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
+				<origin xyz="${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+			</xacro:omni_wheel>
+
+			<xacro:omni_wheel prefix="$(arg prefix)front_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
+				<origin xyz="${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+			</xacro:omni_wheel>
+
+			<xacro:omni_wheel prefix="$(arg prefix)back_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
+				<origin xyz="-${wheel_offset_x} ${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+			</xacro:omni_wheel>
+
+			<xacro:omni_wheel prefix="$(arg prefix)back_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
+				<origin xyz="-${wheel_offset_x} -${wheel_offset_y} ${wheel_offset_z}" rpy="0 0 0"/>
+			</xacro:omni_wheel>
+		</xacro:if>
+
+		<xacro:unless value="${use_omni_wheels}">
+			<xacro:rubber_wheel prefix="$(arg prefix)front_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
+				<origin xyz="${wheel_offset_x} -${wheel_offset_y} ${rubber_wheel_offset_z}" rpy="0 0 0"/>
+			</xacro:rubber_wheel>
+
+			<xacro:rubber_wheel prefix="$(arg prefix)front_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
+				<origin xyz="${wheel_offset_x} ${wheel_offset_y} ${rubber_wheel_offset_z}" rpy="0 0 0"/>
+			</xacro:rubber_wheel>
+
+			<xacro:rubber_wheel prefix="$(arg prefix)back_left" parent="$(arg prefix)base_link" reflect="true" hq="${hq}">
+				<origin xyz="-${wheel_offset_x} ${wheel_offset_y} ${rubber_wheel_offset_z}" rpy="0 0 0"/>
+			</xacro:rubber_wheel>
+
+			<xacro:rubber_wheel prefix="$(arg prefix)back_right" parent="$(arg prefix)base_link" reflect="false" hq="${hq}">
+				<origin xyz="-${wheel_offset_x} -${wheel_offset_y} ${rubber_wheel_offset_z}" rpy="0 0 0"/>
+			</xacro:rubber_wheel>
+		</xacro:unless>
+
+			<!-- Omni mode adds ground-truth odometry with its planar plugin. -->
+			<xacro:unless value="${use_omni_wheels}">
+				<xacro:ground_truth_odometry prefix="${prefix}"/>
+			</xacro:unless>
+
+		</xacro:macro>
+
+</robot>

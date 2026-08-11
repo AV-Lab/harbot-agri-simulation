@@ -4,9 +4,9 @@ A ROS workspace for experiments with multiple robots in a greenhouse environment
 
 This repository provides a ROS Noetic and Gazebo Classic simulation setup based on the RBKairos mobile base integrated with a robotic manipulator, adapted for greenhouse-based research experiments.
 
-![Demo preview](https://www.dropbox.com/scl/fi/tjso48cj7z6yin2h1p5di/agri_final_demo_preview.GIF?rlkey=8iv6r655tom4veze2i4s3xgh2&raw=1)
+![Simulation system walkthrough preview](media/harbot_simulation_features.gif)
 
-Full demo video: [Download here](https://www.dropbox.com/scl/fi/9pud7ad7zqz1ohbytssr9/agri_final_demo.mp4?rlkey=azn2opi42kuegtdal0o9ienq9&raw=1)
+**[Watch the full simulation system overview](https://www.dropbox.com/scl/fi/a84vjmc8g44aoa231ryps/harbot_simulation_features.mp4?rlkey=xneqs1onafdokjcb1fav9ost0&raw=1)**
 
 ---
 
@@ -26,17 +26,24 @@ Recommended hardware (tested configuration):
 
 ---
 
-## Included Base Packages
+## Package Layout
 
-This workspace retains the upstream components needed by the current simulation. The imported repositories have been pruned and adapted for the HARBOT use case; legacy Summit navigation, localization, and gamepad packages are not included.
+The retained code is consolidated into six HARBOT packages with clear ownership:
 
-- [rbkairos_sim](https://github.com/RobotnikAutomation/rbkairos_sim)
-- [egh_gripper_common](https://github.com/RobotnikAutomation/egh_gripper_common)
-- [rbkairos_common](https://github.com/RobotnikAutomation/rbkairos_common)
-- [roboticsgroup_gazebo_plugins](https://github.com/RobotnikAutomation/roboticsgroup_gazebo_plugins)
-- [summit_xl_common](https://github.com/RobotnikAutomation/summit_xl_common)
-- [universal_robot](https://github.com/fmauch/universal_robot)
-- [franka_ros](https://github.com/frankarobotics/franka_ros.git)
+- `harbot_description`: mobile base, arm, gripper, and combined robot models
+- `harbot_control`: base, arm, gripper, and container controllers
+- `harbot_simulation`: Gazebo worlds, models, spawning, RViz, and simulation bringup
+- `harbot_navigation`: saved greenhouse paths and the custom path planner/controller
+- `harbot_moveit`: Franka 6-finger and UR5-EGH MoveIt profiles
+- `harbot_harvest`: perception, harvesting workflow, and PROST integration
+
+The simulation-specific ROS packages are grouped under `simulation_plugins/`:
+
+- `gazebo_ros_link_attacher`: simulated link attachment and detachment
+- `roboticsgroup_gazebo_plugins`: mimic-joint support for the custom grippers
+- `realsense_d435_gazebo`: the integrated D435/D435i model and Gazebo plugins
+
+They remain independent ROS packages even though they are grouped in one directory. Source and license provenance for consolidated or adapted upstream files is retained with the relevant package.
 
 ---
 
@@ -61,7 +68,9 @@ cd ~/catkin_ws/src
 git clone https://github.com/AV-Lab/harbot-agri-simulation.git
 ```
 
-The current simulation also expects the source-only packages `realsense_d435_gazebo` and [`rbkairos_etf_services`](https://github.com/Syed-Abbas-Hussain/rbkairos_etf_services/tree/SIM-integration) in the same workspace. They are already present in `harbot_agri_sim`, but are not vendored here and have no rosdep definitions. Add them to `~/catkin_ws/src` before installing dependencies.
+All Gazebo and Realsense integration packages required by the default simulation are included under `simulation_plugins/`.
+
+The PROST harvesting integration additionally expects [`rbkairos_etf_services`](https://github.com/Syed-Abbas-Hussain/rbkairos_etf_services/tree/SIM-integration) and its `prost_ros` dependency in the same workspace. They are already present in `harbot_agri_sim`, but are not included in this repository and have no rosdep definitions. Add them to `~/catkin_ws/src` before installing dependencies when using the PROST action-server integration. The core Gazebo and MoveIt simulation can run without them.
 
 Install dependencies:
 
@@ -91,13 +100,13 @@ source devel/setup.bash
 Before starting the simulation, from the repository root set the Gazebo model path:
 
 ```bash
-export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$PWD/rbkairos_sim/rbkairos_gazebo/models
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$PWD/harbot_simulation/models
 ```
 
 Launch the complete RB-Kairos simulation:
 
 ```bash
-roslaunch rbkairos_sim_bringup rbkairos_complete.launch
+roslaunch harbot_simulation rbkairos_complete.launch
 ```
 
 This starts Gazebo along with the required ROS controllers.
@@ -105,7 +114,7 @@ The launch file supports spawning the robots at predefined greenhouse waypoints.
 
 The greenhouse waypoint layout used by the navigation and harvesting workflow is shown below. This map is useful when selecting robot spawn waypoints, checking saved path endpoints, and understanding the zigzag traversal order across the rows.
 
-![Greenhouse waypoint map](docs/images/greenhouse_waypoint_map.jpg)
+![Greenhouse waypoint map](media/greenhouse_waypoint_map.jpg)
 
 Waypoint ranges:
 
@@ -115,15 +124,15 @@ Waypoint ranges:
 Example launch with robot A at `a1` and robot B at `a40`:
 
 ```bash
-roslaunch rbkairos_sim_bringup rbkairos_complete.launch waypoint_robot_a:=a1 waypoint_robot_b:=a40
+roslaunch harbot_simulation rbkairos_complete.launch waypoint_robot_a:=a1 waypoint_robot_b:=a40
 ```
 
-For a Franka robot, select a retained MoveIt pipeline with `moveit_pipeline_a:=ompl`, `stomp`, or `ompl_chomp` (and the corresponding `_b`/`_c` argument for another robot).
+For a Franka robot, select a retained MoveIt pipeline with `moveit_pipeline_a:=ompl`, `stomp`, `ompl_chomp`, `chomp`, or `pilz_industrial_motion_planner` (and the corresponding `_b`/`_c` argument for another robot). The UR5 profile supports `ompl`, `chomp`, and `pilz_industrial_motion_planner`.
 
 After the simulation is running, start the harvesting workflow:
 
 ```bash
-rosrun rbkairos_sim_bringup harvest_workflow.py
+rosrun harbot_harvest harvest_workflow.py
 ```
 
 The workflow asks for:
