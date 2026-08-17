@@ -80,6 +80,18 @@
                 -model $(arg id_robot)
                  " />
 
+        <!-- Expose simulator-independent object attachment semantics to harvest clients. -->
+        <node if="$(arg launch_arm)"
+              name="object_attachment_adapter"
+              pkg="harbot_simulation"
+              type="gazebo_attachment_adapter.py"
+              output="screen">
+            <param name="robot_model" value="$(arg id_robot)"/>
+            <param name="base_link" value="$(arg id_robot)_base_footprint"/>
+            <param name="gripper_link" value="$(eval arg('id_robot') + ('_link7' if arg('arm_model') == 'franka' else '_arm_wrist_3_link'))"/>
+            <param name="object_link" value="body"/>
+        </node>
+
         <!-- Start HARBOT controllers. -->
         <include file="$(find harbot_control)/launch/harbot_control.launch">
             <arg name="prefix" value="$(arg prefix)"/>

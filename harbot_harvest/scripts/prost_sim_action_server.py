@@ -10,12 +10,14 @@ from std_msgs.msg import String
 
 from rbkairos_etf_services.srv import ActionServer, ActionServerResponse
 
-from harbot_harvest import workflow
+from harbot_harvest import helpers, workflow
 
 
 class ProstSimActionServer(object):
     def __init__(self):
-        self.robot_ns = workflow.normalize_namespace(rospy.get_param("~robot_ns", "/robot"))
+        self.robot_ns = helpers.normalize_robot_namespace(
+            rospy.get_param("~robot_ns", "/robot")
+        )
         self.robot_key = workflow.namespace_to_path_key(self.robot_ns)
 
         default_service_name = "{}/sim_action_server".format(self.robot_ns)
@@ -385,7 +387,19 @@ class ProstSimActionServer(object):
         if timeout <= 0.0:
             raise RuntimeError("{} timed out before starting.".format(step_label))
 
-        private_params = {"orange": orange_name}
+        private_params = {
+            "orange": orange_name,
+            "cmd_vel_topic": helpers.get_topic_setting("cmd_vel_topic"),
+            "odom_topic": helpers.get_topic_setting("odom_topic"),
+            "result_topic": helpers.get_topic_setting("result_topic"),
+            "arm_command_topic": rospy.get_param(
+                "~arm_command_topic", "arm/pos_traj_controller/command"
+            ),
+            "gripper_command_topic": rospy.get_param(
+                "~gripper_command_topic", "gripper/pos_traj_controller/command"
+            ),
+            "planning_frame": rospy.get_param("~planning_frame", "world"),
+        }
         private_params.update(extra_params)
 
         moveit_planning_time_sec = 0.0
@@ -426,7 +440,7 @@ class ProstSimActionServer(object):
         return step_succeeded, moveit_planning_time_sec, moveit_planning_done_time, step_result_time
 
     def wait_for_navigation_finish(self, process_handle, timeout):
-        status_topic = "{}/path_nav/status".format(self.robot_ns)
+        status_topic = helpers.get_robot_topic(self.robot_ns, "status_topic")
         deadline = time.time() + timeout
         last_status = None
 

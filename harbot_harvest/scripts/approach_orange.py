@@ -7,11 +7,15 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from tf.transformations import euler_from_quaternion
 
+from harbot_harvest import helpers
+
 
 class OrangeApproach(object):
     def __init__(self):
 
-        self.robot_ns = rospy.get_param('~robot_ns', '/robot')
+        self.robot_ns = helpers.normalize_robot_namespace(
+            rospy.get_param('~robot_ns', '/robot')
+        )
         self.orange_model = rospy.get_param('~orange', '').strip()
         
         self.dx = 0.0
@@ -25,9 +29,9 @@ class OrangeApproach(object):
         self.latest_odom = None
 
 
-        self.cmd_topic = self.robot_ns + '/robotnik_base_control/cmd_vel'
-        self.odom_topic = self.robot_ns + '/robotnik_base_control/odom_gt'
-        self.orange_action_topic = self.robot_ns + '/orange_action'
+        self.cmd_topic = helpers.get_robot_topic(self.robot_ns, 'cmd_vel_topic')
+        self.odom_topic = helpers.get_robot_topic(self.robot_ns, 'odom_topic')
+        self.orange_action_topic = helpers.get_robot_topic(self.robot_ns, 'result_topic')
         
         self.pub = rospy.Publisher(self.cmd_topic, Twist, queue_size=1)
         self.orange_action_pub = rospy.Publisher(self.orange_action_topic, Bool, queue_size=1)

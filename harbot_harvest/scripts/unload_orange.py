@@ -2,23 +2,31 @@
 
 import rospy
 from std_msgs.msg import Bool
-from gazebo_msgs.srv import GetModelProperties
-from gazebo_ros_link_attacher.srv import Attach, AttachRequest
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
+from harbot_harvest.attachment import (
+    ATTACHMENT_TARGET_RELEASED,
+    ObjectAttachmentClient,
+)
+from harbot_harvest.helpers import resolve_ros_name
 
 
 class OrangeUnloader(object):
     def __init__(self):
         self.orange_model = rospy.get_param('~orange', '')
         self.robot_ns = rospy.get_param('~robot_ns', '/robot')
-
-        self.robot_model = 'robot'
-        self.robot_link = 'robot_link7'
+        self.attachment_client = ObjectAttachmentClient(self.robot_ns)
 
         self.gripper_joint = 'robot_finger_joint1'
-        self.gripper_cmd_topic = '/robot/gripper/pos_traj_controller/command'
+        self.gripper_cmd_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~gripper_command_topic', 'gripper/pos_traj_controller/command'),
+        )
 
-        self.arm_cmd_topic = '/robot/arm/pos_traj_controller/command'
+        self.arm_cmd_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~arm_command_topic', 'arm/pos_traj_controller/command'),
+        )
         self.arm_joints = [
             'robot_joint1',
             'robot_joint2',
@@ -31,7 +39,10 @@ class OrangeUnloader(object):
 
         self.arm_initial_pos = [0.000, -0.784, 0.000, -2.100, 0.000, 1.569, 0.782]
         self.arm_drop_pos = [0.001, 0.615, -0.000, -1.754, 0.000, 2.463, 0.785]
-        self.orange_action_topic = self.robot_ns + '/orange_action'
+        self.orange_action_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~result_topic', 'orange_action'),
+        )
 
         self.configure_robot()
 
@@ -41,9 +52,6 @@ class OrangeUnloader(object):
 
     def configure_robot(self):
         if self.robot_ns.lower() == '/robot_b':
-            self.robot_model = 'robot_b'
-            self.robot_link = 'robot_b_link7'
-
             self.arm_joints = [
                 'robot_b_joint1',
                 'robot_b_joint2',
@@ -55,31 +63,6 @@ class OrangeUnloader(object):
             ]
 
             self.gripper_joint = 'robot_b_finger_joint1'
-            self.gripper_cmd_topic = '/robot_b/gripper/pos_traj_controller/command'
-            self.arm_cmd_topic = '/robot_b/arm/pos_traj_controller/command'
-
-    def set_link_attachment(self, action, model_name_1, link_name_1, model_name_2, link_name_2):
-        service_name = "/link_attacher_node/{}".format(action)
-
-        try:
-            rospy.wait_for_service(service_name, timeout=0.5)
-        except rospy.ROSException:
-            rospy.logwarn("%s service is not available", service_name)
-            return False
-
-        req = AttachRequest()
-        req.model_name_1 = model_name_1
-        req.link_name_1 = link_name_1
-        req.model_name_2 = model_name_2
-        req.link_name_2 = link_name_2
-
-        try:
-            service = rospy.ServiceProxy(service_name, Attach)
-            result = service(req)
-            return result.ok
-        except rospy.ServiceException as exc:
-            rospy.logwarn("%s service failed: %s", service_name, str(exc))
-            return False
 
     def build_joint_command(self, joint_names, positions, duration):
         cmd = JointTrajectory()
@@ -116,22 +99,10 @@ class OrangeUnloader(object):
         )
         self.arm_pub.publish(cmd)
 
-    def get_model_link_name(self):
-        rospy.wait_for_service('/gazebo/get_model_properties')
-        get_model_properties = rospy.ServiceProxy('/gazebo/get_model_properties', GetModelProperties)
-        response = get_model_properties(self.orange_model)
-
-        if response.success and response.canonical_body_name:
-            return response.canonical_body_name.split('::')[-1]
-
-        return 'body'
-
     def run(self):
         if not self.orange_model:
             rospy.logerr('Parameter ~orange is required')
             return
-
-        model_link = self.get_model_link_name()
 
         rospy.sleep(0.5)
         
@@ -139,13 +110,13 @@ class OrangeUnloader(object):
         self.move_arm_to_drop_position()
         rospy.sleep(4.0)
 
-        self.set_link_attachment(
-            'detach',
-            self.robot_model,
-            self.robot_link,
+        if not self.attachment_client.set_target(
             self.orange_model,
-            model_link,
-        )
+            ATTACHMENT_TARGET_RELEASED,
+        ):
+            rospy.logerr('Could not release %s through the attachment service', self.orange_model)
+            self.orange_action_pub.publish(Bool(data=False))
+            return
         rospy.sleep(0.1)
 
         rospy.loginfo('Unloading orange')

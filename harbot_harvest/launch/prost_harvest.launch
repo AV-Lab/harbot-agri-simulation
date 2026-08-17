@@ -1,0 +1,37 @@
+<launch>
+    <arg name="robot_ns" default="/robot" />
+    <arg name="cmd_vel_topic" default="robotnik_base_control/cmd_vel" />
+    <arg name="odom_topic" default="robotnik_base_control/odom_gt" />
+    <arg name="result_topic" default="orange_action" />
+    <arg name="status_topic" default="path_nav/status" />
+    <arg name="proceed_flag_topic" default="path_nav/proceed_flag" />
+    <arg name="arm_command_topic" default="arm/pos_traj_controller/command" />
+    <arg name="gripper_command_topic" default="gripper/pos_traj_controller/command" />
+    <arg name="planning_frame" default="world" />
+
+    <group ns="$(arg robot_ns)">
+        <node pkg="harbot_harvest"
+              type="hsv_object_detector.py"
+              name="hsv_object_detector"
+              output="screen"
+              launch-prefix="bash -c 'sleep 1; exec &quot;$@&quot;' _">
+            <param name="robot_ns" value="$(arg robot_ns)" />
+        </node>
+
+        <node pkg="harbot_harvest"
+              type="prost_sim_action_server.py"
+              name="prost_sim_action_server"
+              output="screen"
+              launch-prefix="bash -c 'sleep 5; exec &quot;$@&quot;' _">
+            <param name="robot_ns" value="$(arg robot_ns)" />
+            <param name="cmd_vel_topic" value="$(arg cmd_vel_topic)" />
+            <param name="odom_topic" value="$(arg odom_topic)" />
+            <param name="result_topic" value="$(arg result_topic)" />
+            <param name="status_topic" value="$(arg status_topic)" />
+            <param name="proceed_flag_topic" value="$(arg proceed_flag_topic)" />
+            <param name="arm_command_topic" value="$(arg arm_command_topic)" />
+            <param name="gripper_command_topic" value="$(arg gripper_command_topic)" />
+            <param name="planning_frame" value="$(arg planning_frame)" />
+        </node>
+    </group>
+</launch>

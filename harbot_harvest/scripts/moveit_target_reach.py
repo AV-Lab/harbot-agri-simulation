@@ -2,11 +2,9 @@
 
 import os
 import sys
-import json
 import signal
 import time
 import rospy
-import rospkg
 import subprocess
 import moveit_commander
 from std_msgs.msg import Bool, Float64
@@ -14,13 +12,18 @@ from nav_msgs.msg import Odometry
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import PoseStamped, PointStamped
 from moveit_commander import PlanningSceneInterface
-from gazebo_ros_link_attacher.srv import Attach, AttachRequest
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
+from harbot_harvest.attachment import (
+    ATTACHMENT_TARGET_ENVIRONMENT,
+    ObjectAttachmentClient,
+)
+from harbot_harvest.helpers import resolve_ros_name
 
 
 class MoveItTargetReach(object):
     def __init__(self):
-        self.marker_frame = 'world'
+        self.marker_frame = rospy.get_param('~planning_frame', 'world')
         self.package_name = 'harbot_harvest'
 
         self.robot_ns = rospy.get_param('~robot_ns', '/robot')
@@ -32,9 +35,8 @@ class MoveItTargetReach(object):
         self.detection_startup_delay = float(rospy.get_param('~detection_startup_delay', 0.1))
         self.detection_timeout = float(rospy.get_param('~detection_timeout', 10.0))
         self.orange_model = rospy.get_param('~orange', '').strip()
-        self.robot_model = 'robot'
-        self.robot_base_link = 'robot_base_footprint'
         self.arm_type = rospy.get_param('~arm', 'Franka')
+        self.attachment_client = ObjectAttachmentClient(self.robot_ns)
 
 
         self.move_group_name = 'arm'
@@ -74,11 +76,26 @@ class MoveItTargetReach(object):
             'box_size': [0.0, 0.0, 0.0],
         }
 
-        self.orange_action_topic = self.robot_ns + '/orange_action'
+        self.greenhouse_stems_mesh_path = rospy.get_param(
+            '/harbot/planning_scene/greenhouse_stems_mesh_path',
+            '',
+        )
+        self.orange_stem_mesh_path = rospy.get_param(
+            '/harbot/planning_scene/orange_stem_mesh_path',
+            '',
+        )
+
+        self.orange_action_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~result_topic', 'orange_action'),
+        )
         self.object_marker_topic = self.robot_ns + '/detected_object_marker'
         self.target_marker_topic = self.robot_ns + '/target_point_marker'
         self.selected_collision_marker_topic = self.robot_ns + '/selected_collision_markers'
-        self.odom_topic = self.robot_ns + '/robotnik_base_control/odom_gt'
+        self.odom_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~odom_topic', 'robotnik_base_control/odom_gt'),
+        )
 
         self.object_marker_pub = rospy.Publisher(self.object_marker_topic, Marker, queue_size=1, latch=True)
         self.target_marker_pub = rospy.Publisher(self.target_marker_topic, Marker, queue_size=1, latch=True)
@@ -107,30 +124,6 @@ class MoveItTargetReach(object):
             return -1
         return 0
     
-    def set_link_attachment(self, action, model_name_1, link_name_1, model_name_2, link_name_2):
-        service_name = "/link_attacher_node/{}".format(action)
-
-        try:
-            rospy.wait_for_service(service_name, timeout=0.5)
-        except rospy.ROSException:
-            rospy.logwarn("%s service is not available", service_name)
-            return False
-
-        req = AttachRequest()
-        req.model_name_1 = model_name_1
-        req.link_name_1 = link_name_1
-        req.model_name_2 = model_name_2
-        req.link_name_2 = link_name_2
-
-        try:
-            service = rospy.ServiceProxy(service_name, Attach)
-            rospy.sleep(0.1)
-            result = service(req)
-            return result.ok
-        except rospy.ServiceException as exc:
-            rospy.logwarn("%s service failed: %s", service_name, str(exc))
-            return False
-
     def launch_detection_processes(self):
         if not self.launch_detection:
             return []
@@ -138,7 +131,10 @@ class MoveItTargetReach(object):
         processes = []
         scripts = [
             # ("hsv_object_detector.py", {"robot_ns": self.robot_ns, "color_name": "orange"}),
-            ("orange_pose_to_world.py", {"robot_ns": self.robot_ns}),
+            (
+                "orange_pose_to_world.py",
+                {"robot_ns": self.robot_ns, "target_frame": self.marker_frame},
+            ),
         ]
 
         for script_name, params in scripts:
@@ -209,8 +205,6 @@ class MoveItTargetReach(object):
 
     def configure_robot(self):
         self.robot_ns = '/robot'
-        self.robot_model = 'robot'
-        self.robot_base_link = 'robot_base_footprint'
         self.move_group_name = 'arm'
         self.ee_link = 'robot_hand_tcp'
         self.gripper_joint = 'robot_finger_joint1'
@@ -235,8 +229,6 @@ class MoveItTargetReach(object):
 
         if rospy.get_param('~robot_ns', '/robot').lower() == '/robot_b':
             self.robot_ns = '/robot_b'
-            self.robot_model = 'robot_b'
-            self.robot_base_link = 'robot_b_base_footprint'
             self.gripper_cmd_topic = '/robot_b/gripper/pos_traj_controller/command'
             self.arm_cmd_topic = '/robot_b/arm/pos_traj_controller/command'
 
@@ -331,16 +323,19 @@ class MoveItTargetReach(object):
             marker.color.a = marker_color[3]
             markers.markers.append(marker)
 
-        def add_mesh_marker(marker_id, name, mesh_name, enabled_param, mesh_path_param):
+        def add_mesh_marker(marker_id, name, mesh_path, enabled_param):
             if not bool(rospy.get_param(enabled_param, True)):
                 return
 
-            mesh_resource = rospy.get_param(mesh_path_param, "")
-            if mesh_resource:
-                if not mesh_resource.startswith("package://") and not mesh_resource.startswith("file://"):
-                    mesh_resource = "file://" + mesh_resource
-            else:
-                mesh_resource = "package://harbot_simulation/models/greenhouse/meshes/" + mesh_name
+            if not mesh_path:
+                rospy.logwarn_once(
+                    "%s is not configured; skipping the %s planning-scene marker",
+                    enabled_param.replace('add_', '').replace('_collision', '_mesh_path'),
+                    name,
+                )
+                return
+
+            mesh_resource = "file://" + mesh_path
 
             marker = Marker()
             marker.header.frame_id = self.marker_frame
@@ -385,17 +380,26 @@ class MoveItTargetReach(object):
 
         add_sphere_marker(0, "target_orange", object_position, self.target["diameter"])
         add_sphere_marker(1, "paired_orange", paired_orange_position, self.target["diameter"])
-        add_mesh_marker(2, "greenhouse_stems_link", "greenhouse_stems.obj", "~add_greenhouse_stems_collision", "~greenhouse_stems_mesh_path")
-        add_mesh_marker(3, "orange_stem", "orange_stem.obj", "~add_orange_stem_collision", "~orange_stem_mesh_path")
+        add_mesh_marker(
+            2,
+            "greenhouse_stems_link",
+            self.greenhouse_stems_mesh_path,
+            "~add_greenhouse_stems_collision",
+        )
+        add_mesh_marker(
+            3,
+            "orange_stem",
+            self.orange_stem_mesh_path,
+            "~add_orange_stem_collision",
+        )
         return markers
 
     def add_mesh_collision_object(
         self,
         scene,
         object_id,
-        mesh_name,
+        mesh_path,
         enabled_param,
-        mesh_path_param,
         position=(0.0, 0.0, 0.0),
         orientation=(0.70710678118, 0.0, 0.0, 0.70710678118),
         size=(1.0, 1.0, 1.0),
@@ -403,18 +407,15 @@ class MoveItTargetReach(object):
         if not bool(rospy.get_param(enabled_param, True)):
             return False
 
-        mesh_path = rospy.get_param(mesh_path_param, '')
         if not mesh_path:
-            mesh_path = os.path.join(
-                rospkg.RosPack().get_path('harbot_simulation'),
-                'models',
-                'greenhouse',
-                'meshes',
-                mesh_name,
+            rospy.logwarn_once(
+                "No mesh path is configured for %s; skipping that collision object",
+                object_id,
             )
+            return False
 
         if not os.path.isfile(mesh_path):
-            # rospy.logwarn('Collision mesh not found for %s: %s', object_id, mesh_path)
+            rospy.logwarn_once('Collision mesh not found for %s: %s', object_id, mesh_path)
             return False
 
         pose_mesh = PoseStamped()
@@ -498,16 +499,14 @@ class MoveItTargetReach(object):
         self.add_mesh_collision_object(
             scene,
             'greenhouse_stems_link',
-            'greenhouse_stems.obj',
+            self.greenhouse_stems_mesh_path,
             '~add_greenhouse_stems_collision',
-            '~greenhouse_stems_mesh_path',
         )
         self.add_mesh_collision_object(
             scene,
             'orange_stem',
-            'orange_stem.obj',
+            self.orange_stem_mesh_path,
             '~add_orange_stem_collision',
-            '~orange_stem_mesh_path',
         )
 
         rospy.loginfo('Collision objects for orange added to MoveIt planning scene')
@@ -657,12 +656,9 @@ class MoveItTargetReach(object):
         attached = False
 
         for attempt in range(5):
-            if self.set_link_attachment(
-                'attach',
-                self.robot_model,
-                self.robot_base_link,
+            if self.attachment_client.set_target(
                 self.orange_model,
-                'body',
+                ATTACHMENT_TARGET_ENVIRONMENT,
             ):
                 rospy.sleep(0.1)
                 attached = True
@@ -768,6 +764,14 @@ class MoveItTargetReach(object):
 
 
         self.configure_robot()
+        self.arm_cmd_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~arm_command_topic', 'arm/pos_traj_controller/command'),
+        )
+        self.gripper_cmd_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~gripper_command_topic', 'gripper/pos_traj_controller/command'),
+        )
         self.arm_pub = rospy.Publisher(self.arm_cmd_topic, JointTrajectory, queue_size=1)
         rospy.sleep(0.5)
         self.move_arm_to_scan_position()

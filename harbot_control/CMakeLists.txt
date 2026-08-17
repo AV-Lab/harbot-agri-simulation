@@ -4,9 +4,19 @@ project(harbot_control)
 find_package(catkin REQUIRED COMPONENTS
   diff_drive_controller
   joint_state_controller
+  message_generation
 )
 
-catkin_package()
+add_service_files(
+  FILES
+  SetObjectAttachment.srv
+)
+
+generate_messages()
+
+catkin_package(
+  CATKIN_DEPENDS message_runtime
+)
 
 install(
   DIRECTORY config launch LICENSES

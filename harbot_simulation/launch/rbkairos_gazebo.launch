@@ -15,6 +15,12 @@
     <arg name="ros_planar_move_plugin" default="true"/>
     <arg name="load_arm_kinematics_file" default="true"/>
 
+    <!-- Simulation-provided planning-scene resources; harvest code consumes only these generic parameters. -->
+    <param name="/harbot/planning_scene/greenhouse_stems_mesh_path"
+           value="$(find harbot_simulation)/models/greenhouse/meshes/greenhouse_stems.obj"/>
+    <param name="/harbot/planning_scene/orange_stem_mesh_path"
+           value="$(find harbot_simulation)/models/greenhouse/meshes/orange_stem.obj"/>
+
 
     <!--params of the different robots-->
     <!-- robot a -->

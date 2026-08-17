@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(harbot_harvest)
 
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+  harbot_control
+)
 
 catkin_python_setup()
 
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS harbot_control
+)
 
 catkin_install_python(PROGRAMS
   scripts/approach_orange.py

@@ -13,6 +13,8 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import Bool, String, Float64
 from tf.transformations import euler_from_quaternion
 
+from harbot_harvest import helpers
+
 
 WAYPOINTS = {
     "robot_a": {
@@ -264,9 +266,9 @@ def prompt(text):
     return input("{}[harvest_workflow] {}{}".format(COLOR_TEXT, text, COLOR_RESET))
 
 
-def orange_action_callback_factory(robot_ns):
+def orange_action_callback_factory(interface_key):
     def _callback(message):
-        ORANGE_ACTION_EVENTS[robot_ns] = {
+        ORANGE_ACTION_EVENTS[interface_key] = {
             "value": message.data,
             "time": time.monotonic(),
         }
@@ -274,16 +276,18 @@ def orange_action_callback_factory(robot_ns):
 
 
 def ensure_orange_action_subscriber(robot_ns):
-    if robot_ns in ORANGE_ACTION_SUBSCRIBERS:
-        return
+    topic_name = helpers.get_robot_topic(robot_ns, "result_topic")
+    interface_key = (helpers.normalize_robot_namespace(robot_ns), topic_name)
+    if interface_key in ORANGE_ACTION_SUBSCRIBERS:
+        return interface_key
 
-    topic_name = "{}/orange_action".format(robot_ns)
-    ORANGE_ACTION_SUBSCRIBERS[robot_ns] = rospy.Subscriber(
+    ORANGE_ACTION_SUBSCRIBERS[interface_key] = rospy.Subscriber(
         topic_name,
         Bool,
-        orange_action_callback_factory(robot_ns),
+        orange_action_callback_factory(interface_key),
         queue_size=10,
     )
+    return interface_key
 
 
 def waypoint_sort_key(waypoint_name):
@@ -301,20 +305,6 @@ def destination_sort_key(robot_key, destination_name):
     return (2, destination_name)
 
 
-def normalize_namespace(robot_ns):
-    cleaned = robot_ns.strip()
-    if not cleaned:
-        raise ValueError("Robot namespace cannot be empty.")
-    lowered = cleaned.lower()
-    if lowered == "a":
-        return "/robot"
-    if lowered == "b":
-        return "/robot_b"
-    if not cleaned.startswith("/"):
-        cleaned = "/" + cleaned
-    return cleaned.rstrip("/")
-
-
 def namespace_to_path_key(robot_ns):
     base_name = robot_ns.strip("/").lower()
     if base_name not in ROBOT_ALIASES:
@@ -328,7 +318,7 @@ def prompt_robot_namespace(default_ns="/robot"):
     entered = prompt(
         "Robot [a/b]: "
     ).strip()
-    return normalize_namespace(entered or "a")
+    return helpers.normalize_robot_namespace(entered or "a")
 
 
 def prompt_gui_flag(default_value=False):
@@ -365,7 +355,7 @@ def pose_from_odom(message):
 
 
 def get_current_pose(robot_ns, timeout=5.0):
-    odom_topic = "{}/robotnik_base_control/odom_gt".format(robot_ns)
+    odom_topic = helpers.get_robot_topic(robot_ns, "odom_topic")
     message = rospy.wait_for_message(odom_topic, Odometry, timeout=timeout)
     return pose_from_odom(message)
 
@@ -581,6 +571,12 @@ def launch_navigation(robot_ns, path_name, gui_enabled):
         "path_name:={}".format(path_name),
         "robot_ns:={}".format(robot_ns),
         "gui:={}".format(str(gui_enabled).lower()),
+        "odom_topic:={}".format(helpers.get_topic_setting("odom_topic")),
+        "cmd_vel_topic:={}".format(helpers.get_topic_setting("cmd_vel_topic")),
+        "status_topic:={}".format(helpers.get_topic_setting("status_topic")),
+        "proceed_flag_topic:={}".format(
+            helpers.get_topic_setting("proceed_flag_topic")
+        ),
     ]
 
     return subprocess.Popen(
@@ -597,11 +593,11 @@ def launch_persistent_path_gui(robot_ns):
         "harbot_navigation",
         "path_gui.py",
         "__ns:={}".format(robot_ns),
-        "_odom_topic:=robotnik_base_control/odom_gt",
+        "_odom_topic:={}".format(helpers.get_topic_setting("odom_topic")),
         "_global_path_topic:=path_nav/path",
         "_desired_velocity_topic:=path_nav/desired_speed",
-        "_state_flag_topic:=path_nav/status",
-        "_proceed_flag_topic:=path_nav/proceed_flag",
+        "_state_flag_topic:={}".format(helpers.get_topic_setting("status_topic")),
+        "_proceed_flag_topic:={}".format(helpers.get_topic_setting("proceed_flag_topic")),
         "_reverse_mode_topic:=path_nav/reverse_mode",
     ]
 
@@ -647,7 +643,7 @@ def shutdown_process(process_handle):
 
 
 def wait_for_navigation_finish(robot_ns):
-    status_topic = "{}/path_nav/status".format(robot_ns)
+    status_topic = helpers.get_robot_topic(robot_ns, "status_topic")
     last_status = None
     while not rospy.is_shutdown():
         message = rospy.wait_for_message(status_topic, String, timeout=2.0)
@@ -659,7 +655,7 @@ def wait_for_navigation_finish(robot_ns):
 
 
 def send_proceed_flag(robot_ns):
-    topic_name = "{}/path_nav/proceed_flag".format(robot_ns)
+    topic_name = helpers.get_robot_topic(robot_ns, "proceed_flag_topic")
     publisher = rospy.Publisher(topic_name, Bool, queue_size=1, latch=True)
 
     deadline = time.time() + 3.0
@@ -670,13 +666,13 @@ def send_proceed_flag(robot_ns):
 
 
 def wait_for_orange_action_result(robot_ns, process_handle, step_label, timeout=ORANGE_ACTION_TIMEOUT):
-    ensure_orange_action_subscriber(robot_ns)
+    interface_key = ensure_orange_action_subscriber(robot_ns)
     start_time = time.monotonic()
     deadline = time.time() + timeout
     process_exit_time = None
 
     while not rospy.is_shutdown():
-        latest_event = ORANGE_ACTION_EVENTS.get(robot_ns)
+        latest_event = ORANGE_ACTION_EVENTS.get(interface_key)
         if latest_event and latest_event["time"] >= start_time:
             return bool(latest_event["value"])
 
@@ -714,6 +710,16 @@ def run_orange_script_step(
 ):
     private_params = {
         "orange": orange_name,
+        "cmd_vel_topic": helpers.get_topic_setting("cmd_vel_topic"),
+        "odom_topic": helpers.get_topic_setting("odom_topic"),
+        "result_topic": helpers.get_topic_setting("result_topic"),
+        "arm_command_topic": rospy.get_param(
+            "~arm_command_topic", "arm/pos_traj_controller/command"
+        ),
+        "gripper_command_topic": rospy.get_param(
+            "~gripper_command_topic", "gripper/pos_traj_controller/command"
+        ),
+        "planning_frame": rospy.get_param("~planning_frame", "world"),
     }
     if extra_params:
         private_params.update(extra_params)
@@ -1045,7 +1051,11 @@ def main():
     arguments = parse_args()
 
     try:
-        robot_ns = normalize_namespace(arguments.robot_ns) if arguments.robot_ns else prompt_robot_namespace()
+        robot_ns = (
+            helpers.normalize_robot_namespace(arguments.robot_ns)
+            if arguments.robot_ns
+            else prompt_robot_namespace()
+        )
         robot_key = namespace_to_path_key(robot_ns)
     except ValueError as exc:
         info(str(exc))

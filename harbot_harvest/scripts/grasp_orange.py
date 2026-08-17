@@ -5,8 +5,14 @@ import rospy
 import random
 import moveit_commander
 from std_msgs.msg import Bool
-from gazebo_ros_link_attacher.srv import Attach, AttachRequest
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
+from harbot_harvest.attachment import (
+    ATTACHMENT_TARGET_GRIPPER,
+    ATTACHMENT_TARGET_RELEASED,
+    ObjectAttachmentClient,
+)
+from harbot_harvest.helpers import resolve_ros_name
 
 
 class OrangeGrasper(object):
@@ -15,11 +21,8 @@ class OrangeGrasper(object):
         self.orange_model = rospy.get_param('~orange', '').strip()
         self.arm_type = rospy.get_param('~arm', 'Franka').lower()
         self.grasp_success_probability = float(rospy.get_param('~grasp_success_probability', 0.91)) # prob from real-world experiments  
-        self.orange_link = 'body'
+        self.attachment_client = ObjectAttachmentClient(self.robot_ns)
 
-        self.robot_model = 'robot'
-        self.robot_base_link = 'robot_base_footprint'
-        self.gripper_link = 'robot_link7'
         self.gripper_joint = 'robot_finger_joint1'
         self.gripper_close_pos = -0.1
         self.move_group_name = 'arm'
@@ -36,9 +39,18 @@ class OrangeGrasper(object):
 
         self.arm_initial_pos = [0.000, -0.784, 0.000, -2.100, 0.000, 1.569, 0.782]
 
-        self.arm_cmd_topic = self.robot_ns + '/arm/pos_traj_controller/command'
-        self.gripper_cmd_topic = self.robot_ns + '/gripper/pos_traj_controller/command'
-        self.orange_action_topic = self.robot_ns + '/orange_action'
+        self.arm_cmd_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~arm_command_topic', 'arm/pos_traj_controller/command'),
+        )
+        self.gripper_cmd_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~gripper_command_topic', 'gripper/pos_traj_controller/command'),
+        )
+        self.orange_action_topic = resolve_ros_name(
+            self.robot_ns,
+            rospy.get_param('~result_topic', 'orange_action'),
+        )
         self.return_planning_time = float(rospy.get_param('~return_planning_time', 10.0))
         self.return_planning_attempts = int(rospy.get_param('~return_planning_attempts', 10))
         self.return_motion_retries = int(rospy.get_param('~return_motion_retries', -1))
@@ -51,56 +63,6 @@ class OrangeGrasper(object):
         self.gripper_pub = rospy.Publisher(self.gripper_cmd_topic, JointTrajectory, queue_size=1)
         self.orange_action_pub = rospy.Publisher(self.orange_action_topic, Bool, queue_size=1)
 
-    def set_link_attachment(
-        self,
-        action,
-        model_name_1,
-        link_name_1,
-        model_name_2,
-        link_name_2,
-        attempts=3,
-    ):
-        service_name = "/link_attacher_node/{}".format(action)
-
-        req = AttachRequest()
-        req.model_name_1 = model_name_1
-        req.link_name_1 = link_name_1
-        req.model_name_2 = model_name_2
-        req.link_name_2 = link_name_2
-
-        for attempt in range(1, attempts + 1):
-            try:
-                rospy.wait_for_service(service_name, timeout=1.0)
-                service = rospy.ServiceProxy(service_name, Attach)
-                result = service(req)
-                rospy.sleep(0.1)
-                if result.ok:
-                    return True
-
-                rospy.logwarn(
-                    "%s returned ok=False on attempt %d/%d: %s/%s -> %s/%s",
-                    service_name,
-                    attempt,
-                    attempts,
-                    model_name_1,
-                    link_name_1,
-                    model_name_2,
-                    link_name_2,
-                )
-            except (rospy.ROSException, rospy.ServiceException) as exc:
-                rospy.logwarn(
-                    "%s failed on attempt %d/%d: %s",
-                    service_name,
-                    attempt,
-                    attempts,
-                    str(exc),
-                )
-
-            if attempt < attempts:
-                rospy.sleep(0.1)
-
-        return False
-
     def simulated_grasp_succeeds(self):
         if self.grasp_success_probability < 0.0 or self.grasp_success_probability > 1.0:
             rospy.logwarn('Invalid grasp_success_probability. Using 0.8')
@@ -109,10 +71,6 @@ class OrangeGrasper(object):
         return random.random() < self.grasp_success_probability
 
     def configure_robot(self):
-        if self.robot_ns == '/robot_b':
-            self.robot_model = 'robot_b'
-            self.robot_base_link = 'robot_b_base_footprint'
-
         if self.arm_type == 'franka':
             prefix = 'robot_b' if self.robot_ns == '/robot_b' else 'robot'
 
@@ -126,7 +84,6 @@ class OrangeGrasper(object):
                 prefix + '_joint7',
             ]
 
-            self.gripper_link = prefix + '_link7'
             self.gripper_joint = prefix + '_finger_joint1'
             self.gripper_close_pos = -0.1
 
@@ -144,7 +101,6 @@ class OrangeGrasper(object):
             ]
 
             self.arm_initial_pos = [-0.775, -0.784, -2.000, -0.009, -0.011, -0.000]
-            self.gripper_link = prefix + '_arm_wrist_3_link'
             self.gripper_joint = prefix + '_egh_gripper_finger_left_joint'
             self.gripper_close_pos = 0.032
 
@@ -225,83 +181,56 @@ class OrangeGrasper(object):
         finally:
             moveit_commander.roscpp_shutdown()
 
-    def detach_orange_from_base(self):
-        # rospy.loginfo('Detaching %s from robot base', self.orange_model)
-        ok = self.set_link_attachment(
-            'detach',
-            self.robot_model,
-            self.robot_base_link,
+    def release_orange(self):
+        ok = self.attachment_client.set_target(
             self.orange_model,
-            self.orange_link,
-            attempts=5,
+            ATTACHMENT_TARGET_RELEASED,
         )
 
         if ok:
-            # rospy.loginfo('Detached %s from robot base', self.orange_model)
             rospy.sleep(0.5)
             return True
 
-        # rospy.logwarn('Could not detach %s from robot base', self.orange_model)
         return False
 
     def run(self):
-        try:
-            if not self.simulated_grasp_succeeds():
-                rospy.logwarn(
-                    'Grasp attempt failed for %s (simulated success probability %.2f).',
-                    self.orange_model,
-                    self.grasp_success_probability,
-                )
-                if not self.move_arm_to_initial_position_with_moveit():
-                    self.orange_action_pub.publish(Bool(data=False))
-                    return
-                rospy.sleep(1.0)
-                self.detach_orange_from_base()
-                self.orange_action_pub.publish(Bool(data=False))
-                return                
-            
-            rospy.sleep(0.1)
-            
-            if not self.set_link_attachment(
-                'attach',
-                self.robot_model,
-                self.gripper_link,
+        if not self.simulated_grasp_succeeds():
+            rospy.logwarn(
+                'Grasp attempt failed for %s (simulated success probability %.2f).',
                 self.orange_model,
-                self.orange_link,
-            ):
-                # rospy.logwarn('Attach failed')
-                self.orange_action_pub.publish(Bool(data=False))
-                return
-
-            rospy.sleep(0.5)
-
-            if not self.detach_orange_from_base():
-                self.set_link_attachment(
-                    'detach',
-                    self.robot_model,
-                    self.gripper_link,
-                    self.orange_model,
-                    self.orange_link,
-                )
-                self.orange_action_pub.publish(Bool(data=False))
-                return
-
-            rospy.loginfo('Grasping orange')
-
-            self.close_gripper()
-            rospy.sleep(2.0)
-
-            rospy.loginfo('Grasped orange. Moving to unload position using MoveIt')
+                self.grasp_success_probability,
+            )
             if not self.move_arm_to_initial_position_with_moveit():
                 self.orange_action_pub.publish(Bool(data=False))
                 return
-
-            rospy.loginfo('Arm moved to holding position')
-            self.orange_action_pub.publish(Bool(data=True))
-
-        except rospy.ServiceException as exc:
-            rospy.logerr('Attach service failed: %s', str(exc))
+            rospy.sleep(1.0)
+            self.release_orange()
             self.orange_action_pub.publish(Bool(data=False))
+            return
+
+        rospy.sleep(0.1)
+
+        if not self.attachment_client.set_target(
+            self.orange_model,
+            ATTACHMENT_TARGET_GRIPPER,
+        ):
+            self.orange_action_pub.publish(Bool(data=False))
+            return
+
+        rospy.sleep(0.5)
+
+        rospy.loginfo('Grasping orange')
+
+        self.close_gripper()
+        rospy.sleep(2.0)
+
+        rospy.loginfo('Grasped orange. Moving to unload position using MoveIt')
+        if not self.move_arm_to_initial_position_with_moveit():
+            self.orange_action_pub.publish(Bool(data=False))
+            return
+
+        rospy.loginfo('Arm moved to holding position')
+        self.orange_action_pub.publish(Bool(data=True))
 
 
 def main():

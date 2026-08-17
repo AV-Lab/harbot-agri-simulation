@@ -152,6 +152,13 @@ Robot waypoint order in automatic mode:
 
 The path GUI can be enabled from the workflow prompt. It is started once and kept open while individual path executions are restarted as needed.
 
+Start the PROST/perception stack for each robot with:
+
+```bash
+roslaunch harbot_harvest prost_harvest.launch robot_ns:=/robot
+roslaunch harbot_harvest prost_harvest.launch robot_ns:=/robot_b
+```
+
 ---
 
 ## Known Limitations

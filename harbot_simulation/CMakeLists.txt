@@ -4,7 +4,11 @@ project(harbot_simulation)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+  gazebo_ros_link_attacher
+  harbot_control
+  rospy
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -15,9 +19,12 @@ find_package(catkin REQUIRED)
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS gazebo_ros_link_attacher harbot_control rospy
+)
 
 catkin_install_python(PROGRAMS
+  scripts/gazebo_attachment_adapter.py
   scripts/gt_odom_tf.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -1,0 +1,9 @@
+string TARGET_ENVIRONMENT=environment
+string TARGET_GRIPPER=gripper
+string TARGET_RELEASED=released
+
+string object_id
+string target
+---
+bool success
+string message
