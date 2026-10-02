@@ -33,7 +33,7 @@ The retained code is consolidated into six HARBOT packages with clear ownership:
 - `harbot_description`: mobile base, arm, gripper, and combined robot models
 - `harbot_control`: base, arm, gripper, and container controllers
 - `harbot_simulation`: Gazebo worlds, models, spawning, RViz, and simulation bringup
-- `harbot_navigation`: saved greenhouse paths and the custom path planner/controller
+- `harbot_navigation`: saved greenhouse paths, path and speed planners, and the tracking controller
 - `harbot_moveit`: Franka 6-finger and UR5-EGH MoveIt profiles
 - `harbot_harvest`: perception, harvesting workflow, and PROST integration
 
@@ -93,6 +93,10 @@ Source the workspace:
 source devel/setup.bash
 ```
 
+After updating the repository, rebuild the workspace and source
+`~/catkin_ws/devel/setup.bash` in every terminal used below. Run these commands in
+your ROS Noetic environment (inside the simulation container if using Docker).
+
 ---
 
 ## Usage
@@ -129,11 +133,75 @@ roslaunch harbot_simulation rbkairos_complete.launch waypoint_robot_a:=a1 waypoi
 
 For a Franka robot, select a retained MoveIt pipeline with `moveit_pipeline_a:=ompl`, `stomp`, `ompl_chomp`, `chomp`, or `pilz_industrial_motion_planner` (and the corresponding `_b`/`_c` argument for another robot). The UR5 profile supports `ompl`, `chomp`, and `pilz_industrial_motion_planner`.
 
+### Recorded-path navigation
+
+- **Global planner:** loads the recorded JSON route and publishes the full path.
+- **Local planner:** publishes the remaining path, current point index, and permission to move.
+- **Speed planner:** selects the matching recorded speed, or zero when movement is blocked.
+- **Controller:** uses the local path, speed, and odometry to publish `cmd_vel`.
+
+Select components in `harbot_navigation/config/navigation.yaml`:
+
+```yaml
+global_planner: recorded_path
+local_planner: path_follower
+speed_planner: recorded_speed
+controller: holonomic_controller
+```
+
+Tune each component's settings in its own `config.yaml` under
+`harbot_navigation/scripts/`. Keep `path_folder` the same in the recorded-path
+and recorded-speed configs so both read the same route.
+
+With the robots at `a1` and `a40` as above, run these in separate terminals:
+
+```bash
+# Robot A
+roslaunch harbot_navigation path_nav.launch robot_ns:=robot route:=a1-a2 gui:=true
+```
+
+```bash
+# Robot B
+roslaunch harbot_navigation path_nav.launch robot_ns:=robot_b route:=a40-a39 gui:=true
+```
+
+Use a short route name (`start-destination`); the folder and `.json` extension are
+resolved automatically. Choose a route starting at the robot's current location.
+Alternatively, use only a destination, such as `route:=a20` or `route:=ul2_2`,
+to choose the nearest recorded starting waypoint from odometry. This selects an
+existing JSON route; it does not plan a new path. If already at the destination,
+the path is empty and the robot stays stopped.
+
+For automatic selection, launch while the robot is stopped near one known waypoint
+(not between two equally close waypoints), with odometry in the recorded path's
+coordinate frame. The path and speed planners each read odometry independently;
+they may choose different starts if the robot moves during launch. Wait for both
+to load before pressing **Start**. There is no distance limit or automatic path
+to connect an arbitrary robot position to a waypoint.
+
+Restart that robot's navigation launch with a new `route` for the next route.
+Negative speeds in the recorded JSON select reverse motion.
+
+Press **Start** or **Stop** in the GUI. With `gui:=false`, use these commands
+instead (replace `/robot` with `/robot_b` for Robot B):
+
+```bash
+# Start
+rostopic pub -1 /robot/path_nav/proceed_flag std_msgs/Bool "data: true"
+# Stop
+rostopic pub -1 /robot/path_nav/proceed_flag std_msgs/Bool "data: false"
+```
+
+### Harvesting workflow
+
 After the simulation is running, start the harvesting workflow:
 
 ```bash
 rosrun harbot_harvest harvest_workflow.py
 ```
+
+The workflow launches navigation for each route, so stop any standalone
+`path_nav.launch` instance for the same robot before starting it.
 
 The workflow asks for:
 

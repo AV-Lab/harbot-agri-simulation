@@ -1,0 +1,3 @@
+entry_class: PathFollower
+parameters:
+  robot_safety_radius: 0.72

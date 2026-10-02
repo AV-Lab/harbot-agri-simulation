@@ -1,0 +1,6 @@
+entry_class: HolonomicController
+parameters:
+  linear_gain: 10.0
+  heading_gain: 10.0
+  max_angular_speed: 3.5
+  lookahead_point_index: 4

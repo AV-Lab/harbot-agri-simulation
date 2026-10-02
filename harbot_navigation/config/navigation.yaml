@@ -1,0 +1,4 @@
+global_planner: recorded_path
+local_planner: path_follower
+speed_planner: recorded_speed
+controller: holonomic_controller

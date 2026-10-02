@@ -9,22 +9,41 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS
+  geometry_msgs
+  nav_msgs
+  rospy
+  std_msgs
+  tf
+)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
 catkin_install_python(PROGRAMS
-  scripts/path_planner.py
+  scripts/navigation_launcher.py
   scripts/path_gui.py
-  scripts/path_controller.py
-  scripts/path_distance_check.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(DIRECTORY
+  config
   launch
   paths
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(DIRECTORY
+  scripts/global_planners
+  scripts/local_planners
+  scripts/speed_planners
+  scripts/controllers
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
+)
+
+install(FILES
+  scripts/recorded_route.py
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
 )

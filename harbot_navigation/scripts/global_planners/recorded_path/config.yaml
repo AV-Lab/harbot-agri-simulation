@@ -1,0 +1,3 @@
+entry_class: PathLoader
+parameters:
+  path_folder: paths

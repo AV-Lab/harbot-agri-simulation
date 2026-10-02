@@ -2,7 +2,7 @@
 <package>
   <name>harbot_navigation</name>
   <version>0.0.0</version>
-  <description>Waypoint-based navigation and path execution for RBKairos</description>
+  <description>Modular global planning, local path following, speed planning, and control for HARBOT.</description>
 
   <maintainer email="s.abbashussain@outlook.com">todo</maintainer>
   <license>MIT License</license>
@@ -19,6 +19,7 @@
   <run_depend>nav_msgs</run_depend>
   <run_depend>python3-rospkg</run_depend>
   <run_depend>python3-tk</run_depend>
+  <run_depend>python3-yaml</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>tf</run_depend>

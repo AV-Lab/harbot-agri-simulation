@@ -1,50 +1,79 @@
 <launch>
   <arg name="robot_ns" default="robot"/>
+  <arg name="config_file" default="$(find harbot_navigation)/config/navigation.yaml"/>
   <arg name="odom_topic" default="robotnik_base_control/odom_gt"/>
   <arg name="cmd_vel_topic" default="robotnik_base_control/cmd_vel"/>
-  <arg name="path_name" default="robot_a/wavepoint16/a16-a20.json"/>
-  <arg name="path_topic" default="path_nav/path"/>
+  <arg name="route" default="a16-a20"/>
+  <arg name="launch_global_planner" default="true"/>
+  <arg name="launch_local_planner" default="true"/>
+  <arg name="launch_speed_planner" default="true"/>
+  <arg name="launch_controller" default="true"/>
+  <arg name="global_path_topic" default="path_nav/global_path"/>
+  <arg name="local_path_topic" default="path_nav/local_path"/>
+  <arg name="path_index_topic" default="path_nav/path_index"/>
+  <arg name="movement_allowed_topic" default="path_nav/movement_allowed"/>
   <arg name="desired_speed_topic" default="path_nav/desired_speed"/>
+  <arg name="reverse_mode_topic" default="path_nav/reverse_mode"/>
   <arg name="status_topic" default="path_nav/status"/>
   <arg name="proceed_flag_topic" default="path_nav/proceed_flag"/>
+  <arg name="path_frame" default="odom"/>
   <arg name="gui" default="true"/>
   <arg name="other_robot_ns" default="$(eval 'robot_b' if arg('robot_ns').strip('/') in ['robot', 'robot_a'] else 'robot')"/>
   <arg name="other_odom_topic" default="$(eval '/{}/{}'.format(arg('other_robot_ns'), arg('odom_topic').lstrip('/')))"/>
-  <arg name="other_path_topic" default="$(eval '/{}/{}'.format(arg('other_robot_ns'), arg('path_topic').lstrip('/')))"/>
-  <arg name="path_clearance_radius" default="0.72"/>
-  <arg name="shared_area_approach_distance" default="1.60"/>
-  <arg name="clear_confirmation_seconds" default="2.50"/>
+  <arg name="robot_safety_radius" default=""/>
 
   <group ns="$(arg robot_ns)">
-    <node pkg="harbot_navigation" type="path_planner.py" name="path_planner" output="screen">
+    <rosparam command="load" file="$(arg config_file)"/>
+
+    <node if="$(arg launch_global_planner)" pkg="harbot_navigation" type="navigation_launcher.py" name="path_loader" output="screen" required="true">
+      <param name="role" value="global_planner"/>
+      <param name="route" value="$(arg route)"/>
+      <param name="odom_topic" value="$(arg odom_topic)"/>
+      <param name="frame_id" value="$(arg path_frame)"/>
+      <param name="global_path_topic" value="$(arg global_path_topic)"/>
+    </node>
+
+    <node if="$(arg launch_local_planner)" pkg="harbot_navigation" type="navigation_launcher.py" name="path_planner" output="screen" required="true">
+      <param name="role" value="local_planner"/>
       <param name="odom_topic" value="$(arg odom_topic)"/>
       <param name="other_odom_topic" value="$(arg other_odom_topic)"/>
-      <param name="other_path_topic" value="$(arg other_path_topic)"/>
-      <param name="path_name" value="$(arg path_name)"/>
-      <param name="path_topic" value="$(arg path_topic)"/>
-      <param name="desired_speed_topic" value="$(arg desired_speed_topic)"/>
+      <param name="global_path_topic" value="$(arg global_path_topic)"/>
+      <param name="local_path_topic" value="$(arg local_path_topic)"/>
+      <param name="path_index_topic" value="$(arg path_index_topic)"/>
+      <param name="movement_allowed_topic" value="$(arg movement_allowed_topic)"/>
       <param name="status_topic" value="$(arg status_topic)"/>
       <param name="proceed_flag_topic" value="$(arg proceed_flag_topic)"/>
-      <param name="path_clearance_radius" value="$(arg path_clearance_radius)"/>
-      <param name="shared_area_approach_distance" value="$(arg shared_area_approach_distance)"/>
-      <param name="clear_confirmation_seconds" value="$(arg clear_confirmation_seconds)"/>
+      <param if="$(eval arg('robot_safety_radius') != '')" name="robot_safety_radius" value="$(arg robot_safety_radius)"/>
+    </node>
+
+    <node if="$(arg launch_speed_planner)" pkg="harbot_navigation" type="navigation_launcher.py" name="path_speed_planner" output="screen" required="true">
+      <param name="role" value="speed_planner"/>
+      <param name="route" value="$(arg route)"/>
+      <param name="odom_topic" value="$(arg odom_topic)"/>
+      <param name="local_path_topic" value="$(arg local_path_topic)"/>
+      <param name="path_index_topic" value="$(arg path_index_topic)"/>
+      <param name="movement_allowed_topic" value="$(arg movement_allowed_topic)"/>
+      <param name="desired_speed_topic" value="$(arg desired_speed_topic)"/>
+      <param name="reverse_mode_topic" value="$(arg reverse_mode_topic)"/>
     </node>
 
     <node if="$(arg gui)" pkg="harbot_navigation" type="path_gui.py" name="path_gui" output="screen">
       <param name="odom_topic" value="$(arg odom_topic)"/>
       <param name="other_odom_topic" value="$(arg other_odom_topic)"/>
-      <param name="path_name" value="$(arg path_name)"/>
-      <param name="global_path_topic" value="$(arg path_topic)"/>
+      <param name="route" value="$(arg route)"/>
+      <param name="local_path_topic" value="$(arg local_path_topic)"/>
       <param name="desired_velocity_topic" value="$(arg desired_speed_topic)"/>
       <param name="state_flag_topic" value="$(arg status_topic)"/>
       <param name="proceed_flag_topic" value="$(arg proceed_flag_topic)"/>
-      <param name="path_clearance_radius" value="$(arg path_clearance_radius)"/>
+      <param name="reverse_mode_topic" value="$(arg reverse_mode_topic)"/>
+      <param if="$(eval arg('robot_safety_radius') != '')" name="robot_safety_radius" value="$(arg robot_safety_radius)"/>
     </node>
 
-    <node pkg="harbot_navigation" type="path_controller.py" name="path_controller" output="screen">
+    <node if="$(arg launch_controller)" pkg="harbot_navigation" type="navigation_launcher.py" name="path_controller" output="screen" required="true">
+      <param name="role" value="controller"/>
       <param name="odom_topic" value="$(arg odom_topic)"/>
       <param name="cmd_vel_topic" value="$(arg cmd_vel_topic)"/>
-      <param name="path_topic" value="$(arg path_topic)"/>
+      <param name="local_path_topic" value="$(arg local_path_topic)"/>
       <param name="desired_speed_topic" value="$(arg desired_speed_topic)"/>
     </node>
   </group>
