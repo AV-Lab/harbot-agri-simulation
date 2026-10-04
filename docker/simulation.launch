@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="enable_rosbridge" default="$(optenv ENABLE_ROSBRIDGE false)"/>
+    <arg name="launch_rviz" default="false"/>
+    <arg name="launch_robot_b" default="true"/>
+    <arg name="waypoint_robot_a" default="a1"/>
+    <arg name="waypoint_robot_b" default="a40"/>
+
+    <include file="$(find harbot_simulation)/launch/rbkairos_complete.launch">
+        <arg name="launch_rviz" value="$(arg launch_rviz)"/>
+        <arg name="launch_robot_b" value="$(arg launch_robot_b)"/>
+        <arg name="waypoint_robot_a" value="$(arg waypoint_robot_a)"/>
+        <arg name="waypoint_robot_b" value="$(arg waypoint_robot_b)"/>
+    </include>
+
+    <include if="$(arg enable_rosbridge)" file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+        <arg name="address" value="0.0.0.0"/>
+        <arg name="port" value="9090"/>
+    </include>
+</launch>

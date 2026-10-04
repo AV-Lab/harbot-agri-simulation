@@ -1,238 +1,48 @@
 # HARBOT Agri Simulation
 
-A ROS workspace for experiments with multiple robots in a greenhouse environment for the HARBOT project.
-
-This repository provides a ROS Noetic and Gazebo Classic simulation setup based on the RBKairos mobile base integrated with a robotic manipulator, adapted for greenhouse-based research experiments.
+A ROS Noetic and Gazebo Classic workspace for multi-robot navigation and orange
+harvesting in a greenhouse, using RB-Kairos mobile bases with robotic arms.
 
 ![Simulation system walkthrough preview](media/harbot_simulation_features.gif)
 
 **[Watch the full simulation system overview](https://www.dropbox.com/scl/fi/a84vjmc8g44aoa231ryps/harbot_simulation_features.mp4?rlkey=xneqs1onafdokjcb1fav9ost0&raw=1)**
 
----
+## System overview
 
-## Requirements
+- **Navigation:** recorded greenhouse routes, separate path/speed planners and a holonomic tracking controller.
+- **Localization:** Gazebo ground-truth odometry.
+- **Perception:** the Franka wrist D435 supplies RGB/depth images for HSV-based orange detection.
+- **Manipulation:** MoveIt plans arm motion; a Gazebo attachment plugin simulates grasping.
 
-The simulation has been developed and tested with:
+## Package layout
 
-- **Ubuntu 20.04**
-- **ROS Noetic**
-- **Gazebo Classic (Gazebo 11)**
+- `harbot_description`: robot, arm and gripper models
+- `harbot_control`: controller configuration and attachment service definition
+- `harbot_simulation`: Gazebo worlds, models and simulation launch files
+- `harbot_navigation`: recorded routes, planners, controller and navigation GUI
+- `harbot_moveit`: Franka and UR5 MoveIt configurations
+- `harbot_harvest`: perception, harvesting workflow and PROST integration
 
-Recommended hardware (tested configuration):
+The independent Gazebo plugin packages live together in
+[`simulation_plugins/`](simulation_plugins/): link attachment
+(`gazebo_ros_link_attacher`), mimic joints (`roboticsgroup_gazebo_plugins`) and
+D435 cameras (`realsense_d435_gazebo`). Source and license notices are kept with
+the relevant packages. Images/videos are in `media/`; instructions are in `docs/`.
 
-- **GPU:** NVIDIA Quadro RTX 4000 (8GB VRAM)
-- **CPU:** Intel i7-class processor
-- **RAM:** 16 GB or higher recommended
+## Getting started
 
----
+- **[Run with Docker](docs/docker.md)** — build and run the simulation image, with optional rosbridge.
+- **[Build from source](docs/build-from-source.md)** — install and build in a ROS Noetic workspace.
+- **[Use the simulation](docs/usage.md)** — run navigation, harvesting and optional PROST integration.
 
-## Package Layout
+The simulation uses **Ubuntu 20.04, ROS Noetic, Python 3.8 and Gazebo 11**.
 
-The retained code is consolidated into six HARBOT packages with clear ownership:
+## Current limitations
 
-- `harbot_description`: mobile base, arm, gripper, and combined robot models
-- `harbot_control`: base, arm, gripper, and container controllers
-- `harbot_simulation`: Gazebo worlds, models, spawning, RViz, and simulation bringup
-- `harbot_navigation`: saved greenhouse paths, path and speed planners, and the tracking controller
-- `harbot_moveit`: Franka 6-finger and UR5-EGH MoveIt profiles
-- `harbot_harvest`: perception, harvesting workflow, and PROST integration
+- Fruit support and attachment are simulated; stems do not physically break during picking.
+- Orange positions are camera-detected, but fruit identity, waypoint membership and ripeness are configured.
+- End-to-end harvesting targets the Franka wrist camera/gripper. UR5 simulation and basic MoveIt execution work, but its harvesting workflow still needs adaptation.
 
-The simulation-specific ROS packages are grouped under `simulation_plugins/`:
-
-- `gazebo_ros_link_attacher`: simulated link attachment and detachment
-- `roboticsgroup_gazebo_plugins`: mimic-joint support for the custom grippers
-- `realsense_d435_gazebo`: the integrated D435/D435i model and Gazebo plugins
-
-They remain independent ROS packages even though they are grouped in one directory. Source and license provenance for consolidated or adapted upstream files is retained with the relevant package.
-
----
-
-## System Overview
-
-Below is a brief overview of the simulation setup:
-
-- **Planning:** Waypoint-to-waypoint navigation uses pre-recorded JSON paths through the greenhouse rows.
-- **Control:** A custom path controller follows the selected path through the mobile base velocity interface. The controller supports holonomic/omnidirectional motion for the RB-Kairos base.
-- **Localization:** Robot pose is currently taken from Gazebo ground-truth odometry.
-- **Perception:** The Franka wrist D435 supplies synchronized color and depth images. An HSV detector estimates the selected orange's 3D position; waypoint-to-fruit names and ripeness are still configured in the workflow.
-- **Manipulation:** MoveIt plans the arm to the detected 3D target. The simulated grasp then attaches the selected fruit to the gripper.
-
----
-
-## Build
-
-Clone the repository into your catkin workspace:
-
-```bash
-cd ~/catkin_ws/src
-git clone https://github.com/AV-Lab/harbot-agri-simulation.git
-```
-
-All Gazebo and Realsense integration packages required by the default simulation are included under `simulation_plugins/`.
-
-The PROST harvesting integration additionally expects [`rbkairos_etf_services`](https://github.com/Syed-Abbas-Hussain/rbkairos_etf_services/tree/SIM-integration) and its `prost_ros` dependency in the same workspace. They are already present in `harbot_agri_sim`, but are not included in this repository and have no rosdep definitions. Add them to `~/catkin_ws/src` before installing dependencies when using the PROST action-server integration. The core Gazebo and MoveIt simulation can run without them.
-
-Install dependencies:
-
-```bash
-cd ~/catkin_ws
-rosdep install --from-paths src --ignore-src -r -y --skip-keys=stomp_moveit
-```
-
-The default OMPL/RRTConnect arm planner and the retained OMPL-CHOMP pipeline use released ROS Noetic packages. The optional STOMP pipeline is also retained, but `stomp_moveit` must be [added to the workspace from source](https://moveit.github.io/moveit_tutorials/doc/stomp_planner/stomp_planner_tutorial.html) before selecting it because it has no Ubuntu 20.04/Noetic rosdep definition.
-
-Build the workspace:
-
-```bash
-catkin build
-```
-
-Source the workspace:
-
-```bash
-source devel/setup.bash
-```
-
-After updating the repository, rebuild the workspace and source
-`~/catkin_ws/devel/setup.bash` in every terminal used below. Run these commands in
-your ROS Noetic environment (inside the simulation container if using Docker).
-
----
-
-## Usage
-
-Before starting the simulation, from the repository root set the Gazebo model path:
-
-```bash
-export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$PWD/harbot_simulation/models
-```
-
-Launch the complete RB-Kairos simulation:
-
-```bash
-roslaunch harbot_simulation rbkairos_complete.launch
-```
-
-This starts Gazebo along with the required ROS controllers.
-The launch file supports spawning the robots at predefined greenhouse waypoints.
-
-The greenhouse waypoint layout used by the navigation and harvesting workflow is shown below. This map is useful when selecting robot spawn waypoints, checking saved path endpoints, and understanding the zigzag traversal order across the rows.
-
-![Greenhouse waypoint map](media/greenhouse_waypoint_map.jpg)
-
-Waypoint ranges:
-
-- robot A uses `a1` to `a20`
-- robot B uses `a21` to `a40`
-
-Example launch with robot A at `a1` and robot B at `a40`:
-
-```bash
-roslaunch harbot_simulation rbkairos_complete.launch waypoint_robot_a:=a1 waypoint_robot_b:=a40
-```
-
-For a Franka robot, select a retained MoveIt pipeline with `moveit_pipeline_a:=ompl`, `stomp`, `ompl_chomp`, `chomp`, or `pilz_industrial_motion_planner` (and the corresponding `_b`/`_c` argument for another robot). The UR5 profile supports `ompl`, `chomp`, and `pilz_industrial_motion_planner`.
-
-### Recorded-path navigation
-
-- **Global planner:** loads the recorded JSON route and publishes the full path.
-- **Local planner:** publishes the remaining path, current point index, and permission to move.
-- **Speed planner:** selects the matching recorded speed, or zero when movement is blocked.
-- **Controller:** uses the local path, speed, and odometry to publish `cmd_vel`.
-
-Select components in `harbot_navigation/config/navigation.yaml`:
-
-```yaml
-global_planner: recorded_path
-local_planner: path_follower
-speed_planner: recorded_speed
-controller: holonomic_controller
-```
-
-Tune each component's settings in its own `config.yaml` under
-`harbot_navigation/scripts/`. Keep `path_folder` the same in the recorded-path
-and recorded-speed configs so both read the same route.
-
-With the robots at `a1` and `a40` as above, run these in separate terminals:
-
-```bash
-# Robot A
-roslaunch harbot_navigation path_nav.launch robot_ns:=robot route:=a1-a2 gui:=true
-```
-
-```bash
-# Robot B
-roslaunch harbot_navigation path_nav.launch robot_ns:=robot_b route:=a40-a39 gui:=true
-```
-
-Use a short route name (`start-destination`); the folder and `.json` extension are
-resolved automatically. Choose a route starting at the robot's current location.
-Alternatively, use only a destination, such as `route:=a20` or `route:=ul2_2`,
-to choose the nearest recorded starting waypoint from odometry. This selects an
-existing JSON route; it does not plan a new path. If already at the destination,
-the path is empty and the robot stays stopped.
-
-For automatic selection, launch while the robot is stopped near one known waypoint
-(not between two equally close waypoints), with odometry in the recorded path's
-coordinate frame. The path and speed planners each read odometry independently;
-they may choose different starts if the robot moves during launch. Wait for both
-to load before pressing **Start**. There is no distance limit or automatic path
-to connect an arbitrary robot position to a waypoint.
-
-Restart that robot's navigation launch with a new `route` for the next route.
-Negative speeds in the recorded JSON select reverse motion.
-
-Press **Start** or **Stop** in the GUI. With `gui:=false`, use these commands
-instead (replace `/robot` with `/robot_b` for Robot B):
-
-```bash
-# Start
-rostopic pub -1 /robot/path_nav/proceed_flag std_msgs/Bool "data: true"
-# Stop
-rostopic pub -1 /robot/path_nav/proceed_flag std_msgs/Bool "data: false"
-```
-
-### Harvesting workflow
-
-After the simulation is running, start the harvesting workflow:
-
-```bash
-rosrun harbot_harvest harvest_workflow.py
-```
-
-The workflow launches navigation for each route, so stop any standalone
-`path_nav.launch` instance for the same robot before starting it.
-
-The workflow asks for:
-
-- robot selection: `a` for `/robot`, `b` for `/robot_b`
-- whether to launch the path GUI
-- whether to run a full automatic test or use manual waypoint selection
-
-Manual mode detects the current waypoint, shows reachable waypoints or unloading stations, navigates using saved paths, and lists the oranges available at the reached waypoint. Selected fruits are harvested one by one.
-
-Automatic mode starts from the current waypoint, harvests all configured ripe fruits, skips configured unripe fruits, moves through the remaining waypoints in order, then navigates to the robot's unloading station and opens the container bottom.
-
-Robot waypoint order in automatic mode:
-
-- robot A: `a1` to `a8`, then `a16` to `a9`, then `a17` to `a20`
-- robot B: `a40` to `a33`, then `a25` to `a32`, then `a24` to `a21`
-
-The path GUI can be enabled from the workflow prompt. It is started once and kept open while individual path executions are restarted as needed.
-
-Start the PROST/perception stack for each robot with:
-
-```bash
-roslaunch harbot_harvest prost_harvest.launch robot_ns:=/robot
-roslaunch harbot_harvest prost_harvest.launch robot_ns:=/robot_b
-```
-
----
-
-## Known Limitations
-
-This repository currently models orange harvesting at a simulation-workflow level. Some physical details are simplified:
-
-- Each orange uses a support structure in the Gazebo world. This is a workaround because the current model does not yet simulate a stem that physically holds the orange and breaks when enough force is applied.
-- Orange position is camera-detected, but fruit identity, waypoint membership, and ripeness are still configured rather than classified visually.
-- The harvesting workflow currently targets the Franka wrist-camera and gripper conventions. The UR5 simulation and basic MoveIt planning/execution work, but its end-to-end perception and grasp workflow still needs adaptation after the planned D435 port.
+PROST/RDDL requires [external packages](docs/build-from-source.md#optional-integrations)
+and is not included in the default Docker image. ROS Noetic and Gazebo Classic
+are end-of-life software.

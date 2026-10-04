@@ -1,0 +1,26 @@
+services:
+  simulation:
+    build: .
+    image: harbot-simulation:noetic
+    init: true
+    stop_grace_period: 30s
+    shm_size: 1gb
+    gpus: all
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      XAUTHORITY: /tmp/harbot.xauth
+      QT_X11_NO_MITSHM: "1"
+      NVIDIA_DRIVER_CAPABILITIES: graphics,utility,display,compute
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+        read_only: true
+      - type: bind
+        source: ${HARBOT_XAUTHORITY:-/tmp/harbot.xauth}
+        target: /tmp/harbot.xauth
+        read_only: true
+        bind:
+          create_host_path: false
