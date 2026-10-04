@@ -547,28 +547,16 @@ def prompt_destination(destinations):
         info("Please enter a valid option number.")
 
 
-def build_path_name(robot_key, start_node, destination_node):
-    if start_node.startswith("a") and start_node[1:].isdigit():
-        return "{}/wavepoint{}/{}-{}.json".format(
-            robot_key,
-            start_node[1:],
-            start_node,
-            destination_node,
-        )
-    return "{}/{}/{}-{}.json".format(
-        robot_key,
-        start_node,
-        start_node,
-        destination_node,
-    )
+def build_path_name(start_node, destination_node):
+    return "{}-{}".format(start_node, destination_node)
 
 
-def launch_navigation(robot_ns, path_name, gui_enabled):
+def launch_navigation(robot_ns, route, gui_enabled):
     command = [
         "roslaunch",
         "harbot_navigation",
         "path_nav.launch",
-        "path_name:={}".format(path_name),
+        "route:={}".format(route),
         "robot_ns:={}".format(robot_ns),
         "gui:={}".format(str(gui_enabled).lower()),
         "odom_topic:={}".format(helpers.get_topic_setting("odom_topic")),
@@ -594,7 +582,7 @@ def launch_persistent_path_gui(robot_ns):
         "path_gui.py",
         "__ns:={}".format(robot_ns),
         "_odom_topic:={}".format(helpers.get_topic_setting("odom_topic")),
-        "_global_path_topic:=path_nav/path",
+        "_local_path_topic:=path_nav/local_path",
         "_desired_velocity_topic:=path_nav/desired_speed",
         "_state_flag_topic:={}".format(helpers.get_topic_setting("status_topic")),
         "_proceed_flag_topic:={}".format(helpers.get_topic_setting("proceed_flag_topic")),
@@ -919,12 +907,12 @@ def handle_fruit_flow_automatic(robot_ns, location_name):
 
 
 def navigate_to_node(robot_ns, robot_key, start_node, destination_node, gui_enabled):
-    path_name = build_path_name(robot_key, start_node, destination_node)
-    info("Launching path_nav with path_name={} ...".format(path_name))
+    route = build_path_name(start_node, destination_node)
+    info("Launching path_nav with route={} ...".format(route))
 
     nav_process = None
     try:
-        nav_process = launch_navigation(robot_ns, path_name, gui_enabled)
+        nav_process = launch_navigation(robot_ns, route, gui_enabled)
         rospy.sleep(5.0)
         send_proceed_flag(robot_ns)
         wait_for_navigation_finish(robot_ns)

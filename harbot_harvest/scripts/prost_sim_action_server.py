@@ -101,8 +101,19 @@ class ProstSimActionServer(object):
                 workflow.display_node_name(self.robot_key, destination)
             )
 
-        path_name = workflow.build_path_name(self.robot_key, current_node, destination)
-        path_file = os.path.join(workflow.rospack_find("harbot_navigation"), "paths", path_name)
+        route = workflow.build_path_name(current_node, destination)
+        start_folder = (
+            "wavepoint{}".format(current_node[1:])
+            if current_node.startswith("a")
+            else current_node
+        )
+        path_file = os.path.join(
+            workflow.rospack_find("harbot_navigation"),
+            "paths",
+            self.robot_key,
+            start_folder,
+            route + ".json",
+        )
         if not os.path.isfile(path_file):
             return False, "No saved path file from {} to {}: {}".format(
                 current_node,
@@ -112,8 +123,8 @@ class ProstSimActionServer(object):
 
         process_handle = None
         try:
-            rospy.loginfo("Launching path_nav with path_name=%s", path_name)
-            process_handle = workflow.launch_navigation(self.robot_ns, path_name, self.gui_enabled)
+            rospy.loginfo("Launching path_nav with route=%s", route)
+            process_handle = workflow.launch_navigation(self.robot_ns, route, self.gui_enabled)
             rospy.sleep(self.nav_start_delay)
             workflow.send_proceed_flag(self.robot_ns)
 
