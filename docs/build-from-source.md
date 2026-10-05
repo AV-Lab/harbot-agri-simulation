@@ -1,60 +1,63 @@
 # Build from source
 
-[Back to README](../README.md) · [Docker setup](docker.md) · [Usage](usage.md)
+[Back to README](../README.md) · [Usage](usage.md)
 
-Use this guide for an existing ROS Noetic environment. Docker users can follow
-the [Docker guide](docker.md) instead; its workspace is already built.
+Use this for your own ROS Noetic workspace. Docker users can skip it.
 
 ## Requirements
 
-- Ubuntu 20.04, ROS Noetic and Python 3.8
-- Git LFS, rosdep and `python3-catkin-tools` (`catkin build`)
-- A working graphical desktop/GPU for Gazebo 11
+- Ubuntu 20.04, ROS Noetic, Python 3.8 and Gazebo 11
+- Git, Git LFS, rosdep and `python3-catkin-tools`
+- A graphical desktop with a GPU
 
-## Clone and build
+## 1. Get the code
 
-Clone into your catkin workspace and download the mesh assets:
+Clone this repository and download its mesh files:
 
 ```bash
-source /opt/ros/noetic/setup.bash
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/src
 git clone https://github.com/AV-Lab/harbot-agri-simulation.git
-cd harbot-agri-simulation
-git lfs pull
+git -C harbot-agri-simulation lfs pull
 ```
 
-Initialize rosdep once with `sudo rosdep init` if it has not already been
-initialized. Install the core simulation dependencies and build:
+Clone the PROST planning packages next to it:
+
+```bash
+git clone https://github.com/etfrobotics/prost_ros.git
+git -C prost_ros checkout 72028b15f452f9f1fd39d07f7eee85807fa3f038
+git clone -b SIM-integration https://github.com/etfrobotics/rbkairos_etf_services.git
+```
+
+## 2. Build the PROST planner
+
+Install its build tools and the Python RDDL library, then compile the planner:
+
+```bash
+sudo apt install bison flex libbdd-dev libz3-dev python3-pip
+pip3 install pyRDDLGym==2.7
+cd ~/catkin_ws/src/prost_ros/prost
+./build.py
+```
+
+## 3. Build the workspace
+
+Install the ROS dependencies and build. Run `sudo rosdep init` first if rosdep
+has never been set up.
 
 ```bash
 cd ~/catkin_ws
 rosdep update --rosdistro noetic --include-eol-distros
-rosdep install --from-paths src --ignore-src --rosdistro noetic -y \
-  --skip-keys="stomp_moveit rbkairos_etf_services"
+rosdep install --from-paths src --ignore-src --rosdistro noetic -y --skip-keys="stomp_moveit"
 catkin build
-source devel/setup.bash
 ```
 
-The skipped packages are optional, not needed for the default simulation.
-Required Gazebo plugins are included in [`simulation_plugins/`](../simulation_plugins/).
+## 4. Source the workspace
 
-In each new terminal, source the workspace before running ROS commands:
+Run this in every new terminal:
 
 ```bash
 source ~/catkin_ws/devel/setup.bash
 ```
 
-After updating code or models, run `git lfs pull` from the repository root,
-rebuild with `catkin build` from `~/catkin_ws`, and source the workspace again.
-Continue with [starting the simulation](usage.md#start-the-simulation).
-
-## Optional integrations
-
-For PROST, add [`rbkairos_etf_services` on `SIM-integration`](https://github.com/Syed-Abbas-Hussain/rbkairos_etf_services/tree/SIM-integration)
-and its `prost_ros` dependency to `~/catkin_ws/src`, install their dependencies
-and rebuild. They are external packages with no rosdep definitions.
-
-See [PROST usage](usage.md#prost-integration). The external RDDL planner must be
-started separately. Docker users must add these packages to the image build,
-not only to a host workspace.
+Continue with the [usage guide](usage.md).

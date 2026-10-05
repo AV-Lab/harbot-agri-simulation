@@ -1,165 +1,128 @@
 # Using the simulation
 
-[Back to README](../README.md) · [Docker setup](docker.md) · [Source build](build-from-source.md)
+[Back to README](../README.md) · [Docker](docker.md) · [Build from source](build-from-source.md)
 
-- [Start the simulation](#start-the-simulation)
-- [Recorded-path navigation](#recorded-path-navigation)
-- [Harvesting workflow](#harvesting-workflow)
-- [PROST integration](#prost-integration)
+Run each command in its own terminal:
 
-Run ROS commands in a sourced Noetic terminal. With Docker, open a container shell
-from the repository root on the host:
+- **Docker:** a [container shell](docker.md#open-a-container-shell).
+- **Source build:** a terminal with `source ~/catkin_ws/devel/setup.bash`.
 
-```bash
-docker compose exec simulation /harbot_entrypoint.sh bash
-```
-
-For a source build, use `source ~/catkin_ws/devel/setup.bash` in each terminal.
-Use only one navigation or harvesting workflow to command each robot at a time.
+Only one workflow should control a robot at a time: navigation, harvesting or PROST.
 
 ## Start the simulation
 
-**Docker:** the startup script already launches the simulation. Skip to navigation
-or harvesting below.
-
-**Source build:** start the complete simulation:
+Docker starts it with `./docker/run.sh`. For a source build:
 
 ```bash
 roslaunch harbot_simulation rbkairos_complete.launch
 ```
 
-To choose spawn waypoints, use this command **instead**:
+Optional arguments:
 
-```bash
-roslaunch harbot_simulation rbkairos_complete.launch waypoint_robot_a:=a1 waypoint_robot_b:=a40
-```
-
-Robot A uses waypoints `a1`–`a20`; Robot B uses `a21`–`a40`.
-
-Each robot has a third-person camera behind it, publishing
-`/robot/third_person_camera/image_raw` and `/robot_b/third_person_camera/image_raw`.
-Add `third_person_camera:=false` to the launch command to turn it off.
-Use this map to choose spawn locations and recorded route endpoints:
+- `waypoint_robot_a:=a1 waypoint_robot_b:=a40`: spawn waypoints (A uses `a1`–`a20`, B uses `a21`–`a40`).
+- `third_person_camera:=false`: turn off the camera behind each robot.
 
 ![Greenhouse waypoint map](../media/greenhouse_waypoint_map.jpg)
 
-## Recorded-path navigation
-
-The navigation components have separate roles:
-
-- **Global planner:** loads a recorded JSON route and publishes the full path.
-- **Local planner:** publishes the remaining path, current point index and permission to move.
-- **Speed planner:** selects the matching recorded speed, or zero when movement is blocked.
-- **Controller:** uses the local path, speed and odometry to publish `cmd_vel`.
-
-Select components in [`navigation.yaml`](../harbot_navigation/config/navigation.yaml):
-
-```yaml
-global_planner: recorded_path
-local_planner: path_follower
-speed_planner: recorded_speed
-controller: holonomic_controller
-```
-
-Tune settings in each component's `config.yaml` under
-[`harbot_navigation/scripts/`](../harbot_navigation/scripts/). Keep `path_folder`
-the same for the recorded-path and recorded-speed components. Docker users must
-rebuild the image after changing these files on the host.
-
-### Run a route
-
-With robots at `a1` and `a40`, run these in separate sourced terminals:
+To watch both robots from their third-person cameras:
 
 ```bash
-# Robot A
+rosrun rviz rviz -d $(rospack find harbot_simulation)/rviz/rbkairos_camera_views.rviz
+```
+
+## Navigation
+
+Drive a robot along a recorded route that starts at its current waypoint:
+
+```bash
 roslaunch harbot_navigation path_nav.launch robot_ns:=robot route:=a1-a2 gui:=true
-```
-
-```bash
-# Robot B
 roslaunch harbot_navigation path_nav.launch robot_ns:=robot_b route:=a40-a39 gui:=true
 ```
 
-Choose a route starting at the robot's current location. The short name
-`start-destination` resolves the folder and `.json` extension automatically.
-Restart that robot's navigation launch with a new `route` for its next trip.
-Negative recorded speeds select reverse motion.
+Press **Start** in the GUI. With only a destination, such as `route:=a20`, the
+nearest recorded start is chosen from odometry. Launch again with a new `route`
+for the next trip.
 
-For automatic start selection, use only a destination, e.g. `route:=a20` or
-`route:=ul2_2`. Odometry selects the nearest recorded start. This loads an
-existing route; it does not create a new path. If the selected start is already
-the destination, the robot stays stopped.
-
-Launch while stopped near one clear waypoint, with odometry in the recorded
-path's coordinate frame. The path and speed planners select their starts
-independently, so wait for both to load before pressing **Start**. There is no
-distance limit or automatic path from an arbitrary position to the waypoint.
-
-### Start and stop
-
-Press **Start** or **Stop** in the GUI. With `gui:=false`, use these instead
-(replace `/robot` with `/robot_b` for Robot B):
-
-```bash
-# Start
-rostopic pub -1 /robot/path_nav/proceed_flag std_msgs/Bool "data: true"
-# Stop
-rostopic pub -1 /robot/path_nav/proceed_flag std_msgs/Bool "data: false"
-```
+Planner and controller choices are in
+[`navigation.yaml`](../harbot_navigation/config/navigation.yaml), with settings
+in each component's `config.yaml` under [`harbot_navigation/scripts/`](../harbot_navigation/scripts/).
 
 ## Harvesting workflow
 
-Start the simulation first, then start the detector for the robot you will use:
+Start the orange detector, then the interactive workflow:
 
 ```bash
 rosrun harbot_harvest hsv_object_detector.py _robot_ns:=/robot
-```
-
-For Robot B, use `_robot_ns:=/robot_b`. Run one detector per robot being used;
-do not start another if the PROST launch below already started it.
-
-In another sourced terminal:
-
-```bash
 rosrun harbot_harvest harvest_workflow.py
 ```
 
-This workflow does not need PROST. It starts navigation itself, so stop any other
-navigation or external control for the same robot first.
+Use `_robot_ns:=/robot_b` for Robot B. The workflow asks for the robot, the path
+GUI, the camera view, and then:
 
-The prompts select robot `a` (`/robot`) or `b` (`/robot_b`), whether to show the
-path GUI, whether to open the third-person camera view in RViz, and manual or
-automatic operation:
+- **Manual:** pick a destination and the oranges to harvest there.
+- **Automatic:** harvest every ripe orange along the robot's waypoints, then unload.
 
-- **Manual:** detects the current waypoint, lists reachable destinations, navigates
-  to the selected destination and harvests the selected fruits one by one.
-- **Automatic:** harvests configured ripe fruits, skips configured unripe fruits,
-  follows the robot's waypoint order, then unloads by opening the container bottom.
+## PROST planning
 
-Automatic waypoint order:
-
-- Robot A: `a1` → `a8`, then `a16` → `a9`, then `a17` → `a20`
-- Robot B: `a40` → `a33`, then `a25` → `a32`, then `a24` → `a21`
-
-End-to-end harvesting currently targets the Franka configuration; see the
-[limitations](../README.md#current-limitations).
-
-## PROST integration
-
-This requires the [external PROST packages](build-from-source.md#optional-integrations)
-and is **not available in the default Docker image**.
-
-Start the detector and simulation action server for each robot in separate terminals:
+Start the detector and action server for each robot:
 
 ```bash
 roslaunch harbot_harvest prost_harvest.launch robot_ns:=/robot
-```
-
-```bash
 roslaunch harbot_harvest prost_harvest.launch robot_ns:=/robot_b
 ```
 
-These launch files do **not** start the external PROST planner or load an RDDL
-task. Those must be configured and started separately from that project's setup.
-Use this as an alternative to the standalone harvesting workflow, not alongside
-another workflow controlling the same robot.
+Then start the PROST planners, for both robots together:
+
+```bash
+roslaunch rbkairos_etf_services bringup_sim.launch
+```
+
+Or one robot at a time, each in its own terminal:
+
+```bash
+roslaunch rbkairos_etf_services robot1_sim.launch
+roslaunch rbkairos_etf_services robot2_sim.launch
+```
+
+The planners decide each robot's actions, and the action servers carry them out
+in the simulation. Add `dry_run:=true` to test the planners without moving the robots.
+
+### How the planner names map to the simulation
+
+| Planner (RDDL) | Simulation |
+|---|---|
+| `robot1`, `instance_robot1.rddl` | Robot A, `/robot`, waypoints `a1`–`a20` |
+| `robot2`, `instance_robot2.rddl` | Robot B, `/robot_b`, waypoints `a21`–`a40` |
+| `a1`–`a40` | the same waypoints as on the map above |
+| `unload1`, `unload2` | unloading stations `ul1`, `ul2` |
+| `l1`–`l64` (robot1), `l65`–`l128` (robot2) | an orange: `lN` is entry N of `grasp_fruit` in [`actions.json`](https://github.com/etfrobotics/rbkairos_etf_services/blob/SIM-integration/problem_data/actions.json), as `[row, tree, side, height]` |
+
+For example, `l1` is `[1, 1, 0, 0]`, which is `orange1.1.L.B`: row 1, tree 1,
+left side (`0` = L, `1` = R), bottom (`0` = B, `1` = T).
+
+The instance files are in `rbkairos_etf_services/problem_data/`. They also set
+each robot's start waypoint (`robot_at`), grasp success rate and bin capacity.
+If you change the spawn waypoints, change `robot_at` to match.
+
+### Change which oranges are ripe
+
+Unripe oranges are set in three places, and all three must match:
+
+1. **Planner:** `fruit_ripe(lN) = false;` in `instance_robot1.rddl` or `instance_robot2.rddl`.
+2. **World:** the orange model in [`greenhouse.world`](../harbot_simulation/worlds/greenhouse.world): `model://unripe_orange` instead of `model://orange`.
+3. **Harvest code:** `UNRIPE_ORANGES` in [`workflow.py`](../harbot_harvest/src/harbot_harvest/workflow.py).
+
+The planner reads the instance files at startup, so restart the planners after
+editing them. With Docker, the instance files are in
+`/opt/harbot_ws/src/rbkairos_etf_services/problem_data/` inside the container.
+Changes to the world or harvest code need an image rebuild.
+
+### Run one action by hand
+
+```bash
+rosservice call /robot/sim_action_server "{action_id: 'navigate', input: [2, 0, 0, 0, 0, 0], timeout: 120.0}"
+```
+
+Actions are `navigate` (`[waypoint, 0, 0, 0, 0, 0]`, or `[0, 0, 0, 0, 1, 0]` for
+`ul1`), `grasp_fruit` and `load_to_bin` (`[row, tree, side, height, 0, 0]`), and
+`unload` (all zeros).

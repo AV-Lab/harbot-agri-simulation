@@ -11,8 +11,6 @@ services:
       XAUTHORITY: /tmp/harbot.xauth
       QT_X11_NO_MITSHM: "1"
       NVIDIA_DRIVER_CAPABILITIES: graphics,utility,display,compute
-    ports:
-      - "127.0.0.1:9090:9090"
     volumes:
       - type: bind
         source: /tmp/.X11-unix
