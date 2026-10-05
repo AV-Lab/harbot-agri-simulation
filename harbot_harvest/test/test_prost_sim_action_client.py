@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 
-import rospy
 
+# ******************************************************************************
+# Code Summary:
+# - Call the PROST sim_action_server once with the action set below.
+# - Log the success flag and message from the response.
+# ******************************************************************************
+
+
+import rospy
 from rbkairos_etf_services.srv import ActionServer
 
 
-# Edit these three values for quick manual tests.
+# Edit these values for quick manual tests.
 ROBOT_NS = "/robot"
 ACTION_ID = "grasp_fruit"
 INPUT = [1, 1, 0, 1, 0, 0]
@@ -25,9 +32,7 @@ def main():
     rospy.loginfo("Waiting for %s", service_name)
     rospy.wait_for_service(service_name)
 
-    call_action = rospy.ServiceProxy(service_name, ActionServer)
-    response = call_action(ACTION_ID, INPUT, TIMEOUT)
-
+    response = rospy.ServiceProxy(service_name, ActionServer)(ACTION_ID, INPUT, TIMEOUT)
     rospy.loginfo("success=%s", response.success)
     rospy.loginfo("message=%s", response.message)
 

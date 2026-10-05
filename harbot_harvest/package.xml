@@ -13,6 +13,7 @@
   <exec_depend>geometry_msgs</exec_depend>
   <depend>harbot_control</depend>
   <exec_depend>harbot_navigation</exec_depend>
+  <exec_depend>harbot_simulation</exec_depend>
   <exec_depend>message_filters</exec_depend>
   <exec_depend>moveit_commander</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
@@ -23,6 +24,7 @@
   <exec_depend>roslaunch</exec_depend>
   <exec_depend>rospack</exec_depend>
   <exec_depend>rospy</exec_depend>
+  <exec_depend>rviz</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>tf</exec_depend>

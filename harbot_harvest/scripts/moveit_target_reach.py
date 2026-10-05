@@ -1,824 +1,326 @@
 #!/usr/bin/env python3
 
+
+# ******************************************************************************
+# Code Summary:
+# - Move the arm to the scan pose for the requested orange (Franka only).
+# - Start orange_pose_to_world and wait for the detected orange world position.
+# - Offset the target by the orange radius towards the robot.
+# - Add the orange supports, oranges, and stem meshes to the planning scene.
+# - Publish RViz markers for the target and the collision objects.
+# - Attach the orange to the environment, then plan and execute with MoveIt.
+# - Publish the total planning time, the planning-done time, and orange_action.
+# ******************************************************************************
+
+
 import os
 import sys
-import signal
 import time
 import rospy
-import subprocess
 import moveit_commander
-from std_msgs.msg import Bool, Float64
 from nav_msgs.msg import Odometry
-from visualization_msgs.msg import Marker, MarkerArray
-from geometry_msgs.msg import PoseStamped, PointStamped
+from std_msgs.msg import Bool, Float64
+from geometry_msgs.msg import PointStamped
+from trajectory_msgs.msg import JointTrajectory
+from harbot_harvest import arm, helpers, ros_utils
 from moveit_commander import PlanningSceneInterface
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-
-from harbot_harvest.attachment import (
-    ATTACHMENT_TARGET_ENVIRONMENT,
-    ObjectAttachmentClient,
-)
-from harbot_harvest.helpers import resolve_ros_name
+from visualization_msgs.msg import Marker, MarkerArray
+from harbot_harvest.attachment import ATTACHMENT_TARGET_ENVIRONMENT, ObjectAttachmentClient
 
 
-class MoveItTargetReach(object):
+# Franka joint positions that point the wrist camera at each group of oranges.
+SCAN_POSES = {
+    "back_right": {
+        "top": [-0.249, -0.914, -0.461, -2.035, 1.494, 0.906, -0.273],
+        "bottom": [-0.429, 0.233, 0.030, -1.904, 1.325, 1.211, -1.360],
+    },
+    "back_left": {
+        "top": [-0.125, 0.653, 0.982, -0.622, -2.408, 1.137, 1.831],
+        "bottom": [0.163, -1.037, 0.807, -2.724, -0.755, 1.074, 2.606],
+    },
+    "front_right": {
+        "top": [-0.241, -1.294, -0.601, -1.975, 1.576, 0.852, 0.225],
+        "bottom": [-0.510, -0.155, -0.050, -2.357, 1.190, 1.105, -1.470],
+    },
+    "front_left": {
+        "top": [-0.734, -0.632, 0.671, -1.777, -1.178, 1.575, 2.058],
+        "bottom": [-2.086, -1.062, -1.309, -2.582, -2.480, 4.206, 2.007],
+    },
+}
+
+# Offset from the bottom orange to the top orange of a tree, for each tree side.
+TOP_FROM_BOTTOM = {
+    "R": (0.06760, -0.53770, 0.40465),
+    "L": (-0.06761, 0.53580, 0.40465),
+}
+
+MESH_ORIENTATION = (0.70710678118, 0.0, 0.0, 0.70710678118)
+COLLISION_COLOR = (0.0, 1.0, 0.0, 0.85)
+
+
+class MoveItTargetReach:
     def __init__(self):
-        self.marker_frame = rospy.get_param('~planning_frame', 'world')
-        self.package_name = 'harbot_harvest'
+        self.robot_ns = helpers.normalize_robot_namespace(rospy.get_param("~robot_ns", "/robot"))
 
-        self.robot_ns = rospy.get_param('~robot_ns', '/robot')
-        self.detected_pose_topic = rospy.get_param(
-            '~detected_pose_topic',
-            self.robot_ns + '/detected_orange_pose_world'
-        )
-        self.launch_detection = bool(rospy.get_param('~launch_detection', True))
-        self.detection_startup_delay = float(rospy.get_param('~detection_startup_delay', 0.1))
-        self.detection_timeout = float(rospy.get_param('~detection_timeout', 10.0))
-        self.orange_model = rospy.get_param('~orange', '').strip()
-        self.arm_type = rospy.get_param('~arm', 'Franka')
-        self.attachment_client = ObjectAttachmentClient(self.robot_ns)
+        self.arm_type = rospy.get_param("~arm", "Franka")
+        self.orange_model = rospy.get_param("~orange", "").strip()
+        self.planning_frame = helpers.get_setting("planning_frame")
+        self.odom_topic = helpers.get_robot_topic(self.robot_ns, "odom_topic")
+        self.launch_detection = bool(rospy.get_param("~launch_detection", True))
+        self.result_topic = helpers.get_robot_topic(self.robot_ns, "result_topic")
+        self.detection_timeout = float(rospy.get_param("~detection_timeout", 10.0))
+        self.arm_cmd_topic = helpers.get_robot_topic(self.robot_ns, "arm_command_topic")
+        self.no_solution_retries = max(0, int(rospy.get_param("~no_solution_retries", 14)))
+        self.detection_startup_delay = float(rospy.get_param("~detection_startup_delay", 0.1))
+        self.move_group_wait_timeout = float(rospy.get_param("~move_group_wait_timeout", 50.0))
+        self.gripper_cmd_topic = helpers.get_robot_topic(self.robot_ns, "gripper_command_topic")
+        self.orange_stem_mesh_path = rospy.get_param("/harbot/planning_scene/orange_stem_mesh_path", "")
+        self.move_group_connect_retries = max(0, int(rospy.get_param("~move_group_connect_retries", 9)))
+        self.move_group_connect_retry_delay = float(rospy.get_param("~move_group_connect_retry_delay", 2.0))
+        self.greenhouse_stems_mesh_path = rospy.get_param("/harbot/planning_scene/greenhouse_stems_mesh_path", "")
+        self.detected_pose_topic = rospy.get_param("~detected_pose_topic", self.robot_ns + "/detected_orange_pose_world")
 
-
-        self.move_group_name = 'arm'
-        self.ee_link = 'robot_hand_tcp'
-        self.gripper_joint = 'robot_finger_joint1'
-        self.gripper_cmd_topic = '/robot/gripper/pos_traj_controller/command'
-        self.gripper_open_pos = 0.5
-        self.arm_cmd_topic = self.robot_ns + '/arm/pos_traj_controller/command'
-        self.arm_joints = [
-            'robot_joint1',
-            'robot_joint2',
-            'robot_joint3',
-            'robot_joint4',
-            'robot_joint5',
-            'robot_joint6',
-            'robot_joint7',
-        ]
-        self.arm_pub = None
-
+        self.side = None
+        self.height = None
         self.diameter = 0.07
-        self.planner_id = 'RRTConnect'
         self.latest_odom = None
         self.planning_time = 40.0
         self.planning_attempts = 14
+        self.target_position = None
+        self.planner_id = "RRTConnect"
         self.position_tolerance = 0.01
-        self.no_solution_retries = 14
-        self.move_group_wait_timeout = 50.0
-        self.move_group_connect_retries = 9
-        self.move_group_connect_retry_delay = 2.0
         self.moveit_planning_time_sec = 0.0
+        self.arm = arm.get_arm_config(self.arm_type, self.robot_ns)
+        self.attachment_client = ObjectAttachmentClient(self.robot_ns)
+        self.collision_meshes = [
+            ("greenhouse_stems_link", self.greenhouse_stems_mesh_path, "~add_greenhouse_stems_collision"),
+            ("orange_stem", self.orange_stem_mesh_path, "~add_orange_stem_collision"),
+        ]
 
-        self.target = {
-            'orange_name': self.orange_model,
-            'diameter': self.diameter,
-            'object_position': None,
-            'box_position': [0.0, 0.0, 0.0],
-            'box_size': [0.0, 0.0, 0.0],
-        }
+        self.result_pub = rospy.Publisher(self.result_topic, Bool, queue_size=1)
+        self.arm_pub = rospy.Publisher(self.arm_cmd_topic, JointTrajectory, queue_size=1)
+        self.gripper_pub = rospy.Publisher(self.gripper_cmd_topic, JointTrajectory, queue_size=1)
+        self.target_marker_pub = rospy.Publisher(self.robot_ns + "/target_point_marker", Marker, queue_size=1, latch=True)
+        self.object_marker_pub = rospy.Publisher(self.robot_ns + "/detected_object_marker", Marker, queue_size=1, latch=True)
+        self.planning_time_pub = rospy.Publisher(self.robot_ns + "/moveit_planning_time_sec", Float64, queue_size=1, latch=True)
+        self.planning_done_time_pub = rospy.Publisher(self.robot_ns + "/moveit_planning_done_time", Float64, queue_size=1, latch=True)
+        self.collision_marker_pub = rospy.Publisher(self.robot_ns + "/selected_collision_markers", MarkerArray, queue_size=1, latch=True)
 
-        self.greenhouse_stems_mesh_path = rospy.get_param(
-            '/harbot/planning_scene/greenhouse_stems_mesh_path',
-            '',
-        )
-        self.orange_stem_mesh_path = rospy.get_param(
-            '/harbot/planning_scene/orange_stem_mesh_path',
-            '',
-        )
+        rospy.Subscriber(self.odom_topic, Odometry, self.odom_callback, queue_size=1)
 
-        self.orange_action_topic = resolve_ros_name(
-            self.robot_ns,
-            rospy.get_param('~result_topic', 'orange_action'),
-        )
-        self.object_marker_topic = self.robot_ns + '/detected_object_marker'
-        self.target_marker_topic = self.robot_ns + '/target_point_marker'
-        self.selected_collision_marker_topic = self.robot_ns + '/selected_collision_markers'
-        self.odom_topic = resolve_ros_name(
-            self.robot_ns,
-            rospy.get_param('~odom_topic', 'robotnik_base_control/odom_gt'),
-        )
-
-        self.object_marker_pub = rospy.Publisher(self.object_marker_topic, Marker, queue_size=1, latch=True)
-        self.target_marker_pub = rospy.Publisher(self.target_marker_topic, Marker, queue_size=1, latch=True)
-        self.selected_collision_marker_pub = rospy.Publisher(self.selected_collision_marker_topic, MarkerArray, queue_size=1, latch=True)
-        self.orange_action_pub = rospy.Publisher(self.orange_action_topic, Bool, queue_size=1)
-
-        self.moveit_planning_time_pub = rospy.Publisher(self.robot_ns + '/moveit_planning_time_sec', Float64, queue_size=1, latch=True)
-        self.moveit_planning_done_time_pub = rospy.Publisher(self.robot_ns + '/moveit_planning_done_time', Float64, queue_size=1, latch=True)
-        
-        rospy.Subscriber(self.odom_topic, Odometry, self.odom_cb, queue_size=1)
-
-    
-    def odom_cb(self, msg):
+    def odom_callback(self, msg):
         self.latest_odom = msg
 
-    def detected_x_direction(self, detected_x):
-        if self.latest_odom is None:
-            raise RuntimeError('No odom received yet')
+    def scan_pose(self, row, tree):
+        if self.side == "L":
+            pose_group = "back_right" if row in (1, 4) or (row == 3 and tree <= 4) else "front_left"
+        else:
+            pose_group = "back_left" if row == 3 or (row == 2 and tree <= 4) else "front_right"
+        return SCAN_POSES[pose_group]["top" if self.height == "T" else "bottom"]
 
-        robot_x = self.latest_odom.pose.pose.position.x
-        diff = detected_x - robot_x
-
-        if diff > 0:
-            return 1
-        elif diff < 0:
-            return -1
-        return 0
-    
-    def launch_detection_processes(self):
+    def start_detection(self):
         if not self.launch_detection:
-            return []
+            return None
 
-        processes = []
-        scripts = [
-            # ("hsv_object_detector.py", {"robot_ns": self.robot_ns, "color_name": "orange"}),
-            (
-                "orange_pose_to_world.py",
-                {"robot_ns": self.robot_ns, "target_frame": self.marker_frame},
-            ),
-        ]
-
-        for script_name, params in scripts:
-            command = ["rosrun", self.package_name, script_name]
-            command.extend("_{}:={}".format(key, value) for key, value in params.items())
-            # rospy.loginfo("Starting %s for %s", script_name, self.robot_ns)
-            processes.append(subprocess.Popen(command, preexec_fn=os.setsid))
-
+        params = {"robot_ns": self.robot_ns, "target_frame": self.planning_frame}
+        process_handle = ros_utils.start_process(ros_utils.rosrun_command("harbot_harvest", "orange_pose_to_world.py", params))
         rospy.sleep(self.detection_startup_delay)
-        return processes
-
-    def shutdown_detection_processes(self, processes):
-        for process_handle in processes:
-            if process_handle.poll() is not None:
-                continue
-
-            try:
-                os.killpg(os.getpgid(process_handle.pid), signal.SIGINT)
-                process_handle.wait(timeout=3.0)
-            except (OSError, subprocess.TimeoutExpired):
-                try:
-                    os.killpg(os.getpgid(process_handle.pid), signal.SIGTERM)
-                except OSError:
-                    pass
-
+        return process_handle
 
     def load_orange_detection(self):
-        rospy.loginfo('Waiting for detected orange pose on %s', self.detected_pose_topic)
+        rospy.loginfo("Waiting for detected orange pose on %s", self.detected_pose_topic)
 
         try:
-            msg = rospy.wait_for_message(
-                self.detected_pose_topic,
-                PointStamped,
-                timeout=self.detection_timeout
-            )
+            msg = rospy.wait_for_message(self.detected_pose_topic, PointStamped, timeout=self.detection_timeout)
         except rospy.ROSException as exc:
-            raise RuntimeError(
-                'No detected orange pose received on {} within {:.1f} seconds'.format(
-                    self.detected_pose_topic,
-                    self.detection_timeout,
-                )
-            ) from exc
+            raise RuntimeError("No detected orange pose received on {} within {:.1f} seconds".format(self.detected_pose_topic, self.detection_timeout)) from exc
 
-        if msg.header.frame_id != self.marker_frame:
-            raise RuntimeError(
-                'Expected detected orange pose in frame {}, got {}'.format(
-                    self.marker_frame,
-                    msg.header.frame_id,
-                )
-            )
-        offset_direction = self.detected_x_direction(msg.point.x)
-        
-        self.target['object_position'] = [
-            msg.point.x + (self.diameter / 2.0) * offset_direction,
-            msg.point.y,
-            msg.point.z,
-        ]
+        if msg.header.frame_id != self.planning_frame:
+            raise RuntimeError("Expected detected orange pose in frame {}, got {}".format(self.planning_frame, msg.header.frame_id))
+        if self.latest_odom is None:
+            raise RuntimeError("No odom received yet")
 
-        if self.target['object_position'] is None:
-            raise RuntimeError('No detected orange position available')
+        # Aim at the orange surface facing the robot instead of its center.
+        offset_x = msg.point.x - self.latest_odom.pose.pose.position.x
+        direction = (offset_x > 0) - (offset_x < 0)
+        self.target_position = [msg.point.x + (self.diameter / 2.0) * direction, msg.point.y, msg.point.z]
 
-        rospy.loginfo(
-            'Detected MoveIt target: [%.5f, %.5f, %.5f]',
-            self.target['object_position'][0],
-            self.target['object_position'][1],
-            self.target['object_position'][2],
-        )
+        rospy.loginfo("Detected MoveIt target: [%.5f, %.5f, %.5f]", *self.target_position)
 
-    def configure_robot(self):
-        self.robot_ns = '/robot'
-        self.move_group_name = 'arm'
-        self.ee_link = 'robot_hand_tcp'
-        self.gripper_joint = 'robot_finger_joint1'
-        self.gripper_cmd_topic = '/robot/gripper/pos_traj_controller/command'
-        self.arm_cmd_topic = '/robot/arm/pos_traj_controller/command'
-        self.arm_joints = [
-            'robot_joint1',
-            'robot_joint2',
-            'robot_joint3',
-            'robot_joint4',
-            'robot_joint5',
-            'robot_joint6',
-            'robot_joint7',
-        ]
-        self.gripper_open_pos = 0.5
+    def support_positions(self):
+        # Returns the top orange, the bottom orange, and the orange paired with the target.
+        offset = TOP_FROM_BOTTOM[self.side]
+        if self.height == "T":
+            top = self.target_position
+            bottom = [value - delta for value, delta in zip(top, offset)]
+            return top, bottom, bottom
 
-        if self.arm_type.lower() == 'ur5':
-            self.move_group_name = 'ur5_arm'
-            self.ee_link = 'robot_egh_gripper_grasp_link'
-            self.gripper_joint = 'robot_egh_gripper_finger_left_joint'
-            self.gripper_open_pos = 0.048
+        bottom = self.target_position
+        top = [value + delta for value, delta in zip(bottom, offset)]
+        return top, bottom, top
 
-        if rospy.get_param('~robot_ns', '/robot').lower() == '/robot_b':
-            self.robot_ns = '/robot_b'
-            self.gripper_cmd_topic = '/robot_b/gripper/pos_traj_controller/command'
-            self.arm_cmd_topic = '/robot_b/arm/pos_traj_controller/command'
-
-            if self.arm_type.lower() == 'ur5':
-                self.ee_link = 'robot_b_egh_gripper_grasp_link'
-                self.gripper_joint = 'robot_b_egh_gripper_finger_left_joint'
-            else:
-                self.ee_link = 'robot_b_hand_tcp'
-                self.gripper_joint = 'robot_b_finger_joint1'
-                self.arm_joints = [
-                    'robot_b_joint1',
-                    'robot_b_joint2',
-                    'robot_b_joint3',
-                    'robot_b_joint4',
-                    'robot_b_joint5',
-                    'robot_b_joint6',
-                    'robot_b_joint7',
-                ]
-
-    def create_object_marker(self):
-        marker = Marker()
-        marker.header.frame_id = self.marker_frame
-        marker.ns = 'detected_object'
-        marker.id = 0
-        marker.type = Marker.SPHERE
-        marker.action = Marker.ADD
-
-        marker.pose.position.x = self.target['object_position'][0]
-        marker.pose.position.y = self.target['object_position'][1]
-        marker.pose.position.z = self.target['object_position'][2]
-        marker.pose.orientation.w = 1.0
-
-        marker.scale.x = self.target['diameter']
-        marker.scale.y = self.target['diameter']
-        marker.scale.z = self.target['diameter']
-
-        marker.color.r = 1.0
-        marker.color.g = 0.45
-        marker.color.b = 0.0
-        marker.color.a = 0.9
-
-        return marker
-
-    def create_target_marker(self):
-        marker = Marker()
-        marker.header.frame_id = self.marker_frame
-        marker.ns = 'target_point'
-        marker.id = 1
-        marker.type = Marker.SPHERE
-        marker.action = Marker.ADD
-
-        marker.pose.position.x = self.target['object_position'][0]
-        marker.pose.position.y = self.target['object_position'][1]
-        marker.pose.position.z = self.target['object_position'][2]
-        marker.pose.orientation.w = 1.0
-
-        marker.scale.x = 0.01
-        marker.scale.y = 0.01
-        marker.scale.z = 0.01
-
-        marker.color.r = 1.0
-        marker.color.g = 0.0
-        marker.color.b = 0.0
-        marker.color.a = 1.0
-
-        return marker
-
-    def create_selected_collision_markers(self):
-        markers = MarkerArray()
-        marker_stamp = rospy.Time.now()
-        marker_color = (0.0, 1.0, 0.0, 0.85)
-        mesh_orientation = (0.70710678118, 0.0, 0.0, 0.70710678118)
-
-        def add_sphere_marker(marker_id, name, position, diameter):
-            marker = Marker()
-            marker.header.frame_id = self.marker_frame
-            marker.header.stamp = marker_stamp
-            marker.ns = "selected_collision_markers"
-            marker.id = marker_id
-            marker.type = Marker.SPHERE
-            marker.action = Marker.ADD
-            marker.pose.position.x = position[0]
-            marker.pose.position.y = position[1]
-            marker.pose.position.z = position[2]
-            marker.pose.orientation.w = 1.0
-            marker.scale.x = diameter
-            marker.scale.y = diameter
-            marker.scale.z = diameter
-            marker.color.r = marker_color[0]
-            marker.color.g = marker_color[1]
-            marker.color.b = marker_color[2]
-            marker.color.a = marker_color[3]
-            markers.markers.append(marker)
-
-        def add_mesh_marker(marker_id, name, mesh_path, enabled_param):
-            if not bool(rospy.get_param(enabled_param, True)):
-                return
-
-            if not mesh_path:
-                rospy.logwarn_once(
-                    "%s is not configured; skipping the %s planning-scene marker",
-                    enabled_param.replace('add_', '').replace('_collision', '_mesh_path'),
-                    name,
-                )
-                return
-
-            mesh_resource = "file://" + mesh_path
-
-            marker = Marker()
-            marker.header.frame_id = self.marker_frame
-            marker.header.stamp = marker_stamp
-            marker.ns = "selected_collision_markers"
-            marker.id = marker_id
-            marker.type = Marker.MESH_RESOURCE
-            marker.action = Marker.ADD
-            marker.mesh_resource = mesh_resource
-            marker.pose.orientation.x = mesh_orientation[0]
-            marker.pose.orientation.y = mesh_orientation[1]
-            marker.pose.orientation.z = mesh_orientation[2]
-            marker.pose.orientation.w = mesh_orientation[3]
-            marker.scale.x = 1.0
-            marker.scale.y = 1.0
-            marker.scale.z = 1.0
-            marker.color.r = marker_color[0]
-            marker.color.g = marker_color[1]
-            marker.color.b = marker_color[2]
-            marker.color.a = marker_color[3]
-            markers.markers.append(marker)
-
-        orange_name = self.target["orange_name"]
-        object_position = self.target["object_position"]
-        if ".R." in orange_name:
-            top_from_bottom = (0.06760, -0.53770, 0.40465)
-        else:
-            top_from_bottom = (-0.06761, 0.53580, 0.40465)
-
-        if orange_name.endswith(".T"):
-            paired_orange_position = [
-                object_position[0] - top_from_bottom[0],
-                object_position[1] - top_from_bottom[1],
-                object_position[2] - top_from_bottom[2],
-            ]
-        else:
-            paired_orange_position = [
-                object_position[0] + top_from_bottom[0],
-                object_position[1] + top_from_bottom[1],
-                object_position[2] + top_from_bottom[2],
-            ]
-
-        add_sphere_marker(0, "target_orange", object_position, self.target["diameter"])
-        add_sphere_marker(1, "paired_orange", paired_orange_position, self.target["diameter"])
-        add_mesh_marker(
-            2,
-            "greenhouse_stems_link",
-            self.greenhouse_stems_mesh_path,
-            "~add_greenhouse_stems_collision",
-        )
-        add_mesh_marker(
-            3,
-            "orange_stem",
-            self.orange_stem_mesh_path,
-            "~add_orange_stem_collision",
-        )
-        return markers
-
-    def add_mesh_collision_object(
-        self,
-        scene,
-        object_id,
-        mesh_path,
-        enabled_param,
-        position=(0.0, 0.0, 0.0),
-        orientation=(0.70710678118, 0.0, 0.0, 0.70710678118),
-        size=(1.0, 1.0, 1.0),
-    ):
+    def mesh_available(self, object_id, mesh_path, enabled_param):
         if not bool(rospy.get_param(enabled_param, True)):
             return False
-
         if not mesh_path:
-            rospy.logwarn_once(
-                "No mesh path is configured for %s; skipping that collision object",
-                object_id,
-            )
+            rospy.logwarn_once("No mesh path is configured for %s; skipping it", object_id)
             return False
-
         if not os.path.isfile(mesh_path):
-            rospy.logwarn_once('Collision mesh not found for %s: %s', object_id, mesh_path)
+            rospy.logwarn_once("Collision mesh not found for %s: %s", object_id, mesh_path)
             return False
-
-        pose_mesh = PoseStamped()
-        pose_mesh.header.frame_id = self.marker_frame
-        pose_mesh.pose.position.x = position[0]
-        pose_mesh.pose.position.y = position[1]
-        pose_mesh.pose.position.z = position[2]
-        pose_mesh.pose.orientation.x = orientation[0]
-        pose_mesh.pose.orientation.y = orientation[1]
-        pose_mesh.pose.orientation.z = orientation[2]
-        pose_mesh.pose.orientation.w = orientation[3]
-        scene.add_mesh(object_id, pose_mesh, mesh_path, size=size)
         return True
 
+    def publish_markers(self):
+        _, _, paired_position = self.support_positions()
+        diameter_scale = (self.diameter, self.diameter, self.diameter)
+
+        object_marker = ros_utils.make_marker(self.planning_frame, "detected_object", 0, Marker.SPHERE, self.target_position, diameter_scale, (1.0, 0.45, 0.0, 0.9))
+        target_marker = ros_utils.make_marker(self.planning_frame, "target_point", 1, Marker.SPHERE, self.target_position, (0.01, 0.01, 0.01), (1.0, 0.0, 0.0, 1.0))
+
+        collision_markers = MarkerArray()
+        for marker_id, position in enumerate((self.target_position, paired_position)):
+            marker = ros_utils.make_marker(self.planning_frame, "selected_collision_markers", marker_id, Marker.SPHERE, position, diameter_scale, COLLISION_COLOR)
+            collision_markers.markers.append(marker)
+
+        for marker_id, (object_id, mesh_path, enabled_param) in enumerate(self.collision_meshes, start=2):
+            if self.mesh_available(object_id, mesh_path, enabled_param):
+                marker = ros_utils.make_marker(self.planning_frame, "selected_collision_markers", marker_id, Marker.MESH_RESOURCE, (0.0, 0.0, 0.0), (1.0, 1.0, 1.0), COLLISION_COLOR, MESH_ORIENTATION)
+                marker.mesh_resource = "file://" + mesh_path
+                collision_markers.markers.append(marker)
+
+        stamp = rospy.Time.now()
+        for marker in [object_marker, target_marker] + collision_markers.markers:
+            marker.header.stamp = stamp
+
+        self.object_marker_pub.publish(object_marker)
+        self.target_marker_pub.publish(target_marker)
+        self.collision_marker_pub.publish(collision_markers)
+
     def add_collision_objects(self, scene):
-        orange_name = self.target['orange_name']
-        object_position = self.target['object_position']
+        top, bottom, paired_position = self.support_positions()
+        radius = self.diameter / 2.0
 
-        if '.R.' in orange_name:
-            top_from_bottom = (0.06760, -0.53770, 0.40465)
-        else:
-            top_from_bottom = (-0.06761, 0.53580, 0.40465)
+        scene.add_box("top_support_box", ros_utils.make_pose_stamped(self.planning_frame, (top[0], top[1], top[2] - 0.685762)), size=(0.042, 0.042, 1.32421))
+        scene.add_box("bottom_support_box", ros_utils.make_pose_stamped(self.planning_frame, (bottom[0], bottom[1], bottom[2] - 0.483475)), size=(0.042, 0.042, 0.919556))
+        scene.add_sphere("detected_object", ros_utils.make_pose_stamped(self.planning_frame, self.target_position), radius=radius)
+        scene.add_sphere("paired_detected_object", ros_utils.make_pose_stamped(self.planning_frame, paired_position), radius=radius)
 
-        if orange_name.endswith('.T'):
-            top_position = object_position
-            bottom_position = [
-                object_position[0] - top_from_bottom[0],
-                object_position[1] - top_from_bottom[1],
-                object_position[2] - top_from_bottom[2],
-            ]
-            paired_orange_position = bottom_position
-        else:
-            bottom_position = object_position
-            top_position = [
-                object_position[0] + top_from_bottom[0],
-                object_position[1] + top_from_bottom[1],
-                object_position[2] + top_from_bottom[2],
-            ]
-            paired_orange_position = top_position
+        for object_id, mesh_path, enabled_param in self.collision_meshes:
+            if self.mesh_available(object_id, mesh_path, enabled_param):
+                scene.add_mesh(object_id, ros_utils.make_pose_stamped(self.planning_frame, (0.0, 0.0, 0.0), MESH_ORIENTATION), mesh_path, size=(1.0, 1.0, 1.0))
 
-        pose_top_support = PoseStamped()
-        pose_top_support.header.frame_id = self.marker_frame
-        pose_top_support.pose.position.x = top_position[0]
-        pose_top_support.pose.position.y = top_position[1]
-        pose_top_support.pose.position.z = top_position[2] - 0.685762
-        pose_top_support.pose.orientation.w = 1.0
-        scene.add_box('top_support_box', pose_top_support, size=(0.042, 0.042, 1.32421))
+        rospy.loginfo("Collision objects for orange added to MoveIt planning scene")
 
-        pose_bottom_support = PoseStamped()
-        pose_bottom_support.header.frame_id = self.marker_frame
-        pose_bottom_support.pose.position.x = bottom_position[0]
-        pose_bottom_support.pose.position.y = bottom_position[1]
-        pose_bottom_support.pose.position.z = bottom_position[2] - 0.483475
-        pose_bottom_support.pose.orientation.w = 1.0
-        scene.add_box('bottom_support_box', pose_bottom_support, size=(0.042, 0.042, 0.919556))
-
-        pose = PoseStamped()
-        pose.header.frame_id = self.marker_frame
-        pose.pose.position.x = self.target['object_position'][0]
-        pose.pose.position.y = self.target['object_position'][1]
-        pose.pose.position.z = self.target['object_position'][2]
-        pose.pose.orientation.w = 1.0
-        scene.add_sphere('detected_object', pose, radius=self.target['diameter'] / 2.0)
-
-        # pose_target_box = PoseStamped()
-        # pose_target_box.header.frame_id = self.marker_frame
-        # pose_target_box.pose.position.x = object_position[0]
-        # pose_target_box.pose.position.y = object_position[1]
-        # pose_target_box.pose.position.z = object_position[2] + 0.07
-        # pose_target_box.pose.orientation.w = 1.0
-        # scene.add_box('target_orange_clearance_box', pose_target_box, size=(0.03, 0.03, 0.07))
-
-        paired_pose = PoseStamped()
-        paired_pose.header.frame_id = self.marker_frame
-        paired_pose.pose.position.x = paired_orange_position[0]
-        paired_pose.pose.position.y = paired_orange_position[1]
-        paired_pose.pose.position.z = paired_orange_position[2]
-        paired_pose.pose.orientation.w = 1.0
-        scene.add_sphere('paired_detected_object', paired_pose, radius=self.target['diameter'] / 2.0)
-
-        self.add_mesh_collision_object(
-            scene,
-            'greenhouse_stems_link',
-            self.greenhouse_stems_mesh_path,
-            '~add_greenhouse_stems_collision',
-        )
-        self.add_mesh_collision_object(
-            scene,
-            'orange_stem',
-            self.orange_stem_mesh_path,
-            '~add_orange_stem_collision',
-        )
-
-        rospy.loginfo('Collision objects for orange added to MoveIt planning scene')
-
-    def extract_plan_result(self, plan_result):
-        if isinstance(plan_result, tuple):
-            if len(plan_result) >= 2:
-                return bool(plan_result[0]), plan_result[1]
-            return False, None
-
-        trajectory = getattr(plan_result, 'joint_trajectory', None)
-        has_points = bool(trajectory and trajectory.points)
-        return has_points, plan_result
-
-    def plan_has_trajectory(self, plan):
-        trajectory = getattr(plan, 'joint_trajectory', None)
-        return bool(trajectory and trajectory.points)
-
-    def open_gripper(self, pub):
-        cmd = JointTrajectory()
-        cmd.joint_names = [self.gripper_joint]
-
-        point = JointTrajectoryPoint()
-        point.positions = [self.gripper_open_pos]
-        point.time_from_start = rospy.Duration(2.0)
-        cmd.points = [point]
-
-        pub.publish(cmd)
-
-    def build_joint_command(self, joint_names, positions, duration):
-        cmd = JointTrajectory()
-        cmd.joint_names = joint_names
-
-        point = JointTrajectoryPoint()
-        point.positions = positions
-        point.time_from_start = rospy.Duration(duration)
-
-        cmd.points = [point]
-        return cmd
-
-    def move_arm(self, positions, duration=3.0):
-        cmd = self.build_joint_command(
-            self.arm_joints,
-            positions,
-            duration
-        )
-        self.arm_pub.publish(cmd)
-
-    def scan_position_for_orange(self):
-        poses = {
-            'back_right': {
-                'top': [-0.249, -0.914, -0.461, -2.035, 1.494, 0.906, -0.273],
-                'bottom': [-0.429, 0.233, 0.030, -1.904, 1.325, 1.211, -1.360],
-            },
-            'back_left': {
-                'top': [-0.125, 0.653, 0.982, -0.622, -2.408, 1.137, 1.831],
-                'bottom': [0.163, -1.037, 0.807, -2.724, -0.755, 1.074, 2.606],
-            },
-            'front_right': {
-                'top': [-0.241, -1.294, -0.601, -1.975, 1.576, 0.852, 0.225],
-                'bottom': [-0.510, -0.155, -0.050, -2.357, 1.190, 1.105, -1.470],
-            },
-            'front_left': {
-                'top': [-0.734, -0.632, 0.671, -1.777, -1.178, 1.575, 2.058],
-                'bottom': [-2.086, -1.062, -1.309, -2.582, -2.480, 4.206, 2.007],
-            },
-        }
-
-        try:
-            orange_id, orange_index, side, height = self.orange_model.split('.')
-            row = int(orange_id.replace('orange', ''))
-            index = int(orange_index)
-            side = side.upper()
-            height = height.upper()
-            if index < 1 or index > 8:
-                raise ValueError
-        except ValueError as exc:
-            raise RuntimeError('Invalid orange model name: {}'.format(self.orange_model)) from exc
-
-        if side == 'L':
-            if row in (1, 4) or (row == 3 and index <= 4):
-                pose_group = 'back_right'
-            elif row == 2 or (row == 3 and index >= 5):
-                pose_group = 'front_left'
-            else:
-                raise RuntimeError('No scan pose for {}'.format(self.orange_model))
-        elif side == 'R':
-            if row == 3 or (row == 2 and index <= 4):
-                pose_group = 'back_left'
-            elif row in (1, 4) or (row == 2 and index >= 5):
-                pose_group = 'front_right'
-            else:
-                raise RuntimeError('No scan pose for {}'.format(self.orange_model))
-        else:
-            raise RuntimeError('No scan pose for {}'.format(self.orange_model))
-
-        if height == 'B':
-            return poses[pose_group]['bottom']
-        if height == 'T':
-            return poses[pose_group]['top']
-
-        raise RuntimeError('No scan pose for {}'.format(self.orange_model))
-
-    def move_arm_to_scan_position(self):
-        if self.arm_type.lower() != 'franka':
-            rospy.logwarn('Scan pose is only configured for Franka; skipping')
-            return
-
-        self.move_arm(self.scan_position_for_orange())
-        rospy.loginfo('Moved arm to scan pose for %s', self.orange_model)
-
-    def create_move_group_commander(self):
-        wait_timeout = float(rospy.get_param('~move_group_wait_timeout', self.move_group_wait_timeout))
-        retries = max(0, int(rospy.get_param('~move_group_connect_retries', self.move_group_connect_retries)))
-        retry_delay = float(rospy.get_param('~move_group_connect_retry_delay', self.move_group_connect_retry_delay))
-
-        last_error = None
-        for attempt in range(1, retries + 2):
-            try:
-                return moveit_commander.MoveGroupCommander(
-                    self.move_group_name,
-                    robot_description=self.robot_ns + '/robot_description',
-                    ns=self.robot_ns,
-                    wait_for_servers=wait_timeout,
-                )
-            except RuntimeError as exc:
-                last_error = exc
-                rospy.logwarn(
-                    'MoveGroupCommander connection failed on attempt %d/%d: %s',
-                    attempt,
-                    retries + 1,
-                    str(exc),
-                )
-                if attempt <= retries and not rospy.is_shutdown():
-                    rospy.sleep(retry_delay)
-
-        raise last_error
-
-    def move_arm_to_target(self):
-        no_solution_retries = max(0, int(rospy.get_param('~no_solution_retries', self.no_solution_retries)))
-
-        moveit_commander.roscpp_initialize(sys.argv)
-        scene = PlanningSceneInterface(ns=self.robot_ns)
-        group = self.create_move_group_commander()
-        gripper_pub = rospy.Publisher(self.gripper_cmd_topic, JointTrajectory, queue_size=1)
-        
-        attached = False
-
-        for attempt in range(5):
-            if self.attachment_client.set_target(
-                self.orange_model,
-                ATTACHMENT_TARGET_ENVIRONMENT,
-            ):
+    def attach_orange_to_environment(self):
+        for _ in range(5):
+            if self.attachment_client.set_target(self.orange_model, ATTACHMENT_TARGET_ENVIRONMENT):
                 rospy.sleep(0.1)
-                attached = True
-                break
-
+                return True
             rospy.sleep(0.1)
+        return False
 
-        if not attached:
-            moveit_commander.roscpp_shutdown()
-            return False
-        group.set_planner_id(self.planner_id)
-        group.set_planning_time(self.planning_time)
-        group.set_num_planning_attempts(self.planning_attempts)
-        group.set_goal_position_tolerance(self.position_tolerance)
+    def valid_plan(self, plan_result):
+        # MoveIt returns (success, plan, ...) in Noetic and a plain plan in older versions.
+        if isinstance(plan_result, tuple):
+            if len(plan_result) < 2 or not plan_result[0]:
+                return None
+            plan_result = plan_result[1]
 
-        resolved_ee_link = self.ee_link if self.ee_link else group.get_end_effector_link()
-        rospy.loginfo(
-            'Using end-effector: %s | Target: [%.5f, %.5f, %.5f]',
-            resolved_ee_link,
-            self.target['object_position'][0],
-            self.target['object_position'][1],
-            self.target['object_position'][2],
-        )
+        trajectory = getattr(plan_result, "joint_trajectory", None)
+        return plan_result if trajectory and trajectory.points else None
 
-        # rospy.sleep(1.0)
-        self.add_collision_objects(scene)
-        rospy.sleep(1.0)
-
-        group.set_pose_reference_frame(self.marker_frame)
-        # group.set_start_state_to_current_state()
-        # group.allow_replanning(True)    
-        group.set_position_target(self.target['object_position'], resolved_ee_link)
-
-        plan = None
-        for attempt in range(1, no_solution_retries + 2):
-            rospy.loginfo(
-                'Planning to target (attempt %d/%d)',
-                attempt,
-                no_solution_retries + 1,
-            )
+    def plan_to_target(self, group):
+        for attempt in range(1, self.no_solution_retries + 2):
+            rospy.loginfo("Planning to target (attempt %d/%d)", attempt, self.no_solution_retries + 1)
 
             planning_start = time.monotonic()
+            plan = self.valid_plan(group.plan())
+            self.moveit_planning_time_sec += time.monotonic() - planning_start
+            if plan is not None:
+                self.planning_done_time_pub.publish(Float64(data=time.monotonic()))
+                return plan
 
-            RED = "\033[91m"
-            RESET = "\033[0m"
-
-            # rospy.loginfo(
-            #     "%s[MOVEIT TIMER START] attempt %d/%d at %.6f%s",
-            #     RED,
-            #     attempt,
-            #     no_solution_retries + 1,
-            #     planning_start,
-            #     RESET,
-            # )
-
-            planned, candidate_plan = self.extract_plan_result(group.plan())
-
-            planning_elapsed = time.monotonic() - planning_start
-            self.moveit_planning_time_sec += planning_elapsed
-
-            # rospy.loginfo(
-            #     "%s[MOVEIT TIMER STOP] attempt %d/%d elapsed %.3f sec | total %.3f sec%s",
-            #     RED,
-            #     attempt,
-            #     no_solution_retries + 1,
-            #     planning_elapsed,
-            #     self.moveit_planning_time_sec,
-            #     RESET,
-            # )
-            if planned and self.plan_has_trajectory(candidate_plan):
-                plan = candidate_plan
-                planning_done_time = time.monotonic()
-                # rospy.loginfo(
-                #     "\033[91m[POST MOVEIT TIMER START] %s at %.6f\033[0m",
-                #     self.orange_model,
-                #     planning_done_time,
-                # )
-                self.moveit_planning_done_time_pub.publish(Float64(data=planning_done_time))
-                break
-
-            if attempt <= no_solution_retries:
-                # rospy.logwarn('MoveIt found no plan; opening gripper before replanning')
-                self.open_gripper(gripper_pub)
+            # Open the gripper before replanning in case it is blocking the goal.
+            if attempt <= self.no_solution_retries:
+                self.gripper_pub.publish(arm.joint_command([self.arm.gripper_joint], [self.arm.gripper_open], 2.0))
                 rospy.sleep(0.1)
 
-        if plan is None:
-            success = False
-            rospy.logerr('MoveIt found no valid plan after retries; not executing')
-        else:
-            success = group.execute(plan, wait=True)
-            group.stop()
+        return None
 
-        group.clear_pose_targets()
-        rospy.loginfo('Arm reached the target position')
-        moveit_commander.roscpp_shutdown()
+    def move_arm_to_target(self):
+        moveit_commander.roscpp_initialize(sys.argv)
+        try:
+            scene = PlanningSceneInterface(ns=self.robot_ns)
+            group = arm.create_move_group(self.arm.move_group, self.robot_ns, self.move_group_wait_timeout, self.move_group_connect_retries, self.move_group_connect_retry_delay)
+            if not self.attach_orange_to_environment():
+                return False
 
-        return success
+            group.set_planner_id(self.planner_id)
+            group.set_planning_time(self.planning_time)
+            group.set_num_planning_attempts(self.planning_attempts)
+            group.set_goal_position_tolerance(self.position_tolerance)
+            rospy.loginfo("Using end-effector: %s | Target: [%.5f, %.5f, %.5f]", self.arm.ee_link, *self.target_position)
+
+            self.add_collision_objects(scene)
+            rospy.sleep(1.0)
+
+            group.set_pose_reference_frame(self.planning_frame)
+            group.set_position_target(self.target_position, self.arm.ee_link)
+
+            plan = self.plan_to_target(group)
+            if plan is None:
+                rospy.logerr("MoveIt found no valid plan after retries; not executing")
+                success = False
+            else:
+                success = group.execute(plan, wait=True)
+                group.stop()
+                if success:
+                    rospy.loginfo("Arm reached the target position")
+
+            group.clear_pose_targets()
+            return success
+        finally:
+            moveit_commander.roscpp_shutdown()
 
     def run(self):
         if not self.orange_model:
-            rospy.logerr('Set ~orange to an orange model name, for example orange2.4.R.T')
+            rospy.logerr("Set ~orange to an orange model name, for example orange2.4.R.T")
             return
 
+        try:
+            row, tree, self.side, self.height = helpers.parse_orange(self.orange_model)
+        except ValueError as exc:
+            rospy.logerr("%s", exc)
+            return
 
-        self.configure_robot()
-        self.arm_cmd_topic = resolve_ros_name(
-            self.robot_ns,
-            rospy.get_param('~arm_command_topic', 'arm/pos_traj_controller/command'),
-        )
-        self.gripper_cmd_topic = resolve_ros_name(
-            self.robot_ns,
-            rospy.get_param('~gripper_command_topic', 'gripper/pos_traj_controller/command'),
-        )
-        self.arm_pub = rospy.Publisher(self.arm_cmd_topic, JointTrajectory, queue_size=1)
         rospy.sleep(0.5)
-        self.move_arm_to_scan_position()
+        if str(self.arm_type).lower() == "franka":
+            self.arm_pub.publish(arm.joint_command(self.arm.arm_joints, self.scan_pose(row, tree), 3.0))
+            rospy.loginfo("Moved arm to scan pose for %s", self.orange_model)
+        else:
+            rospy.logwarn("Scan pose is only configured for Franka; skipping")
         rospy.sleep(5.0)
 
-        detection_processes = []
+        detection_process = None
         try:
-            detection_processes = self.launch_detection_processes()
+            detection_process = self.start_detection()
             self.load_orange_detection()
         except Exception as exc:
-            rospy.logerr('Failed to get detected orange pose: %s', str(exc))
+            rospy.logerr("Failed to get detected orange pose: %s", exc)
             return
         finally:
-            self.shutdown_detection_processes(detection_processes)
+            ros_utils.shutdown_process(detection_process, timeout=3.0)
 
-        object_marker = self.create_object_marker()
-        target_marker = self.create_target_marker()
-        selected_collision_markers = self.create_selected_collision_markers()
-
-        moved = False
-        rate = rospy.Rate(2)
-
-        while not rospy.is_shutdown():
-            marker_stamp = rospy.Time.now()
-            object_marker.header.stamp = marker_stamp
-            target_marker.header.stamp = marker_stamp
-            for selected_marker in selected_collision_markers.markers:
-                selected_marker.header.stamp = marker_stamp
-
-            self.object_marker_pub.publish(object_marker)
-            self.target_marker_pub.publish(target_marker)
-            self.selected_collision_marker_pub.publish(selected_collision_markers)
-
-            if not moved:
-                moved = True
-                success = self.move_arm_to_target()
-                self.moveit_planning_time_pub.publish(Float64(data=self.moveit_planning_time_sec))
-                self.orange_action_pub.publish(Bool(data=success))
-                return
-
-            rate.sleep()
+        self.publish_markers()
+        success = self.move_arm_to_target()
+        self.planning_time_pub.publish(Float64(data=self.moveit_planning_time_sec))
+        self.result_pub.publish(Bool(data=success))
 
 
 def main():
-    rospy.init_node('moveit_target_reach', anonymous=True)
+    rospy.init_node("moveit_target_reach", anonymous=True)
     MoveItTargetReach().run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

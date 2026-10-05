@@ -1,73 +1,64 @@
 #!/usr/bin/env python3
 
-import rospy
+
+# ******************************************************************************
+# Code Summary:
+# - Receive synchronized color and aligned depth images from the wrist camera.
+# - Find the largest orange-colored blob with an HSV threshold.
+# - Deproject its center into a 3D point in the camera depth frame.
+# - Estimate the object width, height, and thickness from the depth image.
+# - Publish position, size, and color once the point is stable for 1 second.
+# ******************************************************************************
+
+
 import cv2
-import numpy as np
-from cv_bridge import CvBridge
-from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import PointStamped
-import message_filters
 import time
+import rospy
+import numpy as np
+import message_filters
+from cv_bridge import CvBridge
 from std_msgs.msg import String
+from harbot_harvest import helpers
+from geometry_msgs.msg import PointStamped
+from sensor_msgs.msg import CameraInfo, Image
+
+
+HSV_LOWER = np.array([5, 150, 50], dtype=np.uint8)
+HSV_UPPER = np.array([25, 255, 240], dtype=np.uint8)
+MIN_CONTOUR_AREA = 500
+
 
 class HSVObjectDetector:
     def __init__(self):
-        rospy.init_node("hsv_object_detector", anonymous=True)
-        rospy.sleep(0.1) 
+        self.robot_ns = helpers.normalize_robot_namespace(rospy.get_param("~robot_ns", "/robot"))
 
-        self.bridge = CvBridge()
+        self.color_name = rospy.get_param("~color_name", "orange")
+        self.camera_name = self.robot_ns.strip("/") + "_wrist_d435"
+        self.camera_frame = self.camera_name + "_depth_optical_frame"
+
         self.camera_info = None
+        self.bridge = CvBridge()
         self.last_position = None
+        self.stable_duration = 1.0
         self.stable_start_time = None
         self.position_threshold = 0.002
-        self.stable_duration = 1.0
 
-        self.robot_ns = rospy.get_param('~robot_ns', '/robot')
-        self.robot_name = self.robot_ns.strip('/')
+        self.color_pub = rospy.Publisher(self.robot_ns + "/object_color", String, queue_size=1)
+        self.size_pub = rospy.Publisher(self.robot_ns + "/object_size", PointStamped, queue_size=1)
+        self.position_pub = rospy.Publisher(self.robot_ns + "/object_position", PointStamped, queue_size=1)
 
-        self.window_name = "{} - DETECTION".format(
-            self.robot_name.upper().replace("_", " ")
-        )
+        color_sub = message_filters.Subscriber("/" + self.camera_name + "/color/image_raw", Image)
+        depth_sub = message_filters.Subscriber("/" + self.camera_name + "/aligned_depth_to_color/image_raw", Image)
+        self.camera_info_sub = rospy.Subscriber("/" + self.camera_name + "/color/camera_info", CameraInfo, self.camera_info_callback)
 
-        # cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
-        # cv2.resizeWindow(self.window_name, 1920, 1080)
+        self.image_sync = message_filters.ApproximateTimeSynchronizer([color_sub, depth_sub], 10, 0.1)
+        self.image_sync.registerCallback(self.image_callback)
 
-        # if self.robot_name == "robot_a":
-        #     cv2.moveWindow(self.window_name, 0, 0)
-        # elif self.robot_name == "robot_b":
-        #     cv2.moveWindow(self.window_name, 1920, 0)
-
-        self.camera_name = self.robot_name + '_wrist_d435'
-        self.camera_frame = self.camera_name + '_depth_optical_frame'
-
-        # Get selected color from param
-        self.color_name = rospy.get_param("~color_name", "orange")
-
-        self.color_ranges = {
-            "lower": np.array([5, 150, 50], dtype=np.uint8),
-            "upper": np.array([25, 255, 240], dtype=np.uint8),
-        }
-
-        # Publishers
-        self.pub = rospy.Publisher(self.robot_ns + '/object_position', PointStamped, queue_size=1)
-        self.size_pub = rospy.Publisher(self.robot_ns + '/object_size', PointStamped, queue_size=1)
-        self.color_pub = rospy.Publisher(self.robot_ns + '/object_color', String, queue_size=1)
-
-
-        # Camera topics
-        self.camera_info_sub = rospy.Subscriber('/' + self.camera_name + '/color/camera_info', CameraInfo, self.camera_info_callback)
-        color_sub = message_filters.Subscriber('/' + self.camera_name + '/color/image_raw', Image)
-        depth_sub = message_filters.Subscriber('/' + self.camera_name + '/aligned_depth_to_color/image_raw', Image)
-
-        self.ts = message_filters.ApproximateTimeSynchronizer([color_sub, depth_sub], 10, 0.1)
-        self.ts.registerCallback(self.image_callback)
-
-        rospy.loginfo("🎯 Detecting objects of color: %s", self.color_name)
-        rospy.spin()
+        rospy.loginfo("Detecting objects of color: %s", self.color_name)
 
     def camera_info_callback(self, msg):
         self.camera_info = msg
-        rospy.loginfo("📸 Received camera info")
+        rospy.loginfo("Received camera info")
         self.camera_info_sub.unregister()
 
     def image_callback(self, color_msg, depth_msg):
@@ -77,103 +68,74 @@ class HSVObjectDetector:
         try:
             frame = self.bridge.imgmsg_to_cv2(color_msg, "bgr8")
             depth_image = self.bridge.imgmsg_to_cv2(depth_msg, desired_encoding="passthrough")
-        except Exception as e:
-            rospy.logerr("cv_bridge error: %s", e)
+        except Exception as exc:
+            rospy.logerr("cv_bridge error: %s", exc)
             return
 
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        fx, fy = self.camera_info.K[0], self.camera_info.K[4]
-        cx, cy = self.camera_info.K[2], self.camera_info.K[5]
-
-        mask = cv2.inRange(hsv, self.color_ranges["lower"], self.color_ranges["upper"])
-        mask = cv2.erode(mask, None, 2)
-        mask = cv2.dilate(mask, None, 2)
-
+        mask = cv2.inRange(cv2.cvtColor(frame, cv2.COLOR_BGR2HSV), HSV_LOWER, HSV_UPPER)
+        mask = cv2.dilate(cv2.erode(mask, None, 2), None, 2)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        valid_contours = [c for c in contours if cv2.contourArea(c) >= 500]
-        if not valid_contours:
-            # cv2.imshow(self.window_name, frame)
-            cv2.waitKey(1)
+        contours = [contour for contour in contours if cv2.contourArea(contour) >= MIN_CONTOUR_AREA]
+        if not contours:
             return
 
-        c = max(valid_contours, key=cv2.contourArea)
-
-        x, y, w, h = cv2.boundingRect(c)
+        x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
         cx_pixel = x + w // 2
         cy_pixel = y + h // 2
-
         if cx_pixel >= depth_image.shape[1] or cy_pixel >= depth_image.shape[0]:
             return
 
-        Z = depth_image[cy_pixel, cx_pixel] / 1000.0
-        if Z <= 0 or np.isnan(Z):
+        z = depth_image[cy_pixel, cx_pixel] / 1000.0
+        if z <= 0 or np.isnan(z):
             return
 
-        # 1. Get pixel-based width/height first
-        width_m = (w * Z) / fx
-        height_m = (h * Z) / fy
+        fx, fy = self.camera_info.K[0], self.camera_info.K[4]
+        cx, cy = self.camera_info.K[2], self.camera_info.K[5]
+        width_m = (w * z) / fx
+        height_m = (h * z) / fy
 
-        # 2. Estimate object thickness from floor
+        # Thickness is the depth step to the background just below the object.
         floor_y = min(cy_pixel + int(0.5 * h), depth_image.shape[0] - 1)
-        Z_floor = depth_image[floor_y, cx_pixel] / 1000.0
-
-        thickness_z = Z_floor - Z
+        thickness_z = depth_image[floor_y, cx_pixel] / 1000.0 - z
         if thickness_z < 0 or np.isnan(thickness_z):
-            thickness_z = 0.5 * ((width_m + height_m) / 2.0)  # fallback
+            thickness_z = 0.5 * ((width_m + height_m) / 2.0)
 
-        # 3. Deproject 3D point
-        X = (cx_pixel - cx) * Z / fx
-        Y = (cy_pixel - cy) * Z / fy
-        position = np.array([X, Y, Z])
-
+        position = np.array([(cx_pixel - cx) * z / fx, (cy_pixel - cy) * z / fy, z])
         if self.last_position is not None:
-            distance = np.linalg.norm(self.last_position - position)
-            if distance < self.position_threshold:
-                if self.stable_start_time is None:
-                    self.stable_start_time = time.time()
-                elif time.time() - self.stable_start_time >= self.stable_duration:
-                    point = PointStamped()
-                    point.header.stamp = rospy.Time.now()
-                    point.header.frame_id = self.camera_frame
-                    point.point.x = X
-                    point.point.y = Y
-                    point.point.z = Z
-                    self.pub.publish(point)
-
-                    size_msg = PointStamped()
-                    size_msg.header = point.header
-                    size_msg.point.x = height_m 
-                    size_msg.point.y = width_m
-                    size_msg.point.z = thickness_z
-
-                    self.size_pub.publish(size_msg)
-                    self.color_pub.publish(String(self.color_name))
-
-
-                    # rospy.loginfo("✅ [%s] Position: %.3f %.3f %.3f | Size: %.3f x %.3f x %.3f m",
-                    #             self.color_name, X, Y, Z, width_m, height_m, thickness_z)
-
-                    self.stable_start_time = None
-            else:
+            if np.linalg.norm(self.last_position - position) >= self.position_threshold:
+                self.stable_start_time = None
+            elif self.stable_start_time is None:
+                self.stable_start_time = time.time()
+            elif time.time() - self.stable_start_time >= self.stable_duration:
+                self.publish_detection(position, (height_m, width_m, thickness_z))
                 self.stable_start_time = None
 
         self.last_position = position
 
-        # cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        # cv2.circle(frame, (cx_pixel, cy_pixel), 8, (255, 0, 255), -1)
-        # cv2.circle(frame, (int(cx), int(cy)), 6, (255, 255, 255), 2)
-        # cv2.putText(frame, f"{self.color_name}: {Z:.2f}m", (x, y-10),
-        #             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    def publish_detection(self, position, size):
+        point = PointStamped()
+        point.header.stamp = rospy.Time.now()
+        point.header.frame_id = self.camera_frame
+        point.point.x, point.point.y, point.point.z = position
+        self.position_pub.publish(point)
 
-        # # cv2.imshow("Mask", mask)
-        # cv2.imshow(self.window_name, frame)
-        # cv2.waitKey(1)
+        size_msg = PointStamped()
+        size_msg.header = point.header
+        size_msg.point.x, size_msg.point.y, size_msg.point.z = size
+        self.size_pub.publish(size_msg)
+        self.color_pub.publish(String(self.color_name))
 
-if __name__ == '__main__':
+
+def main():
+    rospy.init_node("hsv_object_detector", anonymous=True)
+    rospy.sleep(0.1)
+    HSVObjectDetector()
+
     try:
-        HSVObjectDetector()
-    except rospy.ROSInterruptException:
+        rospy.spin()
+    except KeyboardInterrupt:
         pass
-    finally:
-        cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()
