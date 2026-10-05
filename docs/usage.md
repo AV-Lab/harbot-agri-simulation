@@ -35,6 +35,10 @@ roslaunch harbot_simulation rbkairos_complete.launch waypoint_robot_a:=a1 waypoi
 ```
 
 Robot A uses waypoints `a1`–`a20`; Robot B uses `a21`–`a40`.
+
+Each robot has a third-person camera behind it, publishing
+`/robot/third_person_camera/image_raw` and `/robot_b/third_person_camera/image_raw`.
+Add `third_person_camera:=false` to the launch command to turn it off.
 Use this map to choose spawn locations and recorded route endpoints:
 
 ![Greenhouse waypoint map](../media/greenhouse_waypoint_map.jpg)
@@ -124,7 +128,8 @@ This workflow does not need PROST. It starts navigation itself, so stop any othe
 navigation or external control for the same robot first.
 
 The prompts select robot `a` (`/robot`) or `b` (`/robot_b`), whether to show the
-path GUI, and manual or automatic operation:
+path GUI, whether to open the third-person camera view in RViz, and manual or
+automatic operation:
 
 - **Manual:** detects the current waypoint, lists reachable destinations, navigates
   to the selected destination and harvests the selected fruits one by one.

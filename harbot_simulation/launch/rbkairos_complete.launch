@@ -12,6 +12,8 @@
     <!-- Optional loading of the retained UR kinematics calibration. -->
     <arg name="load_arm_kinematics_file" default="false"/>
     <arg name="launch_gt_odom_tf" default="true"/>
+    <!-- Third-person camera behind each robot; set false to turn it off. -->
+    <arg name="third_person_camera" default="true"/>
 
     <arg name="gt_odom_world_frame" default="world"/>
     <arg name="gt_odom_rate" default="30.0"/>
@@ -93,6 +95,7 @@
         <arg name="gazebo_world" value="$(arg gazebo_world)"/>
         <arg name="ros_planar_move_plugin" value="$(arg omni_drive)"/>
         <arg name="load_arm_kinematics_file" value="$(arg load_arm_kinematics_file)"/>
+        <arg name="third_person_camera" value="$(arg third_person_camera)"/>
         <!-- robot_a args -->
         <arg name="id_robot_a" value="$(arg id_robot_a)"/>
         <arg name="launch_robot_a" value="$(arg launch_robot_a)"/>

@@ -18,6 +18,7 @@
     <arg name="moveit_pipeline" default="ompl"/>
     <arg name="launch_gripper" default="false"/>
     <arg name="launch_camera" default="false"/>
+    <arg name="third_person_camera" default="true"/>
     <arg name="gripper_model" default="egh"/>
 
     <arg name="load_arm_kinematics_file" default="true"/>
@@ -30,7 +31,7 @@
 
         <!-- Load the URDF into the ROS Parameter Server -->
         <param name="robot_description"
-        command="$(find xacro)/xacro '$(find harbot_description)/urdf/robots/$(arg xacro_robot)' prefix:=$(arg prefix) ros_planar_move_plugin:=$(arg ros_planar_move_plugin) load_kinematics_file:=$(arg load_arm_kinematics_file) launch_arm:=$(arg launch_arm) launch_gripper:=$(arg launch_gripper) launch_camera:=$(arg launch_camera) arm_id:=$(arg id_robot)"/>
+        command="$(find xacro)/xacro '$(find harbot_description)/urdf/robots/$(arg xacro_robot)' prefix:=$(arg prefix) ros_planar_move_plugin:=$(arg ros_planar_move_plugin) load_kinematics_file:=$(arg load_arm_kinematics_file) launch_arm:=$(arg launch_arm) launch_gripper:=$(arg launch_gripper) launch_camera:=$(arg launch_camera) third_person_camera:=$(arg third_person_camera) arm_id:=$(arg id_robot)"/>
 
         <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
             <remap from="/joint_states" to="joint_states" />

@@ -21,11 +21,18 @@
 		<!-- Rubber wheels are 17 mm smaller in radius than the omni wheels. -->
 		<xacro:property name="rubber_wheel_offset_z" value="${wheel_offset_z - 0.017}" />
 
+  	<!-- Third-person camera pose relative to base_link: behind and above the robot, tilted down. -->
+  	<xacro:property name="third_person_camera_offset_x" value="-2.2"/>
+  	<xacro:property name="third_person_camera_offset_y" value="0.0"/>
+  	<xacro:property name="third_person_camera_offset_z" value="1.35"/>
+  	<xacro:property name="third_person_camera_pitch" value="0.35"/>
+
   	<!-- Flag to select the high or low quality model -->
   	<xacro:property name="hq" value="true" />
 
   	<xacro:arg name="prefix" default="summit_xl_"/>
   	<xacro:arg name="ros_planar_move_plugin" default="false"/>
+  	<xacro:arg name="third_person_camera" default="true"/>
 
 
     <xacro:macro name="rbkairos_base" params="prefix publish_bf hq use_omni_wheels:=false">
@@ -175,6 +182,51 @@
 			<xacro:unless value="${use_omni_wheels}">
 				<xacro:ground_truth_odometry prefix="${prefix}"/>
 			</xacro:unless>
+
+		<!-- Third-person camera for watching the robot. No visual or collision geometry,
+		     and a tiny mass so it does not change the base dynamics. -->
+		<xacro:if value="$(arg third_person_camera)">
+			<joint name="$(arg prefix)third_person_camera_joint" type="fixed">
+				<origin xyz="${third_person_camera_offset_x} ${third_person_camera_offset_y} ${third_person_camera_offset_z}" rpy="0 ${third_person_camera_pitch} 0"/>
+				<parent link="$(arg prefix)base_link"/>
+				<child link="$(arg prefix)third_person_camera_link"/>
+			</joint>
+
+			<link name="$(arg prefix)third_person_camera_link">
+				<inertial>
+					<mass value="0.001"/>
+					<origin xyz="0 0 0" rpy="0 0 0"/>
+					<inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/>
+				</inertial>
+			</link>
+
+			<gazebo reference="$(arg prefix)third_person_camera_link">
+				<sensor type="camera" name="$(arg prefix)third_person_camera_sensor">
+					<always_on>true</always_on>
+					<update_rate>30.0</update_rate>
+					<camera>
+						<horizontal_fov>${70.0 * pi / 180.0}</horizontal_fov>
+						<image>
+							<width>1280</width>
+							<height>720</height>
+							<format>R8G8B8</format>
+						</image>
+						<clip>
+							<near>0.05</near>
+							<far>50.0</far>
+						</clip>
+					</camera>
+					<plugin name="$(arg prefix)third_person_camera_controller" filename="libgazebo_ros_camera.so">
+						<alwaysOn>true</alwaysOn>
+						<updateRate>30.0</updateRate>
+						<cameraName>third_person_camera</cameraName>
+						<imageTopicName>image_raw</imageTopicName>
+						<cameraInfoTopicName>camera_info</cameraInfoTopicName>
+						<frameName>$(arg prefix)third_person_camera_link</frameName>
+					</plugin>
+				</sensor>
+			</gazebo>
+		</xacro:if>
 
 		</xacro:macro>
 

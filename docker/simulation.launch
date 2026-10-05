@@ -5,12 +5,14 @@
     <arg name="launch_robot_b" default="true"/>
     <arg name="waypoint_robot_a" default="a1"/>
     <arg name="waypoint_robot_b" default="a40"/>
+    <arg name="third_person_camera" default="true"/>
 
     <include file="$(find harbot_simulation)/launch/rbkairos_complete.launch">
         <arg name="launch_rviz" value="$(arg launch_rviz)"/>
         <arg name="launch_robot_b" value="$(arg launch_robot_b)"/>
         <arg name="waypoint_robot_a" value="$(arg waypoint_robot_a)"/>
         <arg name="waypoint_robot_b" value="$(arg waypoint_robot_b)"/>
+        <arg name="third_person_camera" value="$(arg third_person_camera)"/>
     </include>
 
     <include if="$(arg enable_rosbridge)" file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
