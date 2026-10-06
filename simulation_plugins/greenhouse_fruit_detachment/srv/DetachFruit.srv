@@ -1,0 +1,5 @@
+# Name of the fruit model to break off its plant, for example orange1.1.L.B.
+string fruit
+---
+bool success
+string message

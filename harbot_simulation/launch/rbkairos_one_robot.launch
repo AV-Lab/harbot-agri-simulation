@@ -8,9 +8,7 @@
     <arg name="z_init_pose" default="0"/>
     <arg name="yaw_init_pose" default="0"/>
 
-    <arg name="arm_model" default="franka"/>
     <arg name="xacro_robot" default="rbkairos_franka.urdf.xacro"/>
-    <arg name="is_franka" default="$(eval arg('arm_model') == 'franka')"/>
     <arg name="ros_planar_move_plugin" default="true"/><!-- plugin to simulate omni drive -->
 
     <arg name="launch_arm" default="true"/>    <!-- moveit -->
@@ -19,7 +17,6 @@
     <arg name="launch_gripper" default="false"/>
     <arg name="launch_camera" default="false"/>
     <arg name="third_person_camera" default="true"/>
-    <arg name="gripper_model" default="egh"/>
 
     <arg name="load_arm_kinematics_file" default="true"/>
     <arg name="launch_rviz" default="true"/>
@@ -38,21 +35,7 @@
         </node>
 
         <!-- Spawner model into gazebo -->
-        <node if="$(eval not arg('is_franka') and arg('launch_arm'))" name="urdf_spawner_rbkairos_model" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-         args="-x $(arg x_init_pose)
-                -y $(arg y_init_pose)
-                -z $(arg z_init_pose)
-                -Y $(arg yaw_init_pose)
-                -J $(arg id_robot)_arm_elbow_joint -2
-                -J $(arg id_robot)_arm_shoulder_lift_joint -0.785
-                -J $(arg id_robot)_arm_shoulder_pan_joint -0.785
-                -J $(arg id_robot)_egh_gripper_finger_left_joint 0.048
-                -urdf
-                -param robot_description
-                -model $(arg id_robot)
-                 " />
-
-        <node if="$(eval arg('is_franka') and arg('launch_arm'))" name="urdf_spawner_rbkairos_model" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        <node if="$(arg launch_arm)" name="urdf_spawner_rbkairos_model" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
          args="-x $(arg x_init_pose)
                 -y $(arg y_init_pose)
                 -z $(arg z_init_pose)
@@ -89,7 +72,7 @@
               output="screen">
             <param name="robot_model" value="$(arg id_robot)"/>
             <param name="base_link" value="$(arg id_robot)_base_footprint"/>
-            <param name="gripper_link" value="$(eval arg('id_robot') + ('_link7' if arg('arm_model') == 'franka' else '_arm_wrist_3_link'))"/>
+            <param name="gripper_link" value="$(arg id_robot)_link7"/>
             <param name="object_link" value="body"/>
         </node>
 
@@ -103,7 +86,6 @@
             <arg name="ros_planar_move_plugin" value="$(arg ros_planar_move_plugin)"/>
             <arg name="sim_arm_control" value="$(arg launch_arm)"/>
             <arg name="sim_gripper_control" value="$(arg launch_gripper)"/>
-            <arg name="arm_model" value="$(arg arm_model)"/>
             <arg name="arm_id" value="$(arg id_robot)"/>
             <arg name="arm_controllers" value="arm/pos_traj_controller"/>
             <arg unless="$(arg launch_move_group)" name="gripper_controllers" value="gripper/gripper_controller"/>
@@ -111,13 +93,7 @@
         </include>
 
         <!-- MoveGroup Moveit! -->
-        <include if="$(eval arg('launch_move_group') and not arg('is_franka'))" file="$(find harbot_moveit)/launch/ur5_egh/demo.launch">
-            <arg name="load_robot_description" value="false"/>
-            <arg name="prefix" value="$(arg prefix)"/>
-            <arg name="pipeline" value="$(arg moveit_pipeline)"/>
-            <arg name="use_rviz" value="$(arg launch_rviz)"/>
-        </include>
-        <include if="$(eval arg('launch_move_group') and arg('is_franka'))" file="$(find harbot_moveit)/launch/franka_6f/demo.launch">
+        <include if="$(arg launch_move_group)" file="$(find harbot_moveit)/launch/franka_6f/demo.launch">
             <arg name="load_robot_description" value="false"/>
             <arg name="prefix" value="$(arg prefix)"/>
             <arg name="fixed_frame" value="$(arg prefix)base_footprint"/>

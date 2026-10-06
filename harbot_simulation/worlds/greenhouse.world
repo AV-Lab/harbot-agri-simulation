@@ -6,6 +6,14 @@
     <plugin name="gazebo_ros_api_plugin" filename="libgazebo_ros_api_plugin.so"/>
     <plugin name="link_attacher_plugin" filename="libgazebo_ros_link_attacher.so"></plugin>
 
+    <!-- Holds every orange on the greenhouse stems; a successful grasp breaks the orange's joint. -->
+    <plugin name="fruit_detachment_plugin" filename="libgreenhouse_fruit_detachment.so">
+      <plant_model>greenhouse</plant_model>
+      <plant_link>orange_stem</plant_link>
+      <fruit_prefix>orange</fruit_prefix>
+      <fruit_link>body</fruit_link>
+    </plugin>
+
     <physics type="ode">
       <gravity>0 0 -9.8</gravity>
       <ode>
@@ -160,7 +168,6 @@
       </attenuation>
     </light>
 
-
     <include>
       <uri>model://greenhouse</uri>
       <name>greenhouse</name>
@@ -253,21 +260,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_1_L_T</name>
-      <pose>-7.01416 -11.8646 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.1.L.B</name>
       <pose>-6.94655 -12.4004 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_1_L_B</name>
-      <pose>-6.94655 -12.4004 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -277,21 +272,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_2_L_T</name>
-      <pose>-7.01416 -8.424029 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.2.L.B</name>
       <pose>-6.94655 -8.959829 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_2_L_B</name>
-      <pose>-6.94655 -8.959829 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -301,21 +284,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_3_L_T</name>
-      <pose>-7.01416 -4.983458 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.3.L.B</name>
       <pose>-6.94655 -5.519258 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_3_L_B</name>
-      <pose>-6.94655 -5.519258 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -325,21 +296,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_4_L_T</name>
-      <pose>-7.01416 -1.542887 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.4.L.B</name>
       <pose>-6.94655 -2.078687 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_4_L_B</name>
-      <pose>-6.94655 -2.078687 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -349,21 +308,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_5_L_T</name>
-      <pose>-7.01416 1.897684 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.5.L.B</name>
       <pose>-6.94655 1.361884 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_5_L_B</name>
-      <pose>-6.94655 1.361884 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -373,21 +320,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_6_L_T</name>
-      <pose>-7.01416 5.338255 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.6.L.B</name>
       <pose>-6.94655 4.802455 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_6_L_B</name>
-      <pose>-6.94655 4.802455 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -397,21 +332,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_7_L_T</name>
-      <pose>-7.01416 8.778826 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://unripe_orange</uri>
       <name>orange1.7.L.B</name>
       <pose>-6.94655 8.243026 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_7_L_B</name>
-      <pose>-6.94655 8.243026 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -421,21 +344,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_8_L_T</name>
-      <pose>-7.01416 12.219397 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.8.L.B</name>
       <pose>-6.94655 11.683597 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_8_L_B</name>
-      <pose>-6.94655 11.683597 0.558335 0 0 0</pose>
     </include>
 
     <!-- oranges row 1 right -->
@@ -446,34 +357,15 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_1_R_T</name>
-      <pose>-5.00881 -12.4271 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.1.R.B</name>
       <pose>-5.07641 -11.8894 1.04181 0 0 0</pose>
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_1_R_B</name>
-      <pose>-5.07641 -11.8894 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.2.R.T</name>
       <pose>-5.00881 -8.986529 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_2_R_T</name>
-      <pose>-5.00881 -8.986529 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -483,22 +375,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_2_R_B</name>
-      <pose>-5.07641 -8.448829 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.3.R.T</name>
       <pose>-5.00881 -5.545958 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_3_R_T</name>
-      <pose>-5.00881 -5.545958 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -508,22 +387,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_3_R_B</name>
-      <pose>-5.07641 -5.008258 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.4.R.T</name>
       <pose>-5.00881 -2.105387 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_4_R_T</name>
-      <pose>-5.00881 -2.105387 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -533,22 +399,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_4_R_B</name>
-      <pose>-5.07641 -1.567687 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.5.R.T</name>
       <pose>-5.00881 1.335184 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_5_R_T</name>
-      <pose>-5.00881 1.335184 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -558,22 +411,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_5_R_B</name>
-      <pose>-5.07641 1.872884 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.6.R.T</name>
       <pose>-5.00881 4.775755 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_6_R_T</name>
-      <pose>-5.00881 4.775755 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -583,22 +423,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_6_R_B</name>
-      <pose>-5.07641 5.313455 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.7.R.T</name>
       <pose>-5.00881 8.216326 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_7_R_T</name>
-      <pose>-5.00881 8.216326 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -608,22 +435,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_7_R_B</name>
-      <pose>-5.07641 8.754026 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange1.8.R.T</name>
       <pose>-5.00881 11.656897 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange1_8_R_T</name>
-      <pose>-5.00881 11.656897 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -631,13 +445,6 @@
       <name>orange1.8.R.B</name>
       <pose>-5.07641 12.194597 1.04181 0 0 0</pose>
     </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange1_8_R_B</name>
-      <pose>-5.07641 12.194597 0.558335 0 0 0</pose>
-    </include>
-
 
     <!-- oranges row 2 left -->
     <include>
@@ -647,21 +454,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_1_L_T</name>
-      <pose>-3.01416 -11.8646 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.1.L.B</name>
       <pose>-2.94655 -12.4004 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_1_L_B</name>
-      <pose>-2.94655 -12.4004 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -671,21 +466,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_2_L_T</name>
-      <pose>-3.01416 -8.424029 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.2.L.B</name>
       <pose>-2.94655 -8.959829 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_2_L_B</name>
-      <pose>-2.94655 -8.959829 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -695,21 +478,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_3_L_T</name>
-      <pose>-3.01416 -4.983458 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.3.L.B</name>
       <pose>-2.94655 -5.519258 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_3_L_B</name>
-      <pose>-2.94655 -5.519258 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -719,21 +490,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_4_L_T</name>
-      <pose>-3.01416 -1.542887 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.4.L.B</name>
       <pose>-2.94655 -2.078687 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_4_L_B</name>
-      <pose>-2.94655 -2.078687 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -743,21 +502,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_5_L_T</name>
-      <pose>-3.01416 1.897684 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.5.L.B</name>
       <pose>-2.94655 1.361884 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_5_L_B</name>
-      <pose>-2.94655 1.361884 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -767,21 +514,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_6_L_T</name>
-      <pose>-3.01416 5.338255 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.6.L.B</name>
       <pose>-2.94655 4.802455 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_6_L_B</name>
-      <pose>-2.94655 4.802455 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -791,21 +526,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_7_L_T</name>
-      <pose>-3.01416 8.778826 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.7.L.B</name>
       <pose>-2.94655 8.243026 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_7_L_B</name>
-      <pose>-2.94655 8.243026 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -815,21 +538,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_8_L_T</name>
-      <pose>-3.01416 12.219397 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.8.L.B</name>
       <pose>-2.94655 11.683597 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_8_L_B</name>
-      <pose>-2.94655 11.683597 0.558335 0 0 0</pose>
     </include>
 
     <!-- oranges row 2 right -->
@@ -840,34 +551,15 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_1_R_T</name>
-      <pose>-1.00881 -12.4271 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.1.R.B</name>
       <pose>-1.07641 -11.8894 1.04181 0 0 0</pose>
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_1_R_B</name>
-      <pose>-1.07641 -11.8894 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.2.R.T</name>
       <pose>-1.00881 -8.986529 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_2_R_T</name>
-      <pose>-1.00881 -8.986529 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -877,22 +569,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_2_R_B</name>
-      <pose>-1.07641 -8.448829 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.3.R.T</name>
       <pose>-1.00881 -5.545958 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_3_R_T</name>
-      <pose>-1.00881 -5.545958 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -902,22 +581,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_3_R_B</name>
-      <pose>-1.07641 -5.008258 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.4.R.T</name>
       <pose>-1.00881 -2.105387 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_4_R_T</name>
-      <pose>-1.00881 -2.105387 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -927,22 +593,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_4_R_B</name>
-      <pose>-1.07641 -1.567687 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://unripe_orange</uri>
       <name>orange2.5.R.T</name>
       <pose>-1.00881 1.335184 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_5_R_T</name>
-      <pose>-1.00881 1.335184 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -952,22 +605,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_5_R_B</name>
-      <pose>-1.07641 1.872884 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.6.R.T</name>
       <pose>-1.00881 4.775755 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_6_R_T</name>
-      <pose>-1.00881 4.775755 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -977,22 +617,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_6_R_B</name>
-      <pose>-1.07641 5.313455 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.7.R.T</name>
       <pose>-1.00881 8.216326 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_7_R_T</name>
-      <pose>-1.00881 8.216326 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1002,22 +629,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_7_R_B</name>
-      <pose>-1.07641 8.754026 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange2.8.R.T</name>
       <pose>-1.00881 11.656897 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange2_8_R_T</name>
-      <pose>-1.00881 11.656897 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1025,13 +639,6 @@
       <name>orange2.8.R.B</name>
       <pose>-1.07641 12.194597 1.04181 0 0 0</pose>
     </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange2_8_R_B</name>
-      <pose>-1.07641 12.194597 0.558335 0 0 0</pose>
-    </include>
-
 
     <!-- oranges row 3 left -->
     <include>
@@ -1041,21 +648,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_1_L_T</name>
-      <pose>0.98584 -11.8646 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.1.L.B</name>
       <pose>1.05345 -12.4004 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_1_L_B</name>
-      <pose>1.05345 -12.4004 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1065,21 +660,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_2_L_T</name>
-      <pose>0.98584 -8.424029 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.2.L.B</name>
       <pose>1.05345 -8.959829 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_2_L_B</name>
-      <pose>1.05345 -8.959829 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1089,21 +672,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_3_L_T</name>
-      <pose>0.98584 -4.983458 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.3.L.B</name>
       <pose>1.05345 -5.519258 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_3_L_B</name>
-      <pose>1.05345 -5.519258 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1113,21 +684,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_4_L_T</name>
-      <pose>0.98584 -1.542887 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://unripe_orange</uri>
       <name>orange3.4.L.B</name>
       <pose>1.05345 -2.078687 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_4_L_B</name>
-      <pose>1.05345 -2.078687 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1137,21 +696,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_5_L_T</name>
-      <pose>0.98584 1.897684 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.5.L.B</name>
       <pose>1.05345 1.361884 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_5_L_B</name>
-      <pose>1.05345 1.361884 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1161,21 +708,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_6_L_T</name>
-      <pose>0.98584 5.338255 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.6.L.B</name>
       <pose>1.05345 4.802455 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_6_L_B</name>
-      <pose>1.05345 4.802455 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1185,21 +720,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_7_L_T</name>
-      <pose>0.98584 8.778826 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.7.L.B</name>
       <pose>1.05345 8.243026 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_7_L_B</name>
-      <pose>1.05345 8.243026 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1209,21 +732,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_8_L_T</name>
-      <pose>0.98584 12.219397 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.8.L.B</name>
       <pose>1.05345 11.683597 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_8_L_B</name>
-      <pose>1.05345 11.683597 0.558335 0 0 0</pose>
     </include>
 
     <!-- oranges row 3 right -->
@@ -1234,34 +745,15 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_1_R_T</name>
-      <pose>2.99119 -12.4271 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.1.R.B</name>
       <pose>2.92359 -11.8894 1.04181 0 0 0</pose>
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_1_R_B</name>
-      <pose>2.92359 -11.8894 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.2.R.T</name>
       <pose>2.99119 -8.986529 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_2_R_T</name>
-      <pose>2.99119 -8.986529 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1271,22 +763,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_2_R_B</name>
-      <pose>2.92359 -8.448829 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.3.R.T</name>
       <pose>2.99119 -5.545958 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_3_R_T</name>
-      <pose>2.99119 -5.545958 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1296,22 +775,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_3_R_B</name>
-      <pose>2.92359 -5.008258 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.4.R.T</name>
       <pose>2.99119 -2.105387 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_4_R_T</name>
-      <pose>2.99119 -2.105387 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1321,22 +787,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_4_R_B</name>
-      <pose>2.92359 -1.567687 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.5.R.T</name>
       <pose>2.99119 1.335184 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_5_R_T</name>
-      <pose>2.99119 1.335184 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1346,22 +799,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_5_R_B</name>
-      <pose>2.92359 1.872884 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.6.R.T</name>
       <pose>2.99119 4.775755 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_6_R_T</name>
-      <pose>2.99119 4.775755 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1371,22 +811,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_6_R_B</name>
-      <pose>2.92359 5.313455 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.7.R.T</name>
       <pose>2.99119 8.216326 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_7_R_T</name>
-      <pose>2.99119 8.216326 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1396,22 +823,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_7_R_B</name>
-      <pose>2.92359 8.754026 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange3.8.R.T</name>
       <pose>2.99119 11.656897 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange3_8_R_T</name>
-      <pose>2.99119 11.656897 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1419,13 +833,6 @@
       <name>orange3.8.R.B</name>
       <pose>2.92359 12.194597 1.04181 0 0 0</pose>
     </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange3_8_R_B</name>
-      <pose>2.92359 12.194597 0.558335 0 0 0</pose>
-    </include>
-
 
     <!-- oranges row 4 left -->
     <include>
@@ -1435,21 +842,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_1_L_T</name>
-      <pose>4.98584 -11.8646 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.1.L.B</name>
       <pose>5.05345 -12.4004 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_1_L_B</name>
-      <pose>5.05345 -12.4004 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1459,21 +854,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_2_L_T</name>
-      <pose>4.98584 -8.424029 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.2.L.B</name>
       <pose>5.05345 -8.959829 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_2_L_B</name>
-      <pose>5.05345 -8.959829 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1483,21 +866,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_3_L_T</name>
-      <pose>4.98584 -4.983458 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.3.L.B</name>
       <pose>5.05345 -5.519258 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_3_L_B</name>
-      <pose>5.05345 -5.519258 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1507,21 +878,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_4_L_T</name>
-      <pose>4.98584 -1.542887 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.4.L.B</name>
       <pose>5.05345 -2.078687 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_4_L_B</name>
-      <pose>5.05345 -2.078687 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1531,21 +890,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_5_L_T</name>
-      <pose>4.98584 1.897684 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.5.L.B</name>
       <pose>5.05345 1.361884 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_5_L_B</name>
-      <pose>5.05345 1.361884 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1555,21 +902,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_6_L_T</name>
-      <pose>4.98584 5.338255 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.6.L.B</name>
       <pose>5.05345 4.802455 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_6_L_B</name>
-      <pose>5.05345 4.802455 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1579,21 +914,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_7_L_T</name>
-      <pose>4.98584 8.778826 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.7.L.B</name>
       <pose>5.05345 8.243026 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_7_L_B</name>
-      <pose>5.05345 8.243026 0.558335 0 0 0</pose>
     </include>
 
     <include>
@@ -1603,21 +926,9 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_8_L_T</name>
-      <pose>4.98584 12.219397 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.8.L.B</name>
       <pose>5.05345 11.683597 1.04181 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_8_L_B</name>
-      <pose>5.05345 11.683597 0.558335 0 0 0</pose>
     </include>
 
     <!-- oranges row 4 right -->
@@ -1628,34 +939,15 @@
     </include>
 
     <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_1_R_T</name>
-      <pose>6.99119 -12.4271 0.760698 0 0 0</pose>
-    </include>
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.1.R.B</name>
       <pose>6.92359 -11.8894 1.04181 0 0 0</pose>
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_1_R_B</name>
-      <pose>6.92359 -11.8894 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://unripe_orange</uri>
       <name>orange4.2.R.T</name>
       <pose>6.99119 -8.986529 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_2_R_T</name>
-      <pose>6.99119 -8.986529 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1665,22 +957,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_2_R_B</name>
-      <pose>6.92359 -8.448829 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.3.R.T</name>
       <pose>6.99119 -5.545958 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_3_R_T</name>
-      <pose>6.99119 -5.545958 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1690,22 +969,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_3_R_B</name>
-      <pose>6.92359 -5.008258 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.4.R.T</name>
       <pose>6.99119 -2.105387 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_4_R_T</name>
-      <pose>6.99119 -2.105387 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1715,22 +981,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_4_R_B</name>
-      <pose>6.92359 -1.567687 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.5.R.T</name>
       <pose>6.99119 1.335184 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_5_R_T</name>
-      <pose>6.99119 1.335184 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1740,22 +993,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_5_R_B</name>
-      <pose>6.92359 1.872884 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.6.R.T</name>
       <pose>6.99119 4.775755 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_6_R_T</name>
-      <pose>6.99119 4.775755 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1765,22 +1005,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_6_R_B</name>
-      <pose>6.92359 5.313455 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.7.R.T</name>
       <pose>6.99119 8.216326 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_7_R_T</name>
-      <pose>6.99119 8.216326 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1790,22 +1017,9 @@
     </include>
 
     <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_7_R_B</name>
-      <pose>6.92359 8.754026 0.558335 0 0 0</pose>
-    </include>
-
-
-    <include>
       <uri>model://orange</uri>
       <name>orange4.8.R.T</name>
       <pose>6.99119 11.656897 1.44646 0 0 0</pose>
-    </include>
-
-    <include>
-      <uri>model://support_t</uri>
-      <name>support_t_orange4_8_R_T</name>
-      <pose>6.99119 11.656897 0.760698 0 0 0</pose>
     </include>
 
     <include>
@@ -1813,13 +1027,6 @@
       <name>orange4.8.R.B</name>
       <pose>6.92359 12.194597 1.04181 0 0 0</pose>
     </include>
-
-    <include>
-      <uri>model://support_b</uri>
-      <name>support_b_orange4_8_R_B</name>
-      <pose>6.92359 12.194597 0.558335 0 0 0</pose>
-    </include>
-
 
   </world>
 </sdf>

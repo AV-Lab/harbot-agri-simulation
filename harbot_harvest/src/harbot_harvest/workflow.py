@@ -160,7 +160,6 @@ NAV_START_DELAY = 5.0
 NAV_FINISH_DELAY = 3.0
 MAX_PICK_ATTEMPTS = 3
 UNLOAD_ACTION = "open"
-PICK_ARM_TYPE = "Franka"
 INTER_ORANGE_DELAY = 2.0
 STEP_SHUTDOWN_DELAY = 0.1
 ORANGE_ACTION_TIMEOUT = 500.0
@@ -475,11 +474,11 @@ def wait_for_orange_action_result(robot_ns, process_handle, step_label, timeout)
     return False
 
 
-def run_orange_script_step(robot_ns, orange_name, step_label, script_name, arm_type=PICK_ARM_TYPE, timeout=ORANGE_ACTION_TIMEOUT, allow_failure_result=False):
+def run_orange_script_step(robot_ns, orange_name, step_label, script_name, timeout=ORANGE_ACTION_TIMEOUT, allow_failure_result=False):
     if timeout <= 0.0:
         raise RuntimeError("{} timed out before starting.".format(step_label))
 
-    private_params = {"orange": orange_name, "robot_ns": robot_ns, "arm": arm_type}
+    private_params = {"orange": orange_name, "robot_ns": robot_ns}
     private_params.update({setting_name: helpers.get_setting(setting_name) for setting_name in STEP_SETTINGS})
 
     orange_action_tracker(robot_ns)

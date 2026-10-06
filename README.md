@@ -12,7 +12,7 @@ harvesting in a greenhouse, using RB-Kairos mobile bases with robotic arms.
 - **Navigation:** recorded greenhouse routes, path and speed planners, and a holonomic controller.
 - **Localization:** Gazebo ground-truth odometry.
 - **Perception:** HSV orange detection from the Franka wrist D435 camera.
-- **Manipulation:** MoveIt arm planning, with simulated grasping through an attachment plugin.
+- **Manipulation:** MoveIt planning for the Franka arm; oranges hang on the plant stems and break off when grasped.
 - **Task planning:** PROST/RDDL multi-robot planning through `rbkairos_etf_services`.
 
 ## Packages
@@ -21,9 +21,9 @@ harvesting in a greenhouse, using RB-Kairos mobile bases with robotic arms.
 - `harbot_control`: controller configuration and the attachment service
 - `harbot_simulation`: Gazebo world, models and simulation launch files
 - `harbot_navigation`: recorded routes, planners, controller and navigation GUI
-- `harbot_moveit`: Franka and UR5 MoveIt configurations
+- `harbot_moveit`: Franka MoveIt configuration
 - `harbot_harvest`: perception, harvesting workflow and the PROST action server
-- `simulation_plugins/`: third-party Gazebo plugins (link attacher, mimic joints, D435 camera)
+- `simulation_plugins/`: Gazebo plugins (fruit detachment, link attacher, mimic joints, D435 camera)
 
 ## Getting started
 
@@ -36,6 +36,4 @@ are end-of-life software.
 
 ## Current limitations
 
-- Fruit support and attachment are simulated; stems do not physically break during picking.
 - Orange positions are camera-detected, but fruit identity, waypoint membership and ripeness are configured.
-- End-to-end harvesting targets the Franka arm. The UR5 runs in simulation and MoveIt, but its harvesting workflow still needs adaptation.

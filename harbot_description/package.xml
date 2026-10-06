@@ -9,7 +9,7 @@
   <license>MIT</license>
   <license>BSD</license>
   <license>Apache 2.0</license>
-  <license>UNKNOWN (EGH and soft-finger assets; see LICENSES/NOTICE.md)</license>
+  <license>UNKNOWN (soft-finger assets; see LICENSES/NOTICE.md)</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 

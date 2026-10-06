@@ -29,7 +29,6 @@ class ProstSimActionServer:
         self.robot_key = helpers.robot_key(self.robot_ns)
 
         self.gui_enabled = bool(rospy.get_param("~gui", False))
-        self.arm_type = rospy.get_param("~arm", workflow.PICK_ARM_TYPE)
         self.nav_start_delay = float(rospy.get_param("~nav_start_delay", 1.1))
         self.default_timeout = float(rospy.get_param("~default_timeout", 120.0))
         self.nav_finish_delay = float(rospy.get_param("~nav_finish_delay", 1.1))
@@ -168,7 +167,7 @@ class ProstSimActionServer:
         rospy.loginfo("%s for %s", label, orange_name)
         step_timeout = self.remaining_timeout(start_time, timeout)
         allow_failure = script_name in ("moveit_target_reach.py", "grasp_orange.py")
-        return workflow.run_orange_script_step(self.robot_ns, orange_name, label, script_name, self.arm_type, step_timeout, allow_failure)
+        return workflow.run_orange_script_step(self.robot_ns, orange_name, label, script_name, step_timeout, allow_failure)
 
     def decode_navigation_target(self, arr):
         # [waypoint_id, 0, 0, 0, 0, 0] -> a<waypoint_id>

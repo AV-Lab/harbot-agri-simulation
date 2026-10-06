@@ -21,13 +21,12 @@ class OrangeUnloader:
     def __init__(self):
         self.robot_ns = helpers.normalize_robot_namespace(rospy.get_param("~robot_ns", "/robot"))
 
-        self.arm_type = rospy.get_param("~arm", "Franka")
         self.orange_model = rospy.get_param("~orange", "").strip()
         self.result_topic = helpers.get_robot_topic(self.robot_ns, "result_topic")
         self.arm_cmd_topic = helpers.get_robot_topic(self.robot_ns, "arm_command_topic")
         self.gripper_cmd_topic = helpers.get_robot_topic(self.robot_ns, "gripper_command_topic")
 
-        self.arm = arm.get_arm_config(self.arm_type, self.robot_ns)
+        self.arm = arm.get_arm_config(self.robot_ns)
         self.attachment_client = ObjectAttachmentClient(self.robot_ns)
 
         self.result_pub = rospy.Publisher(self.result_topic, Bool, queue_size=1)
@@ -40,10 +39,6 @@ class OrangeUnloader:
     def run(self):
         if not self.orange_model:
             rospy.logerr("Parameter ~orange is required")
-            return
-        if self.arm.drop_pose is None:
-            rospy.logerr("No drop pose is configured for the %s arm", self.arm_type)
-            self.publish_result(False)
             return
 
         rospy.sleep(0.5)

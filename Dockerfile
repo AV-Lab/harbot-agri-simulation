@@ -36,6 +36,7 @@ COPY harbot_moveit/package.xml src/harbot-agri-simulation/harbot_moveit/package.
 COPY harbot_navigation/package.xml src/harbot-agri-simulation/harbot_navigation/package.xml
 COPY harbot_simulation/package.xml src/harbot-agri-simulation/harbot_simulation/package.xml
 COPY simulation_plugins/gazebo_ros_link_attacher/package.xml src/harbot-agri-simulation/simulation_plugins/gazebo_ros_link_attacher/package.xml
+COPY simulation_plugins/greenhouse_fruit_detachment/package.xml src/harbot-agri-simulation/simulation_plugins/greenhouse_fruit_detachment/package.xml
 COPY simulation_plugins/realsense_d435_gazebo/package.xml src/harbot-agri-simulation/simulation_plugins/realsense_d435_gazebo/package.xml
 COPY simulation_plugins/roboticsgroup_gazebo_plugins/package.xml src/harbot-agri-simulation/simulation_plugins/roboticsgroup_gazebo_plugins/package.xml
 

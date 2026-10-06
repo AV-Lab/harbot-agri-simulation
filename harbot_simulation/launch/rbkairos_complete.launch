@@ -5,9 +5,7 @@
 
     <arg name="launch_rviz" default="false"/>
     <arg name="gazebo_world" default="$(find harbot_simulation)/worlds/greenhouse.world"/>
-    <arg name="default_arm_model" default="franka"/>
-    <arg name="default_gripper_model" default="egh"/>
-    <arg name="default_xacro" default="$(eval 'rbkairos_franka.urdf.xacro' if arg('default_arm_model') == 'franka' else 'versions/rbkairos_{}_{}.urdf.xacro'.format(arg('default_arm_model'), arg('default_gripper_model')))"/>
+    <arg name="default_xacro" default="rbkairos_franka.urdf.xacro"/>
     <arg name="omni_drive" default="true"/>
     <!-- Optional loading of the retained UR kinematics calibration. -->
     <arg name="load_arm_kinematics_file" default="false"/>
@@ -30,13 +28,11 @@
     <arg name="yaw_init_pose_robot_a"  default="$(eval {'a1': 1.5708, 'a2': 1.5708, 'a3': 1.5708, 'a4': 1.5708, 'a5': 1.5708, 'a6': 1.5708, 'a7': 1.5708, 'a8': 1.5708, 'a16': -1.5708, 'a15': -1.5708, 'a14': -1.5708, 'a13': -1.5708, 'a12': -1.5708, 'a11': -1.5708, 'a10': -1.5708, 'a9': -1.5708, 'a17': 1.5708, 'a18': 1.5708, 'a19': 1.5708, 'a20': 1.5708}.get(arg('waypoint_robot_a').lower(), 1.5708))" />
     <!-- arm robot a -->
     <arg name="launch_arm_a" default="true"/>
-    <arg name="arm_model_a" default="$(arg default_arm_model)"/>
     <arg name="moveit_movegroup_a" default="true"/>
     <arg name="moveit_pipeline_a" default="ompl"/>
     <!-- gripper robot a -->
     <arg name="launch_gripper_a" default="true"/>
     <arg name="launch_camera_a" default="true"/>
-    <arg name="gripper_model_a" default="$(arg default_gripper_model)"/>
     <arg name="gt_odom_topic_a" default="/$(arg id_robot_a)/robotnik_base_control/odom_gt"/>
     <arg name="gt_odom_frame_a" default="$(arg id_robot_a)_odom"/>
     <arg name="gt_base_frame_a" default="$(arg id_robot_a)_base_footprint"/>
@@ -53,13 +49,11 @@
     <arg name="yaw_init_pose_robot_b" default="$(eval {'a40': -1.5708, 'a39': -1.5708, 'a38': -1.5708, 'a37': -1.5708, 'a36': -1.5708, 'a35': -1.5708, 'a34': -1.5708, 'a33': -1.5708, 'a25': 1.5708, 'a26': 1.5708, 'a27': 1.5708, 'a28': 1.5708, 'a29': 1.5708, 'a30': 1.5708, 'a31': 1.5708, 'a32': 1.5708, 'a24': -1.5708, 'a23': -1.5708, 'a22': -1.5708, 'a21': -1.5708}.get(arg('waypoint_robot_b').lower(), -1.5708))" />
     <!-- arm robot b -->
     <arg name="launch_arm_b" default="true"/>
-    <arg name="arm_model_b" default="$(arg default_arm_model)"/>
     <arg name="moveit_movegroup_b" default="true"/>
     <arg name="moveit_pipeline_b" default="ompl"/>
     <!-- gripper robot b -->
     <arg name="launch_gripper_b" default="true"/>
     <arg name="launch_camera_b" default="true"/>
-    <arg name="gripper_model_b" default="$(arg default_gripper_model)"/>
     <arg name="gt_odom_topic_b" default="/$(arg id_robot_b)/robotnik_base_control/odom_gt"/>
     <arg name="gt_odom_frame_b" default="$(arg id_robot_b)_odom"/>
     <arg name="gt_base_frame_b" default="$(arg id_robot_b)_base_footprint"/>
@@ -75,13 +69,11 @@
     <arg name="yaw_init_pose_robot_c" default="0" />
     <!-- arm robot c -->
     <arg name="launch_arm_c" default="true"/>
-    <arg name="arm_model_c" default="$(arg default_arm_model)"/>
     <arg name="moveit_movegroup_c" default="false"/>
     <arg name="moveit_pipeline_c" default="ompl"/>
     <!-- gripper robot c -->
     <arg name="launch_gripper_c" default="true"/>
     <arg name="launch_camera_c" default="true"/>
-    <arg name="gripper_model_c" default="$(arg default_gripper_model)"/>
     <arg name="gt_odom_topic_c" default="/$(arg id_robot_c)/robotnik_base_control/odom_gt"/>
     <arg name="gt_odom_frame_c" default="$(arg id_robot_c)_odom"/>
     <arg name="gt_base_frame_c" default="$(arg id_robot_c)_base_footprint"/>
@@ -107,13 +99,11 @@
         <arg name="yaw_init_pose_robot_a" value="$(arg yaw_init_pose_robot_a)"/>
         <!-- robot_a arm args -->
         <arg name="launch_arm_a" value="$(arg launch_arm_a)"/>
-        <arg name="arm_model_a" value="$(arg arm_model_a)"/>
         <arg name="moveit_movegroup_a" value="$(arg moveit_movegroup_a)"/>
         <arg name="moveit_pipeline_a" value="$(arg moveit_pipeline_a)"/>
         <!-- robot_a gripper args -->
         <arg name="launch_gripper_a" value="$(arg launch_gripper_a)"/>
         <arg name="launch_camera_a" value="$(arg launch_camera_a)"/>
-        <arg name="gripper_model_a" value="$(arg gripper_model_a)"/>
 
         <!-- robot_b args -->
         <arg name="id_robot_b" value="$(arg id_robot_b)"/>
@@ -126,12 +116,10 @@
         <arg name="yaw_init_pose_robot_b" value="$(arg yaw_init_pose_robot_b)"/>
         <!-- robot_b arm args -->
         <arg name="launch_arm_b" value="$(arg launch_arm_b)"/>
-        <arg name="arm_model_b" value="$(arg arm_model_b)"/>
         <arg name="moveit_movegroup_b" value="$(arg moveit_movegroup_b)"/>
         <arg name="moveit_pipeline_b" value="$(arg moveit_pipeline_b)"/>
         <!-- robot_b gripper args -->
         <arg name="launch_gripper_b" value="$(arg launch_gripper_b)"/>
-        <arg name="gripper_model_b" value="$(arg gripper_model_b)"/>
         <arg name="launch_camera_b" value="$(arg launch_camera_b)"/>
 
         <!-- robot_c args -->
@@ -145,12 +133,10 @@
         <arg name="yaw_init_pose_robot_c" value="$(arg yaw_init_pose_robot_c)"/>
         <!-- robot_c arm args -->
         <arg name="launch_arm_c" value="$(arg launch_arm_c)"/>
-        <arg name="arm_model_c" value="$(arg arm_model_c)"/>
         <arg name="moveit_movegroup_c" value="$(arg moveit_movegroup_c)"/>
         <arg name="moveit_pipeline_c" value="$(arg moveit_pipeline_c)"/>
         <!-- robot_c gripper args -->
         <arg name="launch_gripper_c" value="$(arg launch_gripper_c)"/>
-        <arg name="gripper_model_c" value="$(arg gripper_model_c)"/>
         <arg name="launch_camera_c" value="$(arg launch_camera_c)"/>
 
 

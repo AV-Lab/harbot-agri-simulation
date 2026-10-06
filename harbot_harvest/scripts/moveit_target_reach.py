@@ -3,10 +3,10 @@
 
 # ******************************************************************************
 # Code Summary:
-# - Move the arm to the scan pose for the requested orange (Franka only).
+# - Move the arm to the scan pose for the requested orange.
 # - Start orange_pose_to_world and wait for the detected orange world position.
 # - Offset the target by the orange radius towards the robot.
-# - Add the orange supports, oranges, and stem meshes to the planning scene.
+# - Add the target and paired oranges and the stem meshes to the planning scene.
 # - Publish RViz markers for the target and the collision objects.
 # - Attach the orange to the environment, then plan and execute with MoveIt.
 # - Publish the total planning time, the planning-done time, and orange_action.
@@ -62,7 +62,6 @@ class MoveItTargetReach:
     def __init__(self):
         self.robot_ns = helpers.normalize_robot_namespace(rospy.get_param("~robot_ns", "/robot"))
 
-        self.arm_type = rospy.get_param("~arm", "Franka")
         self.orange_model = rospy.get_param("~orange", "").strip()
         self.planning_frame = helpers.get_setting("planning_frame")
         self.odom_topic = helpers.get_robot_topic(self.robot_ns, "odom_topic")
@@ -90,7 +89,7 @@ class MoveItTargetReach:
         self.planner_id = "RRTConnect"
         self.position_tolerance = 0.01
         self.moveit_planning_time_sec = 0.0
-        self.arm = arm.get_arm_config(self.arm_type, self.robot_ns)
+        self.arm = arm.get_arm_config(self.robot_ns)
         self.attachment_client = ObjectAttachmentClient(self.robot_ns)
         self.collision_meshes = [
             ("greenhouse_stems_link", self.greenhouse_stems_mesh_path, "~add_greenhouse_stems_collision"),
@@ -147,17 +146,10 @@ class MoveItTargetReach:
 
         rospy.loginfo("Detected MoveIt target: [%.5f, %.5f, %.5f]", *self.target_position)
 
-    def support_positions(self):
-        # Returns the top orange, the bottom orange, and the orange paired with the target.
-        offset = TOP_FROM_BOTTOM[self.side]
-        if self.height == "T":
-            top = self.target_position
-            bottom = [value - delta for value, delta in zip(top, offset)]
-            return top, bottom, bottom
-
-        bottom = self.target_position
-        top = [value + delta for value, delta in zip(bottom, offset)]
-        return top, bottom, top
+    def paired_orange_position(self):
+        # The other orange on the same tree side: below a top orange, above a bottom one.
+        sign = -1.0 if self.height == "T" else 1.0
+        return [value + sign * delta for value, delta in zip(self.target_position, TOP_FROM_BOTTOM[self.side])]
 
     def mesh_available(self, object_id, mesh_path, enabled_param):
         if not bool(rospy.get_param(enabled_param, True)):
@@ -171,7 +163,7 @@ class MoveItTargetReach:
         return True
 
     def publish_markers(self):
-        _, _, paired_position = self.support_positions()
+        paired_position = self.paired_orange_position()
         diameter_scale = (self.diameter, self.diameter, self.diameter)
 
         object_marker = ros_utils.make_marker(self.planning_frame, "detected_object", 0, Marker.SPHERE, self.target_position, diameter_scale, (1.0, 0.45, 0.0, 0.9))
@@ -197,11 +189,9 @@ class MoveItTargetReach:
         self.collision_marker_pub.publish(collision_markers)
 
     def add_collision_objects(self, scene):
-        top, bottom, paired_position = self.support_positions()
+        paired_position = self.paired_orange_position()
         radius = self.diameter / 2.0
 
-        scene.add_box("top_support_box", ros_utils.make_pose_stamped(self.planning_frame, (top[0], top[1], top[2] - 0.685762)), size=(0.042, 0.042, 1.32421))
-        scene.add_box("bottom_support_box", ros_utils.make_pose_stamped(self.planning_frame, (bottom[0], bottom[1], bottom[2] - 0.483475)), size=(0.042, 0.042, 0.919556))
         scene.add_sphere("detected_object", ros_utils.make_pose_stamped(self.planning_frame, self.target_position), radius=radius)
         scene.add_sphere("paired_detected_object", ros_utils.make_pose_stamped(self.planning_frame, paired_position), radius=radius)
 
@@ -294,11 +284,8 @@ class MoveItTargetReach:
             return
 
         rospy.sleep(0.5)
-        if str(self.arm_type).lower() == "franka":
-            self.arm_pub.publish(arm.joint_command(self.arm.arm_joints, self.scan_pose(row, tree), 3.0))
-            rospy.loginfo("Moved arm to scan pose for %s", self.orange_model)
-        else:
-            rospy.logwarn("Scan pose is only configured for Franka; skipping")
+        self.arm_pub.publish(arm.joint_command(self.arm.arm_joints, self.scan_pose(row, tree), 3.0))
+        rospy.loginfo("Moved arm to scan pose for %s", self.orange_model)
         rospy.sleep(5.0)
 
         detection_process = None

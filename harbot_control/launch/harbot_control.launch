@@ -10,7 +10,6 @@
   <arg name="ros_planar_move_plugin" default="false"/>
   <arg name="sim" default="false"/>
   <arg name="sim_arm_control" default="true"/>
-  <arg name="arm_model" default="franka"/>
   <arg name="arm_id" default="robot"/>
   <arg name="arm_controllers" default="pos_traj_controller"/> <!-- controllers can be listed seprated by a blank space -->
   <arg name="sim_gripper_control" default="false"/>
@@ -36,8 +35,7 @@
 
     <group if="$(arg sim_arm_control)">
 
-      <rosparam unless="$(eval arg('arm_model') == 'franka')" file="$(find harbot_control)/config/arms/ur5_controllers.yaml" command="load" ns="arm" subst_value="true"/>
-      <rosparam if="$(eval arg('arm_model') == 'franka')" file="$(find harbot_control)/config/arms/franka_controllers.yaml" command="load" ns="arm" subst_value="true"/>
+      <rosparam file="$(find harbot_control)/config/arms/franka_controllers.yaml" command="load" ns="arm" subst_value="true"/>
       <node name="controller_spawner_arm" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="
         $(arg arm_controllers)
       "/>
@@ -46,8 +44,7 @@
 
     <group if="$(arg sim_gripper_control)">
 
-      <rosparam unless="$(eval arg('arm_model') == 'franka')" file="$(find harbot_control)/config/grippers/egh_gripper_controller.yaml" command="load" subst_value="true" ns="gripper"/>
-      <rosparam if="$(eval arg('arm_model') == 'franka')" file="$(find harbot_control)/config/grippers/franka_gripper_controller.yaml" command="load" subst_value="true" ns="gripper"/>
+      <rosparam file="$(find harbot_control)/config/grippers/franka_gripper_controller.yaml" command="load" subst_value="true" ns="gripper"/>
       <node name="controller_spawner_gripper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="
         $(arg gripper_controllers)
       "/>

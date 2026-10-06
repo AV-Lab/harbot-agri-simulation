@@ -25,7 +25,6 @@ class OrangeGrasper:
     def __init__(self):
         self.robot_ns = helpers.normalize_robot_namespace(rospy.get_param("~robot_ns", "/robot"))
 
-        self.arm_type = rospy.get_param("~arm", "Franka")
         self.orange_model = rospy.get_param("~orange", "").strip()
         self.result_topic = helpers.get_robot_topic(self.robot_ns, "result_topic")
         self.return_motion_retries = int(rospy.get_param("~return_motion_retries", -1))
@@ -36,7 +35,7 @@ class OrangeGrasper:
         self.return_motion_retry_delay = float(rospy.get_param("~return_motion_retry_delay", 0.5))
         self.grasp_success_probability = float(rospy.get_param("~grasp_success_probability", 0.91))
 
-        self.arm = arm.get_arm_config(self.arm_type, self.robot_ns)
+        self.arm = arm.get_arm_config(self.robot_ns)
         self.attachment_client = ObjectAttachmentClient(self.robot_ns)
 
         self.result_pub = rospy.Publisher(self.result_topic, Bool, queue_size=1)

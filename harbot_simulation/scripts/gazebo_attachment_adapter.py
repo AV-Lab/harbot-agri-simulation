@@ -4,6 +4,7 @@ import threading
 
 import rospy
 from gazebo_ros_link_attacher.srv import Attach, AttachRequest
+from greenhouse_fruit_detachment.srv import DetachFruit
 from harbot_control.srv import SetObjectAttachment, SetObjectAttachmentResponse
 
 
@@ -15,7 +16,12 @@ VALID_TARGETS = HOLDER_TARGETS | frozenset((TARGET_RELEASED,))
 
 
 class GazeboAttachmentAdapter:
-    """Handle semantic object attachment requests using the Gazebo plugin."""
+    """Handle semantic object attachment requests using the Gazebo plugins.
+
+    Fruits hang on the plants through the fruit detachment plugin. A fruit's
+    stem only breaks when it is attached to the gripper, so a failed grasp
+    leaves the fruit on its plant.
+    """
 
     def __init__(self):
         self.robot_model = rospy.get_param("~robot_model")
@@ -29,6 +35,9 @@ class GazeboAttachmentAdapter:
         )
         self.detach_service_name = rospy.get_param(
             "~gazebo_detach_service", "/link_attacher_node/detach"
+        )
+        self.stem_service_name = rospy.get_param(
+            "~fruit_detach_service", "/fruit_detachment/detach"
         )
         self.wait_timeout = float(rospy.get_param("~service_wait_timeout", 1.0))
         self.attempts = max(1, int(rospy.get_param("~service_attempts", 5)))
@@ -74,6 +83,10 @@ class GazeboAttachmentAdapter:
         if not self._attach(object_id, target):
             return False, "failed to attach {} to {}".format(object_id, target)
 
+        if target == TARGET_GRIPPER and not self._break_stem(object_id):
+            self._detach(object_id, target)
+            return False, "failed to break the stem of {}".format(object_id)
+
         previous = current if current in HOLDER_TARGETS else None
         if current is None and target == TARGET_GRIPPER:
             previous = TARGET_ENVIRONMENT
@@ -102,6 +115,18 @@ class GazeboAttachmentAdapter:
 
         self._states[object_id] = TARGET_RELEASED
         return True, "released {}".format(object_id)
+
+    def _break_stem(self, object_id):
+        try:
+            rospy.wait_for_service(self.stem_service_name, timeout=self.wait_timeout)
+            response = rospy.ServiceProxy(self.stem_service_name, DetachFruit)(object_id)
+        except (rospy.ROSException, rospy.ServiceException) as exc:
+            rospy.logwarn("%s failed for %s: %s", self.stem_service_name, object_id, str(exc))
+            return False
+
+        if not response.success:
+            rospy.logwarn("%s rejected %s: %s", self.stem_service_name, object_id, response.message)
+        return response.success
 
     def _attach(self, object_id, holder):
         return self._call_plugin(self.attach_service_name, object_id, holder)
