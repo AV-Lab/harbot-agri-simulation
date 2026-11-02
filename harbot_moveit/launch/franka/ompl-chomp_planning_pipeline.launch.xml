@@ -1,7 +1,7 @@
 <launch>
   <arg name="arm_id" default="panda" />
   <!-- load OMPL planning pipeline, but add the CHOMP planning adapter. -->
-  <include file="$(find harbot_moveit)/launch/franka_6f/ompl_planning_pipeline.launch.xml">
+  <include file="$(find harbot_moveit)/launch/franka/ompl_planning_pipeline.launch.xml">
     <arg name="arm_id" value="$(arg arm_id)" />
     <arg name="planning_adapters"
          default="default_planner_request_adapters/LimitMaxCartesianLinkSpeed
@@ -15,7 +15,7 @@
   </include>
 
   <!-- load chomp config -->
-  <rosparam command="load" file="$(find harbot_moveit)/config/franka_6f/chomp_planning.yaml" />
+  <rosparam command="load" file="$(find harbot_moveit)/config/franka/chomp_planning.yaml" />
 
   <!-- override trajectory_initialization_method: Use OMPL-generated trajectory -->
   <param name="trajectory_initialization_method" value="fillTrajectory"/>

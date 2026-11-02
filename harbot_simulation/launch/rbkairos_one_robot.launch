@@ -93,7 +93,7 @@
         </include>
 
         <!-- MoveGroup Moveit! -->
-        <include if="$(arg launch_move_group)" file="$(find harbot_moveit)/launch/franka_6f/demo.launch">
+        <include if="$(arg launch_move_group)" file="$(find harbot_moveit)/launch/franka/demo.launch">
             <arg name="load_robot_description" value="false"/>
             <arg name="prefix" value="$(arg prefix)"/>
             <arg name="fixed_frame" value="$(arg prefix)base_footprint"/>

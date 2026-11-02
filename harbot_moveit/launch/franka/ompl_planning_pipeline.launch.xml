@@ -20,6 +20,6 @@
   <param name="start_state_max_bounds_error" value="$(arg start_state_max_bounds_error)" />
   <param name="jiggle_fraction" value="$(arg jiggle_fraction)" />
 
-  <rosparam command="load" file="$(find harbot_moveit)/config/franka_6f/ompl_planning.yaml" subst_value="true"/>
+  <rosparam command="load" file="$(find harbot_moveit)/config/franka/ompl_planning.yaml" subst_value="true"/>
 
 </launch>
