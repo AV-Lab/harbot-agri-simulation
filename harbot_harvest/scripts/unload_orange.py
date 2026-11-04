@@ -12,9 +12,8 @@
 
 import rospy
 from std_msgs.msg import Bool
-from harbot_harvest import arm, helpers
 from trajectory_msgs.msg import JointTrajectory
-from harbot_harvest.attachment import ATTACHMENT_TARGET_RELEASED, ObjectAttachmentClient
+from harbot_harvest import arm, attachment, helpers
 
 
 class OrangeUnloader:
@@ -26,8 +25,7 @@ class OrangeUnloader:
         self.arm_cmd_topic = helpers.get_robot_topic(self.robot_ns, "arm_command_topic")
         self.gripper_cmd_topic = helpers.get_robot_topic(self.robot_ns, "gripper_command_topic")
 
-        self.arm = arm.get_arm_config(self.robot_ns)
-        self.attachment_client = ObjectAttachmentClient(self.robot_ns)
+        self.arm = arm.FrankaArm(self.robot_ns)
 
         self.result_pub = rospy.Publisher(self.result_topic, Bool, queue_size=1)
         self.arm_pub = rospy.Publisher(self.arm_cmd_topic, JointTrajectory, queue_size=1)
@@ -46,7 +44,7 @@ class OrangeUnloader:
         self.arm_pub.publish(arm.joint_command(self.arm.arm_joints, self.arm.drop_pose, 3.0))
         rospy.sleep(4.0)
 
-        if not self.attachment_client.set_target(self.orange_model, ATTACHMENT_TARGET_RELEASED):
+        if not attachment.set_attachment(self.robot_ns, self.orange_model, attachment.ATTACHMENT_TARGET_RELEASED):
             rospy.logerr("Could not release %s through the attachment service", self.orange_model)
             self.publish_result(False)
             return

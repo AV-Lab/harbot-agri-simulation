@@ -18,7 +18,6 @@ catkin_install_python(PROGRAMS
   scripts/harvest_workflow.py
   scripts/hsv_object_detector.py
   scripts/moveit_target_reach.py
-  scripts/orange_pose_to_world.py
   scripts/prost_sim_action_server.py
   scripts/unload_orange.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

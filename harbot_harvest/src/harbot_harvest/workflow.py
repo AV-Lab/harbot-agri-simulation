@@ -5,6 +5,7 @@
 # - Run path_nav for a route and wait until the robot reports FINISHED.
 # - Run one harvest script step and wait for its orange_action result.
 # - Run the container unload action.
+# - Start ROS commands in their own process group and shut them down cleanly.
 # - Provide the interactive harvest workflow used by harvest_workflow.py.
 # - Optionally open the path GUI and the third-person camera view in RViz.
 # - The PROST action server reuses these steps instead of its own copies.
@@ -13,15 +14,15 @@
 
 import os
 import sys
-import json
 import math
 import time
 import rospy
+import signal
 import argparse
 import subprocess
 from nav_msgs.msg import Odometry
+from harbot_harvest import helpers
 from std_msgs.msg import Bool, String
-from harbot_harvest import helpers, ros_utils
 from tf.transformations import euler_from_quaternion
 
 
@@ -47,6 +48,9 @@ WAYPOINTS = {
         "a18": (0.0, -8.559429, 1.5708),
         "a19": (0.0, -5.118858, 1.5708),
         "a20": (0.0, -1.678287, 1.5708),
+        "ul1_1": (-7.5, -13.6, 1.5708),
+        "ul1_2": (-6.45, -14.4, 3.1416),
+        "ul2_2": (6.45, 14.4, 3.1416),
     },
     "robot_b": {
         "a21": (0.0, 1.762284, -1.5708),
@@ -69,6 +73,9 @@ WAYPOINTS = {
         "a38": (7.5, 5.202855, -1.5708),
         "a39": (7.5, 8.643426, -1.5708),
         "a40": (7.5, 12.083997, -1.5708),
+        "ul1_2": (-6.45, -14.4, 0.0),
+        "ul2_1": (7.5, 13.6, -1.5708),
+        "ul2_2": (6.45, 14.4, 3.1416),
     },
 }
 
@@ -130,7 +137,6 @@ UNRIPE_ORANGES = {
     "orange4.8.R.B",
 }
 
-
 # Each robot's own unloading station, and every unloading point it has a saved route to.
 UNLOADING_LABELS = ["ul1", "ul2"]
 UNLOADING_STATIONS = {
@@ -157,15 +163,16 @@ COLOR_TEXT = "\033[96m" if USE_COLOR else ""
 COLOR_DETAIL = "\033[92m" if USE_COLOR else ""
 
 NAV_START_DELAY = 5.0
-NAV_FINISH_DELAY = 3.0
 MAX_PICK_ATTEMPTS = 3
+NAV_FINISH_DELAY = 3.0
 UNLOAD_ACTION = "open"
 INTER_ORANGE_DELAY = 2.0
 STEP_SHUTDOWN_DELAY = 0.1
 ORANGE_ACTION_TIMEOUT = 500.0
 PROCESS_EXIT_GRACE_DELAY = 1.0
 
-ORANGE_ACTION_TRACKERS = {}
+# Latest orange_action result per topic; None until the running step reports.
+ORANGE_ACTION_RESULTS = {}
 
 
 def info(text):
@@ -193,34 +200,15 @@ def prompt_yes_no(text, default):
         info("Please enter y or n.")
 
 
-def waypoint_sort_key(waypoint_name):
-    if waypoint_name.startswith("a") and waypoint_name[1:].isdigit():
-        return int(waypoint_name[1:])
-    return waypoint_name
-
-
 def destination_sort_key(destination_name):
-    if destination_name.startswith("a") and destination_name[1:].isdigit():
-        return (0, int(destination_name[1:]))
+    # Waypoints first, in number order, then the unloading stations.
     if destination_name in UNLOADING_LABELS:
         return (1, UNLOADING_LABELS.index(destination_name))
-    return (2, destination_name)
-
-
-def unloading_station_label(robot_key):
-    return UNLOADING_STATIONS[robot_key]["label"]
-
-
-def is_unloading_point(robot_key, node_name):
-    return node_name in UNLOADING_STATIONS[robot_key]["points"]
+    return (0, int(destination_name[1:]))
 
 
 def display_node_name(robot_key, node_name):
     return UNLOADING_STATIONS[robot_key]["points"].get(node_name, node_name)
-
-
-def build_path_name(start_node, destination_node):
-    return "{}-{}".format(start_node, destination_node)
 
 
 def rospack_find(package_name):
@@ -228,53 +216,24 @@ def rospack_find(package_name):
 
 
 def path_directory(robot_key, node_name):
-    folder = node_name
-    if node_name.startswith("a") and node_name[1:].isdigit():
-        folder = "wavepoint{}".format(node_name[1:])
+    folder = "wavepoint{}".format(node_name[1:]) if node_name.startswith("a") else node_name
     return os.path.join(rospack_find("harbot_navigation"), "paths", robot_key, folder)
 
 
-def route_file(robot_key, start_node, destination_node):
-    return os.path.join(path_directory(robot_key, start_node), build_path_name(start_node, destination_node) + ".json")
-
-
-def list_raw_destinations(robot_key, current_node):
-    directory = path_directory(robot_key, current_node)
-    if not os.path.isdir(directory):
-        return []
-
-    destinations = []
+def list_destinations(robot_key, current_node):
     prefix = current_node + "-"
-    for file_name in sorted(os.listdir(directory)):
-        if not file_name.startswith(prefix) or not file_name.endswith(".json"):
-            continue
-        destination = file_name[len(prefix):-len(".json")]
-        if destination in WAYPOINTS[robot_key] or is_unloading_point(robot_key, destination):
-            destinations.append(destination)
-    return destinations
-
-
-def available_destinations(robot_key, current_node):
-    shown_names = []
-    for destination in list_raw_destinations(robot_key, current_node):
-        shown_name = display_node_name(robot_key, destination)
-        if shown_name not in shown_names:
-            shown_names.append(shown_name)
-    return sorted(shown_names, key=destination_sort_key)
+    file_names = sorted(os.listdir(path_directory(robot_key, current_node)))
+    return [file_name[len(prefix):-len(".json")] for file_name in file_names]
 
 
 def resolve_destination_node(robot_key, current_node, selected_destination):
     if selected_destination not in UNLOADING_LABELS:
         return selected_destination
 
-    for destination in sorted(list_raw_destinations(robot_key, current_node)):
+    for destination in list_destinations(robot_key, current_node):
         if UNLOADING_STATIONS[robot_key]["points"].get(destination) == selected_destination:
             return destination
     return selected_destination
-
-
-def angle_diff(angle_a, angle_b):
-    return abs(math.atan2(math.sin(angle_a - angle_b), math.cos(angle_a - angle_b)))
 
 
 def get_current_pose(robot_ns, timeout=5.0):
@@ -284,50 +243,41 @@ def get_current_pose(robot_ns, timeout=5.0):
     return message.pose.pose.position.x, message.pose.pose.position.y, yaw
 
 
-def unload_point_pose(robot_key, unload_point):
-    directory = path_directory(robot_key, unload_point)
-    if not os.path.isdir(directory):
-        return None
-
-    json_files = sorted(file_name for file_name in os.listdir(directory) if file_name.endswith(".json"))
-    if not json_files:
-        return None
-
-    with open(os.path.join(directory, json_files[0]), "r", encoding="utf-8") as route_handle:
-        points = json.load(route_handle)
-    if not points:
-        return None
-
-    return float(points[0][0]), float(points[0][1]), float(points[0][2])
-
-
-def nearest_named_pose(candidates, pose):
+def detect_current_node(robot_key, pose):
     best_name = None
     best_score = None
-    for candidate_name, candidate_pose in candidates.items():
-        distance = math.hypot(pose[0] - candidate_pose[0], pose[1] - candidate_pose[1])
-        score = distance + 0.25 * angle_diff(pose[2], candidate_pose[2])
+    for node_name, node_pose in WAYPOINTS[robot_key].items():
+        distance = math.hypot(pose[0] - node_pose[0], pose[1] - node_pose[1])
+        heading_error = abs(math.atan2(math.sin(pose[2] - node_pose[2]), math.cos(pose[2] - node_pose[2])))
+        score = distance + 0.25 * heading_error
         if best_score is None or score < best_score:
-            best_name = candidate_name
+            best_name = node_name
             best_score = score
     return best_name, best_score
 
 
-def detect_current_node(robot_key, pose):
-    waypoint_name, waypoint_score = nearest_named_pose(WAYPOINTS[robot_key], pose)
+def rosrun_command(package_name, script_name, private_params):
+    command = ["rosrun", package_name, script_name]
+    command.extend("_{}:={}".format(name, value) for name, value in private_params.items())
+    return command
 
-    unloading_candidates = {}
-    for unload_point in UNLOADING_STATIONS[robot_key]["points"]:
-        unload_pose = unload_point_pose(robot_key, unload_point)
-        if unload_pose is not None:
-            unloading_candidates[unload_point] = unload_pose
 
-    if unloading_candidates:
-        unload_name, unload_score = nearest_named_pose(unloading_candidates, pose)
-        if unload_score < waypoint_score:
-            return unload_name, unload_score
+def start_process(command, quiet=False):
+    output = subprocess.DEVNULL if quiet else None
+    return subprocess.Popen(command, start_new_session=True, stdout=output, stderr=output)
 
-    return waypoint_name, waypoint_score
+
+def shutdown_process(process_handle, timeout=5.0):
+    if process_handle is None or process_handle.poll() is not None:
+        return
+
+    try:
+        os.killpg(process_handle.pid, signal.SIGINT)
+        process_handle.wait(timeout)
+    except subprocess.TimeoutExpired:
+        os.killpg(process_handle.pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
 
 
 def launch_navigation(robot_ns, route, gui_enabled):
@@ -343,7 +293,7 @@ def launch_navigation(robot_ns, route, gui_enabled):
         "cmd_vel_topic:={}".format(helpers.get_setting("cmd_vel_topic")),
         "proceed_flag_topic:={}".format(helpers.get_setting("proceed_flag_topic")),
     ]
-    return ros_utils.start_process(command, quiet=True)
+    return start_process(command, quiet=True)
 
 
 def launch_persistent_path_gui(robot_ns):
@@ -354,56 +304,32 @@ def launch_persistent_path_gui(robot_ns):
         "__ns:={}".format(robot_ns),
         "_local_path_topic:=path_nav/local_path",
         "_reverse_mode_topic:=path_nav/reverse_mode",
-        "_desired_velocity_topic:=path_nav/desired_speed",
+        "_desired_speed_topic:=path_nav/desired_speed",
         "_odom_topic:={}".format(helpers.get_setting("odom_topic")),
-        "_state_flag_topic:={}".format(helpers.get_setting("status_topic")),
+        "_status_topic:={}".format(helpers.get_setting("status_topic")),
         "_proceed_flag_topic:={}".format(helpers.get_setting("proceed_flag_topic")),
     ]
-    return ros_utils.start_process(command, quiet=True)
+    return start_process(command, quiet=True)
 
 
 def launch_camera_view(robot_key):
     rviz_config = os.path.join(rospack_find("harbot_simulation"), "rviz", "rbkairos_camera_views.rviz")
     command = ["rosrun", "rviz", "rviz", "-d", rviz_config, "__name:={}_camera_views_rviz".format(robot_key)]
-    return ros_utils.start_process(command, quiet=True)
-
-
-def wait_for_process(process_handle, timeout, process_name):
-    deadline = time.time() + timeout
-
-    while not rospy.is_shutdown():
-        return_code = process_handle.poll()
-        if return_code is not None:
-            if return_code == 0:
-                return True, "{} completed.".format(process_name)
-            return False, "{} exited with code {}.".format(process_name, return_code)
-
-        remaining = deadline - time.time()
-        if remaining <= 0.0:
-            return False, "Timed out waiting for {} after {:.1f}s.".format(process_name, timeout)
-
-        rospy.sleep(min(0.1, remaining))
-
-    return False, "ROS shutdown while waiting for {}.".format(process_name)
+    return start_process(command, quiet=True)
 
 
 def send_proceed_flag(robot_ns):
     publisher = rospy.Publisher(helpers.get_robot_topic(robot_ns, "proceed_flag_topic"), Bool, queue_size=1, latch=True)
-
-    deadline = time.time() + 3.0
-    while publisher.get_num_connections() == 0 and time.time() < deadline and not rospy.is_shutdown():
-        rospy.sleep(0.1)
-
     publisher.publish(Bool(data=True))
 
 
 def wait_for_navigation_finish(robot_ns, process_handle, timeout):
     status_topic = helpers.get_robot_topic(robot_ns, "status_topic")
-    deadline = time.time() + timeout
+    deadline = time.monotonic() + timeout
     last_status = None
 
     while not rospy.is_shutdown():
-        remaining = deadline - time.time()
+        remaining = deadline - time.monotonic()
         if remaining <= 0.0:
             return False, "Timed out waiting for navigation after {:.1f}s.".format(timeout)
 
@@ -436,40 +362,33 @@ def navigate(robot_ns, route, gui_enabled, timeout, start_delay, finish_delay):
         if ok:
             rospy.sleep(finish_delay)
     finally:
-        ros_utils.shutdown_process(process_handle)
+        shutdown_process(process_handle)
 
     return ok, message
 
 
-def orange_action_tracker(robot_ns):
-    topic = helpers.get_robot_topic(robot_ns, "result_topic")
-    if topic not in ORANGE_ACTION_TRACKERS:
-        ORANGE_ACTION_TRACKERS[topic] = ros_utils.LatestMessage(topic, Bool)
-    return ORANGE_ACTION_TRACKERS[topic]
+def orange_action_callback(msg, topic):
+    ORANGE_ACTION_RESULTS[topic] = msg.data
 
 
-def wait_for_orange_action_result(robot_ns, process_handle, step_label, timeout):
-    tracker = orange_action_tracker(robot_ns)
-    start_time = time.monotonic()
-    deadline = time.time() + timeout
-    process_exit_time = None
-
+def wait_for_orange_action_result(topic, process_handle, step_label, timeout):
+    deadline = time.monotonic() + timeout
     while not rospy.is_shutdown():
-        result = tracker.value_since(start_time)
+        result = ORANGE_ACTION_RESULTS[topic]
         if result is not None:
             return bool(result)
 
+        # The script stopped: wait once for a result that may still be on its way.
         if process_handle.poll() is not None:
-            if process_exit_time is None:
-                process_exit_time = time.monotonic()
-            elif time.monotonic() - process_exit_time >= PROCESS_EXIT_GRACE_DELAY:
+            rospy.sleep(PROCESS_EXIT_GRACE_DELAY)
+            result = ORANGE_ACTION_RESULTS[topic]
+            if result is None:
                 raise RuntimeError("{} exited before publishing orange_action.".format(step_label))
+            return bool(result)
 
-        remaining = deadline - time.time()
-        if remaining <= 0.0:
+        if time.monotonic() > deadline:
             raise RuntimeError("Timed out waiting for orange_action from {} after {:.1f} seconds.".format(step_label, timeout))
-
-        rospy.sleep(min(0.1, remaining))
+        rospy.sleep(0.1)
 
     return False
 
@@ -481,53 +400,48 @@ def run_orange_script_step(robot_ns, orange_name, step_label, script_name, timeo
     private_params = {"orange": orange_name, "robot_ns": robot_ns}
     private_params.update({setting_name: helpers.get_setting(setting_name) for setting_name in STEP_SETTINGS})
 
-    orange_action_tracker(robot_ns)
+    # Subscribe once per topic, before the first step starts, so a fast result is not missed.
+    topic = helpers.get_robot_topic(robot_ns, "result_topic")
+    if topic not in ORANGE_ACTION_RESULTS:
+        ORANGE_ACTION_RESULTS[topic] = None
+        rospy.Subscriber(topic, Bool, orange_action_callback, callback_args=topic, queue_size=10)
+
     process_handle = None
     try:
-        start_time = time.monotonic()
-        process_handle = ros_utils.start_process(ros_utils.rosrun_command("harbot_harvest", script_name, private_params))
-        succeeded = wait_for_orange_action_result(robot_ns, process_handle, step_label, timeout)
+        process_handle = start_process(rosrun_command("harbot_harvest", script_name, private_params))
+        succeeded = wait_for_orange_action_result(topic, process_handle, step_label, timeout)
         result_time = time.monotonic()
         rospy.sleep(STEP_SHUTDOWN_DELAY)
     finally:
-        ros_utils.shutdown_process(process_handle)
+        shutdown_process(process_handle)
+        # Clear the result, so the next step waits for its own.
+        ORANGE_ACTION_RESULTS[topic] = None
 
     if not succeeded and not allow_failure_result:
         raise RuntimeError("{} reported orange_action=False.".format(step_label))
 
-    return succeeded, start_time, result_time
+    return succeeded, result_time
 
 
 def run_container_action(robot_ns, action, timeout):
     process_name = "container_control.py ({})".format(action)
     process_handle = None
     try:
-        command = ros_utils.rosrun_command("harbot_harvest", "container_control.py", {"robot_ns": robot_ns, "action": action})
-        process_handle = ros_utils.start_process(command)
-        return wait_for_process(process_handle, timeout, process_name)
+        command = rosrun_command("harbot_harvest", "container_control.py", {"robot_ns": robot_ns, "action": action})
+        process_handle = start_process(command)
+        return_code = process_handle.wait(timeout)
+    except subprocess.TimeoutExpired:
+        return False, "Timed out waiting for {} after {:.1f}s.".format(process_name, timeout)
     finally:
-        ros_utils.shutdown_process(process_handle)
+        shutdown_process(process_handle)
 
-
-def execute_orange_pick(robot_ns, orange_name):
-    step_count = len(PICK_STEPS) + 1
-    for index, (step_label, script_name) in enumerate(PICK_STEPS, start=1):
-        label = "Step {}/{}: {}".format(index, step_count, step_label)
-        info(label)
-        succeeded, _, _ = run_orange_script_step(robot_ns, orange_name, label, script_name, allow_failure_result=script_name == "grasp_orange.py")
-
-    if not succeeded:
-        info("Grasp failed for {}. Skipping unload for this fruit.".format(orange_name))
-        return False
-
-    label = "Step {}/{}: Unload fruit from gripper".format(step_count, step_count)
-    info(label)
-    run_orange_script_step(robot_ns, orange_name, label, "unload_orange.py")
-    info("Resetting environment.")
-    return True
+    if return_code != 0:
+        return False, "{} exited with code {}.".format(process_name, return_code)
+    return True, "{} completed.".format(process_name)
 
 
 def execute_fruit_sequence(robot_ns, selected_fruits):
+    steps = PICK_STEPS + [("Unload fruit from gripper", "unload_orange.py")]
     for orange_name in selected_fruits:
         if orange_name in UNRIPE_ORANGES:
             info("{} is unripe. Skipping harvest.".format(orange_name))
@@ -535,19 +449,17 @@ def execute_fruit_sequence(robot_ns, selected_fruits):
 
         harvested = False
         for attempt in range(1, MAX_PICK_ATTEMPTS + 1):
-            if attempt == 1:
-                info("Executing complete harvesting workflow for {}.".format(orange_name))
-            else:
-                info("Retrying harvesting workflow for {} (attempt {}/{}).".format(orange_name, attempt, MAX_PICK_ATTEMPTS))
-
+            info("Harvesting {} (attempt {}/{}).".format(orange_name, attempt, MAX_PICK_ATTEMPTS))
             try:
-                harvested = execute_orange_pick(robot_ns, orange_name)
+                for index, (step_label, script_name) in enumerate(steps, start=1):
+                    label = "Step {}/{}: {}".format(index, len(steps), step_label)
+                    info(label)
+                    run_orange_script_step(robot_ns, orange_name, label, script_name)
+                harvested = True
+                break
             except (OSError, RuntimeError, rospy.ROSException) as exc:
                 info("Harvesting workflow failed for {}: {}".format(orange_name, exc))
-                harvested = False
 
-            if harvested:
-                break
             if attempt < MAX_PICK_ATTEMPTS:
                 rospy.sleep(INTER_ORANGE_DELAY)
 
@@ -559,10 +471,6 @@ def execute_fruit_sequence(robot_ns, selected_fruits):
         rospy.sleep(INTER_ORANGE_DELAY)
 
     return True
-
-
-def prompt_robot_namespace():
-    return helpers.normalize_robot_namespace(prompt("Robot [a/b]: ").strip() or "a")
 
 
 def prompt_destination(destinations):
@@ -581,13 +489,11 @@ def prompt_destination(destinations):
 
 
 def prompt_fruit_selection(location_name):
-    fruits = FRUIT_OPTIONS.get(location_name, [])
-    info("Fruit options at {}:".format(location_name))
-    if not fruits:
-        detail("No fruit options configured yet.")
-        prompt("Press Enter to continue...")
+    if location_name not in FRUIT_OPTIONS:
         return []
 
+    fruits = FRUIT_OPTIONS[location_name]
+    info("Fruit options at {}:".format(location_name))
     for index, fruit_name in enumerate(fruits, start=1):
         detail("{}. {}".format(index, fruit_name))
 
@@ -596,72 +502,23 @@ def prompt_fruit_selection(location_name):
         tokens = prompt("Fruit selection: ").replace(",", " ").split()
         if not tokens:
             return []
-        if not all(token.isdigit() for token in tokens):
-            info("Please enter only numbers from the list.")
-            continue
-        if any(not 1 <= int(token) <= len(fruits) for token in tokens):
-            info("One or more fruit numbers are out of range.")
-            continue
-
-        chosen = [fruits[int(token) - 1] for token in tokens]
-        info("Selected fruits: {}".format(", ".join(chosen)))
-        return chosen
-
-
-def handle_fruit_flow(robot_ns, location_name):
-    if location_name in FRUIT_OPTIONS:
-        execute_fruit_sequence(robot_ns, prompt_fruit_selection(location_name))
-
-
-def handle_fruit_flow_automatic(robot_ns, location_name):
-    fruits = FRUIT_OPTIONS.get(location_name, [])
-    if not fruits:
-        info("No fruit options configured at {}.".format(location_name))
-        return True
-
-    info("Automatic fruit collection at {}: {}.".format(location_name, ", ".join(fruits)))
-    return execute_fruit_sequence(robot_ns, fruits)
+        if all(token.isdigit() and 1 <= int(token) <= len(fruits) for token in tokens):
+            chosen = [fruits[int(token) - 1] for token in tokens]
+            info("Selected fruits: {}".format(", ".join(chosen)))
+            return chosen
+        info("Please enter numbers from the list.")
 
 
 def navigate_to_node(robot_ns, robot_key, start_node, destination_node):
-    route = build_path_name(start_node, destination_node)
+    route = "{}-{}".format(start_node, destination_node)
     info("Launching path_nav with route={} ...".format(route))
 
-    # The interactive workflow shows the persistent path GUI, so path_nav runs without its own.
     ok, message = navigate(robot_ns, route, False, float("inf"), NAV_START_DELAY, NAV_FINISH_DELAY)
     if not ok:
         raise rospy.ROSException(message)
 
     reached_node, reached_score = detect_current_node(robot_key, get_current_pose(robot_ns))
     info("Robot is now nearest to {} (match score {:.3f}).".format(display_node_name(robot_key, reached_node), reached_score))
-    return reached_node
-
-
-def run_container_unload(robot_ns):
-    info("Running container unload action: {}.".format(UNLOAD_ACTION))
-    ok, message = run_container_action(robot_ns, UNLOAD_ACTION, float("inf"))
-    info("Container unload action completed." if ok else message)
-    return ok
-
-
-def navigate_to_unloading_station(robot_ns, robot_key, active_node):
-    unloading_label = unloading_station_label(robot_key)
-    destination_node = resolve_destination_node(robot_key, active_node, unloading_label)
-    if destination_node == unloading_label:
-        info("No unloading path found from {} to {}.".format(active_node, unloading_label))
-        return None
-
-    info("Automatic test finished waypoint collection. Going to {}.".format(unloading_label))
-    try:
-        reached_node = navigate_to_node(robot_ns, robot_key, active_node, destination_node)
-    except (subprocess.CalledProcessError, OSError, rospy.ROSException) as exc:
-        info("Automatic navigation to {} failed: {}".format(unloading_label, exc))
-        return None
-
-    if not is_unloading_point(robot_key, reached_node):
-        info("Expected to reach {}, but detected {} instead.".format(unloading_label, display_node_name(robot_key, reached_node)))
-        return None
-
     return reached_node
 
 
@@ -672,7 +529,7 @@ def run_full_automatic_test(robot_ns, robot_key, current_node):
         return False
 
     info("Starting full automatic test from {}.".format(current_node))
-    if not handle_fruit_flow_automatic(robot_ns, current_node):
+    if not execute_fruit_sequence(robot_ns, FRUIT_OPTIONS[current_node]):
         return False
 
     active_node = current_node
@@ -687,42 +544,54 @@ def run_full_automatic_test(robot_ns, robot_key, current_node):
             info("Expected to reach {}, but detected {} instead.".format(next_waypoint, display_node_name(robot_key, active_node)))
             return False
 
-        if not handle_fruit_flow_automatic(robot_ns, active_node):
+        if not execute_fruit_sequence(robot_ns, FRUIT_OPTIONS[active_node]):
             return False
 
-    if navigate_to_unloading_station(robot_ns, robot_key, active_node) is None:
+    unloading_label = UNLOADING_STATIONS[robot_key]["label"]
+    destination_node = resolve_destination_node(robot_key, active_node, unloading_label)
+    info("Automatic test finished waypoint collection. Going to {}.".format(unloading_label))
+    try:
+        reached_node = navigate_to_node(robot_ns, robot_key, active_node, destination_node)
+    except (subprocess.CalledProcessError, OSError, rospy.ROSException) as exc:
+        info("Automatic navigation to {} failed: {}".format(unloading_label, exc))
         return False
-    if not run_container_unload(robot_ns):
+
+    if reached_node not in UNLOADING_STATIONS[robot_key]["points"]:
+        info("Expected to reach {}, but detected {} instead.".format(unloading_label, display_node_name(robot_key, reached_node)))
+        return False
+
+    info("Running container unload action: {}.".format(UNLOAD_ACTION))
+    ok, message = run_container_action(robot_ns, UNLOAD_ACTION, float("inf"))
+    if not ok:
+        info(message)
         return False
 
     info("Full automatic test completed.")
     return True
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Interactive waypoint navigator for RBKairos simulation.")
-    parser.add_argument("--robot-ns", help="Robot namespace, for example /robot or /robot_b.")
-    parser.add_argument("--gui", action="store_true", help="Launch path_nav with GUI enabled.")
-    parser.add_argument("--camera-view", action="store_true", help="Open the third-person camera view in RViz.")
-    return parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
-
-
 def main():
     rospy.init_node("harvest_workflow", anonymous=True)
-    arguments = parse_args()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--robot-ns")
+    parser.add_argument("--gui", action="store_true")
+    parser.add_argument("--auto-test", action="store_true")
+    parser.add_argument("--camera-view", action="store_true")
+    arguments = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 
     try:
-        robot_ns = helpers.normalize_robot_namespace(arguments.robot_ns) if arguments.robot_ns else prompt_robot_namespace()
+        robot_ns = helpers.normalize_robot_namespace(arguments.robot_ns or prompt("Robot [a/b]: ").strip() or "a")
         robot_key = helpers.robot_key(robot_ns)
     except ValueError as exc:
-        info(str(exc))
+        info(exc)
         return 1
 
-    gui_requested = arguments.gui or prompt_yes_no("Launch path_nav GUI?", default=False)
+    gui_requested = arguments.gui or prompt_yes_no("Open the path GUI?", default=False)
     camera_view_requested = arguments.camera_view or prompt_yes_no("Open third-person camera view?", default=False)
+    auto_test_requested = arguments.auto_test or prompt_yes_no("Run full automatic test from the current waypoint?", default=False)
     path_gui_process = None
     camera_view_process = None
-    auto_test_prompt_pending = True
 
     try:
         if gui_requested:
@@ -747,25 +616,21 @@ def main():
             current_location_name = display_node_name(robot_key, current_node)
             info("Current pose is nearest to {} (match score {:.3f}).".format(current_location_name, score))
 
-            if auto_test_prompt_pending:
-                auto_test_prompt_pending = False
-                if prompt_yes_no("Run full automatic test from the current waypoint?", default=False):
-                    if run_full_automatic_test(robot_ns, robot_key, current_node):
-                        return 0
-                    info("Automatic test did not complete.")
-                    return 1
+            if auto_test_requested:
+                if run_full_automatic_test(robot_ns, robot_key, current_node):
+                    return 0
+                info("Automatic test did not complete.")
+                return 1
 
             if not prompt_yes_no("Current location is {}. Navigate to another destination?".format(current_location_name), default=True):
-                handle_fruit_flow(robot_ns, current_node)
+                execute_fruit_sequence(robot_ns, prompt_fruit_selection(current_node))
                 if not prompt_yes_no("Stay in the script and choose another destination?", default=True):
                     info("Exiting interactive waypoint navigator.")
                     return 0
                 continue
 
-            destinations = available_destinations(robot_key, current_node)
-            if not destinations:
-                info("No path files found for {} from {}.".format(robot_key, current_location_name))
-                return 1
+            shown_names = {display_node_name(robot_key, destination) for destination in list_destinations(robot_key, current_node)}
+            destinations = sorted(shown_names, key=destination_sort_key)
 
             destination_waypoint = prompt_destination(destinations)
             if destination_waypoint is None:
@@ -778,12 +643,12 @@ def main():
             except (subprocess.CalledProcessError, OSError, rospy.ROSException) as exc:
                 info("Navigation failed: {}".format(exc))
                 return 1
-            handle_fruit_flow(robot_ns, reached_node)
+            execute_fruit_sequence(robot_ns, prompt_fruit_selection(reached_node))
 
         return 0
     finally:
-        ros_utils.shutdown_process(path_gui_process)
-        ros_utils.shutdown_process(camera_view_process)
+        shutdown_process(path_gui_process)
+        shutdown_process(camera_view_process)
 
 
 if __name__ == "__main__":

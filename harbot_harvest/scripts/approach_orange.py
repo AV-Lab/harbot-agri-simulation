@@ -47,7 +47,7 @@ class OrangeApproach:
         self.goal_tolerance = 0.005
 
         self.cmd_pub = rospy.Publisher(self.cmd_topic, Twist, queue_size=1)
-        self.result_pub = rospy.Publisher(self.result_topic, Bool, queue_size=1)
+        self.result_pub = rospy.Publisher(self.result_topic, Bool, queue_size=1, latch=True)
 
         rospy.Subscriber(self.odom_topic, Odometry, self.odom_callback, queue_size=1)
 
@@ -62,23 +62,8 @@ class OrangeApproach:
     def stop_robot(self):
         self.cmd_pub.publish(Twist())
 
-    def publish_result(self, value):
-        for _ in range(2):
-            if rospy.is_shutdown():
-                return
-            self.result_pub.publish(Bool(data=value))
-            try:
-                rospy.sleep(0.1)
-            except rospy.exceptions.ROSInterruptException:
-                return
-
     def find_goal_x(self, current_x):
-        try:
-            row, _, side, _ = helpers.parse_orange(self.orange_model)
-        except ValueError as exc:
-            rospy.logwarn("%s", exc)
-            return current_x
-
+        row, _, side, _ = helpers.parse_orange(self.orange_model)
         # Oranges without an approach position are harvested from where the robot is.
         return APPROACH_X.get((row, side), current_x)
 
@@ -97,8 +82,8 @@ class OrangeApproach:
             self.done = True
             self.stop_robot()
             rospy.loginfo("Reached near orange")
+            self.result_pub.publish(Bool(data=True))
             rospy.sleep(0.1)
-            self.publish_result(True)
             rospy.signal_shutdown("orange approach complete")
             return
 
