@@ -13,6 +13,7 @@
     <arg name="ros_planar_move_plugin" default="true"/>
     <arg name="load_arm_kinematics_file" default="true"/>
     <arg name="third_person_camera" default="true"/>
+    <arg name="gripper" default="six"/>
 
     <!-- Simulation-provided planning-scene resources; harvest code consumes only these generic parameters. -->
     <param name="/harbot/planning_scene/greenhouse_stems_mesh_path"
@@ -78,6 +79,7 @@
         <arg name="launch_gripper" value="$(arg launch_gripper_a)"/>
         <arg name="launch_camera" value="$(arg launch_camera_a)"/>
         <arg name="third_person_camera" value="$(arg third_person_camera)"/>
+        <arg name="gripper" value="$(arg gripper)"/>
         <arg name="load_arm_kinematics_file" value="$(arg load_arm_kinematics_file)"/>
         <arg name="launch_rviz" value="$(arg launch_rviz)"/>
     </include>
@@ -97,6 +99,7 @@
         <arg name="launch_gripper" value="$(arg launch_gripper_b)"/>
         <arg name="launch_camera" value="$(arg launch_camera_b)"/>
         <arg name="third_person_camera" value="$(arg third_person_camera)"/>
+        <arg name="gripper" value="$(arg gripper)"/>
         <arg name="load_arm_kinematics_file" value="$(arg load_arm_kinematics_file)"/>
         <arg name="launch_rviz" value="$(arg launch_rviz)"/>
     </include>
@@ -116,6 +119,7 @@
         <arg name="launch_gripper" value="$(arg launch_gripper_c)"/>
         <arg name="launch_camera" value="$(arg launch_camera_c)"/>
         <arg name="third_person_camera" value="$(arg third_person_camera)"/>
+        <arg name="gripper" value="$(arg gripper)"/>
         <arg name="load_arm_kinematics_file" value="$(arg load_arm_kinematics_file)"/>
         <arg name="launch_rviz" value="$(arg launch_rviz)"/>
     </include>

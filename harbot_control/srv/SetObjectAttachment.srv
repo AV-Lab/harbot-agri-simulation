@@ -1,4 +1,3 @@
-string TARGET_ENVIRONMENT=environment
 string TARGET_GRIPPER=gripper
 string TARGET_RELEASED=released
 

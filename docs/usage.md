@@ -21,6 +21,7 @@ Optional arguments:
 
 - `waypoint_robot_a:=a1 waypoint_robot_b:=a40`: spawn waypoints (A uses `a1`–`a20`, B uses `a21`–`a40`).
 - `third_person_camera:=false`: turn off the camera behind each robot.
+- `gripper:=four`: use the 4-finger gripper instead of the default 6-finger one (`six`). With Docker, change the `gripper` default in `docker/simulation.launch` and [rebuild the image](docker.md#build).
 
 ![Greenhouse waypoint map](../media/greenhouse_waypoint_map.jpg)
 
@@ -32,10 +33,17 @@ rosrun rviz rviz -d $(rospack find harbot_simulation)/rviz/rbkairos_camera_views
 
 ## Navigation
 
-Drive a robot along a recorded route that starts at its current waypoint:
+Drive a robot along a recorded route that starts at its current waypoint.
+
+**Robot A:**
 
 ```bash
 roslaunch harbot_navigation path_nav.launch robot_ns:=robot route:=a1-a2 gui:=true
+```
+
+**Robot B:**
+
+```bash
 roslaunch harbot_navigation path_nav.launch robot_ns:=robot_b route:=a40-a39 gui:=true
 ```
 
@@ -49,25 +57,39 @@ in each component's `config.yaml` under [`harbot_navigation/scripts/`](../harbot
 
 ## Harvesting workflow
 
-Start the orange detector, then the interactive workflow:
+Start the orange detector, then the interactive workflow.
+
+**Terminal 1:**
 
 ```bash
-rosrun harbot_harvest hsv_object_detector.py _robot_ns:=/robot
+rosrun harbot_harvest hsv_object_detector.py
+```
+
+**Terminal 2:**
+
+```bash
 rosrun harbot_harvest harvest_workflow.py
 ```
 
-Use `_robot_ns:=/robot_b` for Robot B. The workflow asks for the robot, the path
-GUI, the camera view, and then:
+For Robot B, add `_robot_ns:=/robot_b` to the detector and pick Robot B in the
+workflow. The workflow asks for the robot, the path GUI, the camera view, and then:
 
 - **Manual:** pick a destination and the oranges to harvest there.
 - **Automatic:** harvest every ripe orange along the robot's waypoints, then unload.
 
 ## PROST planning
 
-Start the detector and action server for each robot:
+Start the detector and action server for each robot.
+
+**Robot A:**
 
 ```bash
 roslaunch harbot_harvest prost_harvest.launch robot_ns:=/robot
+```
+
+**Robot B:**
+
+```bash
 roslaunch harbot_harvest prost_harvest.launch robot_ns:=/robot_b
 ```
 
@@ -77,10 +99,17 @@ Then start the PROST planners, for both robots together:
 roslaunch rbkairos_etf_services bringup_sim.launch
 ```
 
-Or one robot at a time, each in its own terminal:
+Or one robot at a time.
+
+**Robot A:**
 
 ```bash
 roslaunch rbkairos_etf_services robot1_sim.launch
+```
+
+**Robot B:**
+
+```bash
 roslaunch rbkairos_etf_services robot2_sim.launch
 ```
 

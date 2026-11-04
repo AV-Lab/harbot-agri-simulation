@@ -62,8 +62,8 @@
       <param name="other_odom_topic" value="$(arg other_odom_topic)"/>
       <param name="route" value="$(arg route)"/>
       <param name="local_path_topic" value="$(arg local_path_topic)"/>
-      <param name="desired_velocity_topic" value="$(arg desired_speed_topic)"/>
-      <param name="state_flag_topic" value="$(arg status_topic)"/>
+      <param name="desired_speed_topic" value="$(arg desired_speed_topic)"/>
+      <param name="status_topic" value="$(arg status_topic)"/>
       <param name="proceed_flag_topic" value="$(arg proceed_flag_topic)"/>
       <param name="reverse_mode_topic" value="$(arg reverse_mode_topic)"/>
       <param if="$(eval arg('robot_safety_radius') != '')" name="robot_safety_radius" value="$(arg robot_safety_radius)"/>

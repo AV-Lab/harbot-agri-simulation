@@ -129,17 +129,17 @@ class PathGuiNode:
         self.route = rospy.get_param("~route", "example_straight.json")
         self.vehicle_width = float(rospy.get_param("~vehicle_width", 0.60))
         self.vehicle_length = float(rospy.get_param("~vehicle_length", 0.70))
-        self.state_flag_topic = rospy.get_param("~state_flag_topic", "path_nav/status")
+        self.status_topic = rospy.get_param("~status_topic", "path_nav/status")
+        self.show_waypoints = parse_bool(rospy.get_param("~show_waypoints", True))
         self.robot_safety_radius = float(rospy.get_param("~robot_safety_radius", 0.72))
         self.odom_topic = rospy.get_param("~odom_topic", "robotnik_base_control/odom_gt")
-        self.default_show_waypoints = parse_bool(rospy.get_param("~show_waypoints", True))
         self.local_path_topic = rospy.get_param("~local_path_topic", "path_nav/local_path")
         self.waypoint_marker_radius = float(rospy.get_param("~waypoint_marker_radius", 0.36))
+        self.show_waypoint_labels = parse_bool(rospy.get_param("~show_waypoint_labels", True))
         self.proceed_flag_topic = rospy.get_param("~proceed_flag_topic", "path_nav/proceed_flag")
         self.reverse_mode_topic = rospy.get_param("~reverse_mode_topic", "path_nav/reverse_mode")
-        self.default_show_waypoint_labels = parse_bool(rospy.get_param("~show_waypoint_labels", True))
-        self.desired_velocity_topic = rospy.get_param("~desired_velocity_topic", "path_nav/desired_speed")
-        self.default_show_unloading_stations = parse_bool(rospy.get_param("~show_unloading_stations", True))
+        self.desired_speed_topic = rospy.get_param("~desired_speed_topic", "path_nav/desired_speed")
+        self.show_unloading_stations = parse_bool(rospy.get_param("~show_unloading_stations", True))
         self.completed_waypoints_topic = rospy.get_param("~completed_waypoints_topic", "path_nav/completed_waypoints")
         self.other_odom_topic = rospy.get_param("~other_odom_topic", "/{}/robotnik_base_control/odom_gt".format(self.other_robot_namespace))
         self.other_completed_waypoints_topic = rospy.get_param("~other_completed_waypoints_topic", "/{}/path_nav/completed_waypoints".format(self.other_robot_namespace))
@@ -158,17 +158,16 @@ class PathGuiNode:
         self.self_vehicle_color = "blue" if self.is_robot_a else "red"
         self.completed_waypoints = {"robot_a": set(), "robot_b": set()}
         self.other_vehicle_color = "red" if self.is_robot_a else "blue"
-        self.waypoint_count = sum(len(robot_points) for robot_points in self.waypoints.values())
 
         self.proceed_pub = rospy.Publisher(self.proceed_flag_topic, Bool, queue_size=1, latch=True)
 
         rospy.Subscriber(self.odom_topic, Odometry, self.odom_callback, queue_size=10)
+        rospy.Subscriber(self.status_topic, String, self.state_callback, queue_size=1)
         rospy.Subscriber(self.local_path_topic, Path, self.path_callback, queue_size=1)
-        rospy.Subscriber(self.state_flag_topic, String, self.state_callback, queue_size=1)
         rospy.Subscriber(self.proceed_flag_topic, Bool, self.proceed_callback, queue_size=1)
         rospy.Subscriber(self.reverse_mode_topic, Bool, self.reverse_mode_callback, queue_size=1)
+        rospy.Subscriber(self.desired_speed_topic, Float64, self.velocity_callback, queue_size=1)
         rospy.Subscriber(self.other_odom_topic, Odometry, self.other_odom_callback, queue_size=10)
-        rospy.Subscriber(self.desired_velocity_topic, Float64, self.velocity_callback, queue_size=1)
         rospy.Subscriber(self.completed_waypoints_topic, String, self.completed_waypoints_callback, queue_size=1)
         rospy.Subscriber(self.other_completed_waypoints_topic, String, self.other_completed_waypoints_callback, queue_size=1)
 
@@ -299,8 +298,6 @@ class PathGuiNode:
         namespace = rospy.get_namespace().strip("/") or "global"
         self.root.title(f"ORBit Visualization - {namespace}")
 
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
         self.root.geometry("1920x1080+0+0")
 
         main_frame = ttk.Frame(self.root)
@@ -322,17 +319,11 @@ class PathGuiNode:
         self.state_label = ttk.Label(status_frame, textvariable=self.state_var)
         self.state_label.pack(anchor=tk.W)
 
-        # self.proceed_var = tk.StringVar(value="Proceed: False")
-        # ttk.Label(status_frame, textvariable=self.proceed_var).pack(anchor=tk.W)
-
         self.position_var = tk.StringVar(value="Position: (0.0, 0.0)")
         ttk.Label(status_frame, textvariable=self.position_var).pack(anchor=tk.W)
 
         self.other_position_var = tk.StringVar(value="Other: n/a")
         ttk.Label(status_frame, textvariable=self.other_position_var).pack(anchor=tk.W)
-
-        # self.path_info_var = tk.StringVar(value="Path Points: 0")
-        # ttk.Label(status_frame, textvariable=self.path_info_var).pack(anchor=tk.W)
 
         button_frame = ttk.Frame(control_frame, padding=10)
         button_frame.pack(side=tk.RIGHT)
@@ -361,8 +352,6 @@ class PathGuiNode:
 
         self.show_grid_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(options_frame, text="Show Grid", variable=self.show_grid_var).pack(anchor=tk.W)
-
-        # self.setup_extra_view_options(options_frame)
 
         self.follow_vehicle_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(
@@ -634,28 +623,6 @@ class PathGuiNode:
                 tags="path"
             )
 
-    def setup_extra_view_options(self, options_frame):
-        self.show_waypoints_var = tk.BooleanVar(value=self.default_show_waypoints)
-        ttk.Checkbutton(
-            options_frame,
-            text="Waypoint Markers",
-            variable=self.show_waypoints_var
-        ).pack(anchor=tk.W)
-
-        self.show_waypoint_labels_var = tk.BooleanVar(value=self.default_show_waypoint_labels)
-        ttk.Checkbutton(
-            options_frame,
-            text="Waypoint Names",
-            variable=self.show_waypoint_labels_var
-        ).pack(anchor=tk.W)
-
-        self.show_unloading_stations_var = tk.BooleanVar(value=self.default_show_unloading_stations)
-        ttk.Checkbutton(
-            options_frame,
-            text="Unloading Stations",
-            variable=self.show_unloading_stations_var
-        ).pack(anchor=tk.W)
-
     def setup_extra_legend(self, legend_frame):
         waypoint_row = ttk.Frame(legend_frame)
         waypoint_row.pack(anchor=tk.W, pady=(6, 0))
@@ -693,18 +660,6 @@ class PathGuiNode:
             station_canvas.pack(side=tk.LEFT, padx=5)
             ttk.Label(station_row, text=station_name.upper()).pack(side=tk.LEFT, padx=(0, 12))
 
-    def waypoints_visible(self):
-        var = getattr(self, "show_waypoints_var", None)
-        return self.default_show_waypoints if var is None else var.get()
-
-    def waypoint_labels_visible(self):
-        var = getattr(self, "show_waypoint_labels_var", None)
-        return self.default_show_waypoint_labels if var is None else var.get()
-
-    def unloading_stations_visible(self):
-        var = getattr(self, "show_unloading_stations_var", None)
-        return self.default_show_unloading_stations if var is None else var.get()
-
     def draw_extra_map_layers(self):
         self.draw_unloading_stations()
         self.draw_waypoints()
@@ -713,7 +668,7 @@ class PathGuiNode:
         return WAYPOINT_STYLES.get(station.get("style", "robot_a"), WAYPOINT_STYLES["robot_a"])
 
     def draw_unloading_stations(self):
-        if not self.unloading_stations_visible():
+        if not self.show_unloading_stations:
             return
 
         for station_name, station in self.unloading_stations.items():
@@ -746,7 +701,7 @@ class PathGuiNode:
             )
 
     def draw_waypoints(self):
-        if not self.waypoints_visible():
+        if not self.show_waypoints:
             return
 
         marker_radius = max(24.0, min(120.0, self.waypoint_marker_radius * self.scale))
@@ -789,7 +744,7 @@ class PathGuiNode:
                         tags="waypoint",
                     )
 
-                if self.waypoint_labels_visible():
+                if self.show_waypoint_labels:
                     self.canvas.create_text(
                         canvas_x,
                         canvas_y,
@@ -843,8 +798,6 @@ class PathGuiNode:
         self.velocity_var.set(f"Velocity: {self.vehicle_velocity:.2f} m/s")
         self.desired_velocity_var.set(f"Desired: {self.desired_speed:.2f} m/s")
         self.state_var.set(f"State: {self.state}")
-        # self.proceed_var.set(f"Proceed: {self.proceed_flag}")
-        # self.path_info_var.set(f"Path Points: {len(self.path_points)} | Waypoints: {self.waypoint_count}")
 
         if self.vehicle_position:
             self.position_var.set(f"Position: ({self.vehicle_position[0]:.2f}, {self.vehicle_position[1]:.2f})")

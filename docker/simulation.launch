@@ -5,6 +5,7 @@
     <arg name="waypoint_robot_a" default="a1"/>
     <arg name="waypoint_robot_b" default="a40"/>
     <arg name="third_person_camera" default="true"/>
+    <arg name="gripper" default="six"/>
 
     <include file="$(find harbot_simulation)/launch/rbkairos_complete.launch">
         <arg name="launch_rviz" value="$(arg launch_rviz)"/>
@@ -12,5 +13,6 @@
         <arg name="waypoint_robot_a" value="$(arg waypoint_robot_a)"/>
         <arg name="waypoint_robot_b" value="$(arg waypoint_robot_b)"/>
         <arg name="third_person_camera" value="$(arg third_person_camera)"/>
+        <arg name="gripper" value="$(arg gripper)"/>
     </include>
 </launch>

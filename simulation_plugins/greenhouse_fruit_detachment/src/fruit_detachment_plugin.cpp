@@ -1,13 +1,3 @@
-// ******************************************************************************
-// Code Summary:
-// - When the world starts, fix every fruit model to the plant link with a joint.
-// - Fruits are the models whose names start with fruit_prefix.
-// - Offer the ROS service fruit_detachment/detach to break one fruit's joint.
-// - A broken joint is never recreated, so the fruit stays free afterwards.
-// - Adapted from the Gazebo Classic plugin in harbot-greenhouse-models.
-// ******************************************************************************
-
-
 #include <map>
 #include <mutex>
 #include <memory>
